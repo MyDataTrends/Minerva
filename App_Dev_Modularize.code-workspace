@@ -1,0 +1,55 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": ".conda"
+		},
+		{
+			"path": ".ebextensions"
+		},
+		{
+			"path": ".elasticbeanstalk"
+		},
+		{
+			"path": ".venv"
+		},
+		{
+			"path": "clean-env"
+		},
+		{
+			"path": "Config"
+		},
+		{
+			"path": "Data_Intake"
+		},
+		{
+			"path": "Data_Intake/__pycache__"
+		},
+		{
+			"path": "Integration"
+		},
+		{
+			"path": "modeling"
+		},
+		{
+			"path": "modeling/__pycache__"
+		},
+		{
+			"path": "new-env"
+		},
+		{
+			"path": "output"
+		},
+		{
+			"path": "preprocessing"
+		},
+                {
+                        "path": "Purchase_handler"
+                },
+		{
+			"path": "ui"
+		}
+	]
+}

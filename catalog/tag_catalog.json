@@ -1,0 +1,13 @@
+{
+  "data.csv": {
+    "columns": [
+      "sales",
+      "feat"
+    ],
+    "dtypes": {
+      "sales": "int64",
+      "feat": "int64"
+    },
+    "llm_tags": "LLM unavailable"
+  }
+}

@@ -1,0 +1,4 @@
+date,city,temperature_f,precip_in
+2023-01-01,Chicago,35,0.1
+2023-01-02,Chicago,31,0.0
+2023-01-03,Chicago,30,0.2

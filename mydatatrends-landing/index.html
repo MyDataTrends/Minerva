@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyDataTrends</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col min-h-screen">
+  <!-- Hero Section -->
+  <div id="hero-section"></div>
+
+  <!-- Problem/Pain Section -->
+  <section class="py-20">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-10">Your Business Has Questions You Can’t Yet See</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="p-4 border rounded">Endless spreadsheets</div>
+        <div class="p-4 border rounded">Outdated dashboards</div>
+        <div class="p-4 border rounded">Hidden opportunities</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Value Proposition -->
+  <section class="py-20 bg-gray-100">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-10">From Raw Data to Business Strategy in 48 Hours</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="p-4">Upload</div>
+        <div class="p-4">Automated Analysis</div>
+        <div class="p-4">Actionable Insights</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Workflow Demo -->
+  <section class="py-20">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-10">See the Workflow in Action</h2>
+      <div id="workflow" class="relative w-full max-w-xl h-64 mx-auto overflow-hidden">
+        <div class="stage" id="stage-0">
+          <div class="flex items-center">
+            <svg class="w-12 h-12 text-blue-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 7h18v4H3z"/><path d="M3 11h18v10H3z"/></svg>
+            <div>
+              <h3 class="text-xl font-bold mb-2">Upload &amp; Preprocess</h3>
+              <p class="text-gray-600 text-sm">Files are cleaned automatically.</p>
+            </div>
+          </div>
+        </div>
+        <div class="stage" id="stage-1">
+          <div class="flex items-center">
+            <svg class="w-12 h-12 text-green-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4z"/><path d="M4 10h16v10H4z"/><path d="M8 14h8v2H8z"/></svg>
+            <div>
+              <h3 class="text-xl font-bold mb-2">Semantic Enrichment</h3>
+              <p class="text-gray-600 text-sm">Public data is merged and tagged.</p>
+            </div>
+          </div>
+        </div>
+        <div class="stage" id="stage-2">
+          <div class="flex items-center">
+            <svg class="w-12 h-12 text-purple-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6"/><path d="M12 10V4"/><circle cx="12" cy="12" r="8"/></svg>
+            <div>
+              <h3 class="text-xl font-bold mb-2">Model Training</h3>
+              <p class="text-gray-600 text-sm">The best model is selected and trained.</p>
+            </div>
+          </div>
+        </div>
+        <div class="stage" id="stage-3">
+          <div class="flex items-center">
+            <svg class="w-12 h-12 text-yellow-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M12 3v18"/></svg>
+            <div>
+              <h3 class="text-xl font-bold mb-2">Generate Dashboard</h3>
+              <p class="text-gray-600 text-sm">Results are saved and visualized.</p>
+            </div>
+          </div>
+        </div>
+        <div class="stage" id="stage-4">
+          <div class="flex items-center">
+            <svg class="w-12 h-12 text-red-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+            <div>
+              <h3 class="text-xl font-bold mb-2">Trigger Actions</h3>
+              <p class="text-gray-600 text-sm">Notifications and recipes run.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button id="start" class="mt-8 px-6 py-2 bg-blue-600 text-white rounded shadow">Start Demo</button>
+    </div>
+  </section>
+
+  <!-- Testimonial Block -->
+  <section class="py-20">
+    <div class="container mx-auto px-4 text-center">
+      <img src="images/placeholder.jpg" alt="Retail COO" class="mx-auto mb-4 rounded-full w-24 h-24">
+      <p class="italic mb-2">“MyDataTrends transformed how we view sales data.”</p>
+      <div class="star-rating text-2xl mb-4">★★★★★</div>
+      <p class="font-semibold">Retail COO</p>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <div id="pricing-section"></div>
+
+  <!-- Proof + Outcomes -->
+  <section class="py-20">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-6">Over $5,000+ value delivered</h2>
+      <p class="mb-8">Perfect for retail shops, agencies, and software firms.</p>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section class="py-20 bg-blue-600 text-white">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-4">Your data already has the clues. We help you unlock them.</h2>
+      <a href="#" class="bg-white text-blue-600 font-semibold py-3 px-6 rounded-lg">Upload a spreadsheet</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-auto bg-gray-800 text-white py-8">
+    <div class="container mx-auto px-4 text-center">
+      <nav class="mb-4">
+        <a href="#" class="px-2">Home</a>
+        <a href="#" class="px-2">Pricing</a>
+        <a href="#" class="px-2">Contact</a>
+      </nav>
+      <p class="text-sm">&copy; 2024 MyDataTrends. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/demo.js"></script>
+</body>
+</html>

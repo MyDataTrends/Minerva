@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  analytics-app:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+        reservations:
+          memory: 1GB
+    volumes:
+      - .:/app
+
+  purchase-handler:
+    build: .
+    command: python Purchase_handler/purchase_handler.py
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+        reservations:
+          memory: 512MB
+    volumes:
+      - .:/app

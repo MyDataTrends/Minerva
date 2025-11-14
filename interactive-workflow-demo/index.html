@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workflow Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
+  <h1 class="text-2xl font-semibold mb-6 text-gray-700">Data Automation Workflow</h1>
+  <div id="workflow" class="relative w-full max-w-xl h-64 overflow-hidden">
+    <div class="stage" id="stage-0">
+      <div class="flex items-center">
+        <svg class="w-12 h-12 text-blue-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 7h18v4H3z"/><path d="M3 11h18v10H3z"/></svg>
+        <div>
+          <h2 class="text-xl font-bold mb-2">Upload &amp; Preprocess</h2>
+          <p class="text-gray-600 text-sm">Files are loaded and cleaned by the DataPreprocessor.</p>
+        </div>
+      </div>
+    </div>
+    <div class="stage" id="stage-1">
+      <div class="flex items-center">
+        <svg class="w-12 h-12 text-green-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4z"/><path d="M4 10h16v10H4z"/><path d="M8 14h8v2H8z"/></svg>
+        <div>
+          <h2 class="text-xl font-bold mb-2">Semantic Enrichment</h2>
+          <p class="text-gray-600 text-sm">Public datasets are merged and tags generated.</p>
+        </div>
+      </div>
+    </div>
+    <div class="stage" id="stage-2">
+      <div class="flex items-center">
+        <svg class="w-12 h-12 text-purple-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6"/><path d="M12 10V4"/><circle cx="12" cy="12" r="8"/></svg>
+        <div>
+          <h2 class="text-xl font-bold mb-2">Model Training</h2>
+          <p class="text-gray-600 text-sm">AnalyzerSelector chooses and trains the best model.</p>
+        </div>
+      </div>
+    </div>
+    <div class="stage" id="stage-3">
+      <div class="flex items-center">
+        <svg class="w-12 h-12 text-yellow-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M12 3v18"/></svg>
+        <div>
+          <h2 class="text-xl font-bold mb-2">Generate Dashboard</h2>
+          <p class="text-gray-600 text-sm">OutputGenerator saves results and orchestrates the dashboard.</p>
+        </div>
+      </div>
+    </div>
+    <div class="stage" id="stage-4">
+      <div class="flex items-center">
+        <svg class="w-12 h-12 text-red-500 mr-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <div>
+          <h2 class="text-xl font-bold mb-2">Trigger Actions</h2>
+          <p class="text-gray-600 text-sm">AgentTrigger sends notifications and logs the run.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button id="start" class="mt-8 px-6 py-2 bg-blue-600 text-white rounded shadow">Start Demo</button>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+transaction_date:
+  - transaction date
+  - sale date
+  - purchase date
+order_date:
+  - order date
+  - online order date
+  - order_dt
+store_id:
+  - store id
+  - store number
+  - location id
+product_category:
+  - product category
+  - item category
+  - category
+product_id:
+  - product id
+  - item id
+  - sku
+customer_id:
+  - customer id
+  - client id
+  - shopper id
+sales_amount:
+  - sales amount
+  - revenue
+  - total sales
+quantity:
+  - quantity
+  - qty
+  - units sold
+zip_code:
+  - zip
+  - postal code
+  - zipcode
+city:
+  - city
+  - town
+  - municipality
+state:
+  - state
+  - province
+  - region code
+country:
+  - country
+  - nation
+latitude:
+  - latitude
+  - lat
+longitude:
+  - longitude
+  - lon
+discount:
+  - discount
+  - markdown
+  - price reduction
+unit_price:
+  - unit price
+  - price each
+  - cost per unit
+total_price:
+  - total price
+  - order amount
+  - transaction total
+payment_method:
+  - payment method
+  - tender type
+  - pay type
+customer_age:
+  - customer age
+  - age
+  - shopper age
+customer_gender:
+  - gender
+  - customer gender
+  - sex
+inventory_level:
+  - inventory level
+  - stock on hand
+  - on hand quantity
+reorder_point:
+  - reorder point
+  - reorder level
+  - minimum stock
+supplier_id:
+  - supplier id
+  - vendor id
+  - supplier number
+product_name:
+  - product name
+  - item name
+  - description
+brand:
+  - brand
+  - manufacturer
+  - brand name
+cost:
+  - cost
+  - cost price
+  - purchase cost
+margin:
+  - margin
+  - profit margin
+  - markup
+profit:
+  - profit
+  - net profit
+  - earnings
+return_flag:
+  - returned
+  - return flag
+  - was returned
+promotion_code:
+  - promo code
+  - promotion code
+  - coupon
+week:
+  - week
+  - wk
+  - week number
+month:
+  - month
+  - mo
+year:
+  - year
+  - yr
+weekday:
+  - weekday
+  - day of week
+holiday_flag:
+  - holiday
+  - holiday flag
+  - holiday indicator
+store_region:
+  - region
+  - store region
+  - area
+aisle:
+  - aisle
+  - aisle number
+shelf:
+  - shelf
+  - shelf number
+forecast_qty:
+  - forecast quantity
+  - forecasted qty
+  - demand forecast
+forecast_sales:
+  - forecast sales
+  - sales forecast
+  - projected sales
+online_order:
+  - online order
+  - e-commerce
+  - web order
+shipping_date:
+  - shipping date
+  - ship date
+  - delivery date

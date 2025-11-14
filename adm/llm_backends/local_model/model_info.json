@@ -1,0 +1,7 @@
+{
+  "model_name": "Mistral-7B-Instruct",
+  "quantization": "Q4_K_M",
+  "format": "gguf",
+  "usage": "metadata tagging, modeling recommendations, structured prompt-response",
+  "source": "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
+}

@@ -1,0 +1,27 @@
+include=[
+    'lr',         # Linear Regression
+    'lasso',      # Lasso Regression
+    'ridge',      # Ridge Regression
+    'en',         # ElasticNet
+    'lar',        # Least Angle Regression
+    'llar',       # Lasso Least Angle Regression
+    'omp',        # Orthogonal Matching Pursuit
+    'br',         # Bayesian Ridge
+    'ard',        # Automatic Relevance Determination
+    'par',        # Passive Aggressive Regressor
+    'ransac',     # RANSAC Regression
+    'tr',         # TheilSen Regressor
+    'huber',      # Huber Regressor
+    'kr',         # Kernel Ridge
+    'svm',        # Support Vector Machine
+    'knn',        # K-Nearest Neighbors
+    'dt',         # Decision Tree
+    'rf',         # Random Forest
+    'et',         # Extra Trees
+    'ada',        # AdaBoost Regressor
+    'gbr',        # Gradient Boosting Regressor
+    'mlp',        # Multi-Layer Perceptron
+    'xgboost',    # Extreme Gradient Boosting
+    'lightgbm',   # Light Gradient Boosting Machine
+    'catboost'    # CatBoost Regressor
+]
