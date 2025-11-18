@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from imputation_confidence import score_imputations
+from scripts.imputation_confidence import score_imputations
 
 
 def test_score_imputations_basic():

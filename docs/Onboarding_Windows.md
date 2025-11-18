@@ -6,7 +6,7 @@
   - Optional: Conda (Miniconda/Anaconda)
 
 - Clone
-  - git clone <repo> && cd Minerva
+  - git clone [repository-url] && cd Minerva
 
 - Create a virtualenv (PowerShell)
   - python -m venv .venv
@@ -17,8 +17,8 @@
   - Optional: conda users can use infra\environments\environment.yml
 
 - Configure environment
-  - copy .env.example .env
-  - edit .env (set LOG_DIR, LOCAL_DATA_DIR, etc.)
+  - copy config/.env.example config/.env
+  - edit config/.env (set LOG_DIR, LOCAL_DATA_DIR, etc.)
 
 - Run tests
   - pytest -q

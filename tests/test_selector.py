@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd  # noqa: E402
 
-from analysis_selector import select_analyzer  # noqa: E402
+from orchestration.analysis_selector import select_analyzer  # noqa: E402
 from modeling.regression_analyzer import RegressionAnalyzer  # noqa: E402
 from modeling.classification_analyzer import ClassificationAnalyzer  # noqa: E402
 from modeling.cluster_analyzer import ClusterAnalyzer  # noqa: E402

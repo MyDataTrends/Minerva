@@ -25,8 +25,8 @@ from preprocessing.metadata_parser import parse_metadata
 from preprocessing.misaligned_row_detector import detect_misaligned_rows
 from preprocessing.advanced_schema_validator import validate_schema
 from preprocessing.context_missing_finder import find_contextual_missingness
-from imputation_confidence import score_imputations
-from alignment_drift_monitor import generate_historical_stats, monitor_alignment_drift
+from scripts.imputation_confidence import score_imputations
+from scripts.alignment_drift_monitor import generate_historical_stats, monitor_alignment_drift
 
 
 class DataPreprocessor:

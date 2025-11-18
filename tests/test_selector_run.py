@@ -1,5 +1,5 @@
 import pandas as pd
-from analysis_selector import select_analyzer
+from orchestration.analysis_selector import select_analyzer
 
 
 def test_select_and_run_simple():

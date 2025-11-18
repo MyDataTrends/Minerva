@@ -1,5 +1,5 @@
 import pandas as pd
-from orchestrator import orchestrate_dashboard
+from orchestration.orchestrator import orchestrate_dashboard
 
 
 def main():

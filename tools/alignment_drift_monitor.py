@@ -1,7 +1,7 @@
 import argparse
 import json
 import pandas as pd
-from alignment_drift_monitor import generate_historical_stats, monitor_alignment_drift
+from scripts.alignment_drift_monitor import generate_historical_stats, monitor_alignment_drift
 
 
 def main():

@@ -1,6 +1,6 @@
 import pandas as pd
 from orchestration.data_preprocessor import DataPreprocessor
-from alignment_drift_monitor import generate_historical_stats
+from scripts.alignment_drift_monitor import generate_historical_stats
 
 def test_clean_with_diagnostics():
     df = pd.DataFrame({"A": [1, 2, None, 4], "B": ["x", "y", "z", "w"]})

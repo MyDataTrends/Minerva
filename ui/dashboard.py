@@ -24,7 +24,7 @@ from pathlib import Path
 from feedback.ratings import store_rating
 from feedback.role_corrections import store_role_corrections
 from ui.column_review import column_review
-from analysis_selector import select_analyzer
+from orchestration.analysis_selector import select_analyzer
 from orchestrate_workflow import orchestrate_workflow
 from storage.local_backend import load_datalake_dfs
 from preprocessing.save_meta import (
@@ -42,7 +42,7 @@ from ui.visualizations import (
     generate_pie_chart,
     generate_area_chart,
 )
-from orchestrator import orchestrate_dashboard
+from orchestration.orchestrator import orchestrate_dashboard
 from ui import redaction_banner
 
 

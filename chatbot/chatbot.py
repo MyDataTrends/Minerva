@@ -2,7 +2,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"   # avoid OpenMP double-load crash
 from dotenv import load_dotenv
 import streamlit as st
-from orchestrator import orchestrate_dashboard
+from orchestration.orchestrator import orchestrate_dashboard
 from .decision import decide_action
 
 def chatbot_interface(data, visualizations, models, target=None, prefill=None):

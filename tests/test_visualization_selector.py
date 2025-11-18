@@ -4,7 +4,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from visualization_selector import infer_visualization_type
+from scripts.visualization_selector import infer_visualization_type
 from config import LLM_VISUALIZATION_TOKEN_BUDGET
 
 
