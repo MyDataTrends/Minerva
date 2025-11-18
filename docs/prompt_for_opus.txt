@@ -1,0 +1,453 @@
+
+Let me gather more information about the modeling components and test data structure.
+
+
+
+
+
+Perfect! Now I have enough context to create specific, ready-to-use prompts for Claude Opus. Let me create comprehensive prompts based on the actual Minerva codebase.
+
+## Ready-to-Use Claude Opus Prompts for Minerva
+
+### 1. **Novelty Assessment Prompt**
+
+```markdown
+Analyze the Minerva data analysis platform and identify its novel contributions compared to existing solutions like DataRobot, H2O.ai, and Dataiku.
+
+**Core Architecture:**
+- Entry point: `orchestration/orchestrate_workflow.py` with [WorkflowManager](cci:2://file:///C:/Projects/Minerva/Minerva/orchestration/workflow_manager.py:17:0-228:9) coordinating 5 workflow steps
+- Main workflow: preprocess → enrich → analyze → generate outputs → trigger agents
+- FastAPI service in `main.py` exposing session management and workflow reruns
+
+**Key Technical Components:**
+
+1. **Semantic Merge System** (`integration/semantic_merge.py`):
+   - `synthesise_join_keys()` function automatically discovers join relationships between user data and public datasets
+   - Supports direct role matching, zip-to-FIPS conversion, city+state hashing, and multi-role composite keys
+   - `rank_and_merge()` evaluates candidate tables and selects the best enrichment based on column gain
+   - No manual join specification required
+
+2. **Dynamic Analyzer Selection** ([orchestration/analysis_selector.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/analysis_selector.py:0:0-0:0)):
+   - [select_analyzer()](cci:1://file:///C:/Projects/Minerva/Minerva/orchestration/analysis_selector.py:13:0-40:24) uses dataset characteristics to auto-select from 5 analyzer types: RegressionAnalyzer, ClassificationAnalyzer, ClusterAnalyzer, AnomalyAnalyzer, DescriptiveAnalyzer
+   - Combines `dataset_score()` with analyzer-specific `suitability_score()` for optimal matching
+   - Falls back to descriptive analysis when modeling is not viable
+
+3. **Intelligent Preprocessing** ([orchestration/analyzer_selector_helper.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/analyzer_selector_helper.py:0:0-0:0)):
+   - `assess_modelability()` performs cheap suitability checks before expensive modeling
+   - Iterative refinement: runs semantic merge, evaluates metrics (R², MAPE), then optionally reruns with user-labeled column roles
+   - Automatic fallback to baseline or descriptive analysis when quality thresholds aren't met (MIN_R2, MAX_MAPE)
+
+4. **Visualization Intelligence** (`scripts/visualization_selector.py`):
+   - `infer_visualization_type()` uses heuristics (datetime + numeric → line chart, categorical + numeric → bar chart) with 70% confidence threshold
+   - Falls back to LLM-based selection when heuristics are uncertain
+   - Context-aware: considers question, model type, and industry
+
+**Evaluation Questions:**
+
+1. What makes the semantic merge capability fundamentally different from traditional ETL/data integration approaches? How does the automatic join key synthesis compare to tools like Alteryx or Trifacta?
+
+2. The dynamic analyzer selection combines dataset scoring with analyzer suitability. How does this differ from AutoML platforms' model selection strategies? What's innovative about the iterative refinement with user labels?
+
+3. The system has a 3-tier analysis strategy: full modeling → baseline → descriptive. How does this pragmatic approach compare to platforms that always attempt full modeling?
+
+4. The visualization selector uses heuristics-first with LLM fallback. What's the strategic advantage of this hybrid approach compared to pure rule-based or pure AI-based systems?
+
+5. What market gap does Minerva fill? Who would benefit most from this combination of semantic enrichment + adaptive analysis + intelligent visualization?
+
+Provide specific examples of scenarios where Minerva's approach would outperform existing tools, and identify any architectural patterns that could be considered best practices for similar systems.
+```
+
+### 2. **Technical Viability Assessment Prompt**
+
+```markdown
+Evaluate the technical viability and production-readiness of the Minerva data analysis platform.
+
+**System Architecture:**
+
+**Core Workflow** ([orchestration/workflow_manager.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/workflow_manager.py:0:0-0:0) - 230 lines):
+```python
+class WorkflowManager:
+    def preprocess_and_cache(self, diagnostics_config) -> Optional[dict]
+    def enrich_with_public_data(self) -> None
+    def select_and_run_analysis(self, intent) -> Optional[dict]
+    def generate_outputs(self) -> None
+    def trigger_agent_actions(self) -> None
+```
+
+**Key Dependencies:**
+- pandas for data manipulation
+- scikit-learn for modeling
+- FastAPI for REST API
+- Streamlit for dashboard UI
+- LLM integration for summarization and recommendations (via `preprocessing/llm_preprocessor.py`, `preprocessing/llm_analyzer.py`, `preprocessing/llm_summarizer.py`)
+
+**Data Flow:**
+1. User uploads CSV → `DataPreprocessor.run()` validates and cleans
+2. `SemanticEnricher.enrich()` calls `rank_and_merge()` to join public datasets from [datasets/](cci:7://file:///c:/Projects/Minerva/Minerva/datasets:0:0-0:0) directory
+3. [AnalyzerSelector.analyze()](cci:1://file:///C:/Projects/Minerva/Minerva/orchestration/analyzer_selector_helper.py:40:4-164:18) runs suitability check, selects analyzer, trains model
+4. `OutputGenerator.generate()` saves model to `models/<run_id>/best_model`, predictions to `output_files/<run_id>_predictions.csv`
+5. `AgentTrigger.trigger()` executes post-analysis actions
+
+**Scalability Constraints:**
+- `MAX_ROWS_FIRST_PASS = 25000`, `MAX_FEATURES_FIRST_PASS = 100`
+- `MAX_ROWS_FULL = 5000` for full analysis
+- `PROFILE_SAMPLE_ROWS = 1000` for large dataset profiling
+- Quota system: `MAX_REQUESTS_FREE = 20`, `MAX_GB_FREE = 1`
+
+**Model Persistence:**
+- Models saved per `run_id` at `local_data/models/<run_id>/best_model`
+- Metadata logged via `storage/local_backend.log_run_metadata()`
+- Session history accessible via `ui/session_history.py`
+
+**Available Datasets** (in [datasets/](cci:7://file:///c:/Projects/Minerva/Minerva/datasets:0:0-0:0)):
+- [WA_Fn-UseC_-Telco-Customer-Churn.csv](cci:7://file:///c:/Projects/Minerva/Minerva/datasets/WA_Fn-UseC_-Telco-Customer-Churn.csv:0:0-0:0) (977KB)
+- [transactions.csv](cci:7://file:///c:/Projects/Minerva/Minerva/datasets/transactions.csv:0:0-0:0) (1.6MB)
+- [test.csv](cci:7://file:///c:/Projects/Minerva/Minerva/datasets/test.csv:0:0-0:0) (1MB)
+- Various demographic/geographic enrichment tables (census, holidays, stores, weather)
+
+**Evaluation Criteria:**
+
+1. **Scalability Analysis:**
+   - Current row/column limits are conservative. What's the realistic upper bound before performance degrades?
+   - The semantic merge evaluates all candidate tables sequentially. How would this perform with 100+ enrichment tables?
+   - What bottlenecks exist in the current architecture?
+
+2. **Reliability Assessment:**
+   - The system has multiple fallback paths (modeling → baseline → descriptive). How robust is error handling?
+   - Model persistence uses run_id. What happens with concurrent workflows?
+   - How does the system handle malformed data, missing columns, or type mismatches?
+
+3. **Production Readiness:**
+   - What's missing for production deployment? (monitoring, logging, security, etc.)
+   - The LLM integration is optional. How gracefully does the system degrade without LLM access?
+   - What testing coverage exists? (check `tests/` directory)
+
+4. **Technical Debt:**
+   - Identify circular import risks (e.g., [analyzer_selector_helper.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/analyzer_selector_helper.py:0:0-0:0) imports from `orchestrate_workflow`)
+   - Are there any deprecated patterns or compatibility shims that should be removed?
+   - What refactoring would improve maintainability?
+
+5. **Integration Risks:**
+   - External dependencies: LLM API, storage backends, data sources
+   - What happens if the semantic index database (`_INDEX_DB`) is corrupted?
+   - How portable is the system across environments?
+
+Provide a SWOT analysis, identify the top 3 technical risks, and recommend specific improvements with estimated effort (low/medium/high).
+```
+
+### 3. **Output Quality Evaluation Prompt**
+
+```markdown
+Evaluate the quality, interpretability, and actionability of Minerva's outputs.
+
+**Output Generation System** (`orchestration/output_generator.py`):
+
+```python
+class OutputGenerator:
+    def generate(self, model, predictions, metrics, model_info, run_id, data, target_column, needs_role_review, file_name):
+        # Saves model to models/<run_id>/best_model
+        # Saves predictions to output_files/<run_id>_predictions.csv
+        # Generates formatted output via format_output(predictions)
+        # Generates analysis via ask_follow_up_question("What is the accuracy of the model?", context)
+        # Generates business summary via generate_summary(data_stats=metrics, model_results=model_info, prompt=summary_prompt)
+        # Logs metadata via log_run_metadata()
+```
+
+**Output Components:**
+
+1. **Predictions File:** CSV with prediction column saved to `output_files/<run_id>_predictions.csv`
+
+2. **Formatted Output:** Generated by `output/output_formatter.format_output(predictions)`
+
+3. **Analysis:** LLM-generated response to "What is the accuracy of the model?" via `preprocessing/llm_analyzer.ask_follow_up_question()`
+
+4. **Business Summary:** LLM-generated summary with prompt:
+   ```
+   "Given these data statistics and model outputs, write a one-page business summary, 
+    list the top 3 next steps, and include a clear call to action."
+   ```
+
+5. **Metrics Dictionary:**
+   - For semantic merge: `{"semantic_merge": {"r2": ..., "mape": ..., "mae": ...}}`
+   - For user-labeled merge: `{"user_merge": {"r2": ..., "mape": ..., "mae": ...}}`
+   - Quality thresholds: `MIN_R2` and `MAX_MAPE` from config
+
+6. **Model Info:**
+   - `model_type`: Class name (e.g., "RandomForestRegressor")
+   - `merge_report`: Details of which enrichment table was chosen and why
+
+7. **Recommended Models:** Generated by `preprocessing/llm_preprocessor.recommend_models_with_llm(df)`
+
+8. **Actions & Flags:**
+   - `needs_role_review`: Boolean indicating if user should review column role assignments
+   - `actions`: List of suggested next steps
+
+**Visualization System** (`scripts/visualization_selector.py`):
+- Auto-selects from: line_chart, bar_chart, scatter_plot, histogram
+- Heuristic rules: datetime+numeric → line (90% confidence), categorical+numeric → bar (90% confidence)
+- LLM fallback for uncertain cases
+
+**Dashboard Integration** ([orchestration/orchestrator.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/orchestrator.py:0:0-0:0)):
+- [orchestrate_dashboard()](cci:1://file:///C:/Projects/Minerva/Minerva/orchestration/orchestrator.py:7:0-111:5) function combines model output, visualizations, and chatbot input
+- Returns: dashboard layout, insights list, confidence score, scored visualizations, model results, chart results
+
+**Evaluation Questions:**
+
+1. **Interpretability:**
+   - How understandable are the outputs for non-technical users?
+   - Does the business summary provide actionable insights or just restate metrics?
+   - Are the "top 3 next steps" specific enough to act on?
+
+2. **Completeness:**
+   - What's missing from the output that a data analyst would expect? (feature importance, residual plots, confidence intervals, etc.)
+   - Does the merge_report adequately explain why a particular enrichment table was chosen?
+   - Are there scenarios where the output would be misleading?
+
+3. **Visualization Quality:**
+   - Are the heuristic rules for visualization selection comprehensive?
+   - What edge cases might produce poor visualization choices?
+   - How effective is the LLM fallback compared to the heuristics?
+
+4. **Actionability:**
+   - Does `needs_role_review=True` provide enough guidance on what to review?
+   - Are the recommended models actually useful, or just generic suggestions?
+   - What would make the "actions" list more actionable?
+
+5. **Benchmarking:**
+   - Compare Minerva's output format to industry standards (Tableau, Power BI, DataRobot)
+   - What would make the outputs more shareable/exportable?
+   - How could the outputs be enhanced for different audiences (executives vs. data scientists)?
+
+Provide specific examples of improvements to each output component, with before/after samples where possible. Prioritize changes by impact on user decision-making.
+```
+
+### 4. **Strategic Enhancement Roadmap Prompt**
+
+```markdown
+Develop a strategic enhancement roadmap for Minerva based on its current capabilities and market positioning.
+
+**Current Capabilities Summary:**
+
+**Core Strengths:**
+1. Automatic semantic enrichment via `rank_and_merge()` - joins user data with public datasets without manual configuration
+2. Adaptive analysis strategy - automatically selects from 5 analyzer types based on data characteristics
+3. Iterative refinement - reruns analysis with user-provided column labels to improve results
+4. Multi-tier fallback - gracefully degrades from full modeling → baseline → descriptive analysis
+5. Hybrid visualization selection - heuristics + LLM for optimal chart selection
+6. Session persistence - models and metadata saved per run_id for reproducibility
+
+**Technical Stack:**
+- Backend: FastAPI (`main.py`)
+- UI: Streamlit ([ui/dashboard.py](cci:7://file:///C:/Projects/Minerva/Minerva/ui/dashboard.py:0:0-0:0), `ui/session_history.py`)
+- ML: scikit-learn with 5 analyzer types (regression, classification, clustering, anomaly, descriptive)
+- Data: pandas with semantic merge capabilities
+- AI: LLM integration for summarization and recommendations
+
+**Available Analyzers** (from [modeling/__init__.py](cci:7://file:///c:/Projects/Minerva/Minerva/modeling/__init__.py:0:0-0:0)):
+- RegressionAnalyzer
+- ClassificationAnalyzer
+- ClusterAnalyzer
+- AnomalyAnalyzer
+- DescriptiveAnalyzer
+
+**Current Limitations:**
+- Row limit: 25,000 for first pass, 5,000 for full analysis
+- Feature limit: 100 columns
+- Sequential enrichment table evaluation (no parallel processing)
+- Limited visualization types (line, bar, scatter, histogram)
+- LLM dependency for advanced features
+
+**Existing Infrastructure:**
+- Data intake CLI for S3/API ingestion (`Data_Intake/datalake_ingestion`)
+- Semantic index database for enrichment table metadata
+- Local storage backend with session tracking
+- Diagnostic tools: alignment drift monitor, imputation confidence scorer
+- Test suite in `tests/` directory
+
+**Strategic Questions:**
+
+1. **Market Positioning:**
+   - What's Minerva's ideal target user? (Data analysts? Business users? Data scientists?)
+   - Should it compete with AutoML platforms or complement them?
+   - What's the most compelling use case to lead with?
+
+2. **Feature Prioritization:**
+   Given the current architecture, rank these potential enhancements by impact/effort:
+   - Add time-series forecasting analyzer (ForecastingAnalyzer stub exists in [modeling/forecasting.py](cci:7://file:///c:/Projects/Minerva/Minerva/modeling/forecasting.py:0:0-0:0))
+   - Implement parallel enrichment table evaluation
+   - Add feature importance and model explainability (SHAP, LIME)
+   - Expand visualization library (heatmaps, network graphs, geospatial)
+   - Build collaborative features (shared sessions, annotations)
+   - Add real-time data streaming support
+   - Implement A/B testing and experiment tracking
+   - Create API for programmatic access
+   - Add data quality scoring and profiling
+   - Implement automated report generation (PDF, PowerPoint)
+
+3. **Technical Improvements:**
+   What should be the next 3 technical investments?
+   - Performance optimization (caching, parallelization, incremental processing)
+   - Scalability enhancements (distributed processing, cloud deployment)
+   - Reliability improvements (better error handling, monitoring, alerting)
+   - Security hardening (authentication, authorization, data encryption)
+   - Testing expansion (integration tests, performance tests, chaos engineering)
+
+4. **Differentiation Strategy:**
+   How can Minerva differentiate from competitors?
+   - Double down on semantic enrichment as the killer feature?
+   - Focus on ease-of-use for non-technical users?
+   - Emphasize interpretability and explainability?
+   - Target a specific vertical (healthcare, finance, retail)?
+
+5. **Monetization & Growth:**
+   - What features belong in free vs. paid tiers?
+   - What integrations would drive adoption? (Slack, Salesforce, Snowflake, etc.)
+   - What partnerships would accelerate growth?
+
+**Deliverables:**
+
+1. **6-Month Roadmap:** Prioritized list of features/improvements with effort estimates
+2. **Positioning Statement:** Clear articulation of Minerva's unique value proposition
+3. **Success Metrics:** KPIs to track product-market fit and user satisfaction
+4. **Risk Mitigation:** Identify potential pitfalls and mitigation strategies
+5. **Go-to-Market Strategy:** How to acquire first 100 users
+
+Be specific and actionable. Reference actual code files and existing infrastructure where relevant.
+```
+
+### 5. **Comparative Analysis Prompt**
+
+```markdown
+Compare Minerva's technical approach to leading data analysis and AutoML platforms, identifying competitive advantages and gaps.
+
+**Minerva's Architecture:**
+
+**Semantic Enrichment** (`integration/semantic_merge.py`):
+```python
+def synthesise_join_keys(df_user, df_table, user_meta, table_meta):
+    # Automatically discovers join relationships:
+    # 1. Direct role matching (e.g., both have "customer_id")
+    # 2. Semantic conversions (zip_code → fips_code)
+    # 3. Composite keys (city + state hashed together)
+    # 4. Multi-role hashing for complex joins
+    # Returns: modified dataframes, join keys, method used
+```
+
+**Analyzer Selection** ([orchestration/analysis_selector.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/analysis_selector.py:0:0-0:0)):
+```python
+def select_analyzer(df, preferred=None):
+    # If preferred analyzer specified, use it
+    # Otherwise: score all 5 analyzers (regression, classification, cluster, anomaly, descriptive)
+    # Scoring: dataset_score(df) * analyzer.suitability_score(df)
+    # Returns: best-fit analyzer instance
+```
+
+**Iterative Refinement** ([orchestration/analyzer_selector_helper.py](cci:7://file:///C:/Projects/Minerva/Minerva/orchestration/analyzer_selector_helper.py:0:0-0:0)):
+```python
+# Workflow:
+# 1. Check modelability (cheap heuristics)
+# 2. Run semantic merge + train model
+# 3. Evaluate metrics (R², MAPE, MAE)
+# 4. If user provides column labels, rerun with tuned metadata
+# 5. Compare results, keep best model
+# 6. Fall back to baseline or descriptive if quality thresholds not met
+```
+
+**Comparison Platforms:**
+
+1. **DataRobot:**
+   - Automated feature engineering, model selection, hyperparameter tuning
+   - Supports 100+ algorithms
+   - Enterprise focus with deployment and monitoring
+   - How does Minerva's semantic enrichment compare to DataRobot's feature discovery?
+   - How does the 5-analyzer approach compare to DataRobot's exhaustive model search?
+
+2. **H2O.ai (H2O AutoML):**
+   - Automated ensemble methods
+   - Stacked ensembles and model explainability
+   - Open-source with enterprise version
+   - How does Minerva's iterative refinement compare to H2O's automated feature engineering?
+   - How does the visualization selection compare to H2O's built-in plotting?
+
+3. **Dataiku:**
+   - Visual data preparation and ML pipeline builder
+   - Collaboration features and project management
+   - Strong data integration capabilities
+   - How does Minerva's automatic join synthesis compare to Dataiku's visual join builder?
+   - How does the semantic enrichment compare to Dataiku's data catalog?
+
+4. **KNIME:**
+   - Visual workflow builder with drag-and-drop nodes
+   - Extensive plugin ecosystem
+   - Open-source with commercial extensions
+   - How does Minerva's code-based approach compare to KNIME's visual paradigm?
+   - What would a KNIME-style workflow for Minerva look like?
+
+5. **RapidMiner:**
+   - Visual workflow design with automated modeling
+   - Strong in data preparation and transformation
+   - Enterprise deployment options
+   - How does Minerva's preprocessing compare to RapidMiner's data prep capabilities?
+
+6. **Google Cloud AutoML / Vertex AI:**
+   - Cloud-native with scalable infrastructure
+   - Pre-trained models and transfer learning
+   - Integration with Google Cloud ecosystem
+   - How does Minerva's local-first approach compare to cloud-native AutoML?
+   - What would it take to make Minerva cloud-native?
+
+**Analysis Framework:**
+
+For each platform, evaluate:
+
+1. **Data Integration:**
+   - How do they handle joining external data?
+   - Minerva's advantage: automatic semantic join synthesis
+   - Minerva's gap: limited to local datasets directory
+
+2. **Model Selection:**
+   - How do they choose which models to train?
+   - Minerva's advantage: fast suitability-based selection with fallbacks
+   - Minerva's gap: only 5 analyzer types vs. dozens of algorithms
+
+3. **User Experience:**
+   - How much configuration is required?
+   - Minerva's advantage: minimal configuration, automatic decisions
+   - Minerva's gap: no visual workflow builder
+
+4. **Interpretability:**
+   - How do they explain model decisions?
+   - Minerva's advantage: LLM-generated business summaries
+   - Minerva's gap: no feature importance or SHAP values
+
+5. **Scalability:**
+   - What are the data size limits?
+   - Minerva's advantage: lightweight, runs locally
+   - Minerva's gap: 25K row limit vs. cloud platforms handling millions
+
+6. **Deployment:**
+   - How do they handle model deployment and monitoring?
+   - Minerva's advantage: FastAPI endpoints for session management
+   - Minerva's gap: no production deployment infrastructure
+
+**Deliverables:**
+
+1. **Feature Matrix:** Side-by-side comparison of capabilities
+2. **Competitive Positioning:** Where Minerva wins, loses, and differentiates
+3. **Best Practices to Adopt:** Specific features/patterns from competitors worth implementing
+4. **Unique Value Proposition:** What makes Minerva worth using over alternatives
+5. **Strategic Recommendations:** Should Minerva compete head-on or find a niche?
+
+Be specific about technical implementations. For example, if recommending adopting a feature from H2O, explain how it would integrate with Minerva's existing architecture.
+```
+
+---
+
+These prompts are ready to copy/paste into Claude Opus. Each one:
+- Uses actual file paths, function names, and code snippets from Minerva
+- References real datasets in the [datasets/](cci:7://file:///c:/Projects/Minerva/Minerva/datasets:0:0-0:0) directory
+- Cites specific architectural components and their interactions
+- Provides concrete evaluation criteria
+- Asks for actionable, specific recommendations
+
+Would you like me to create additional prompts for other aspects of the evaluation?
