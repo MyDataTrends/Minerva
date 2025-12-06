@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 # Ensure the base directory is in the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from orchestrate_workflow import orchestrate_workflow
+from orchestration.orchestrate_workflow import orchestrate_workflow
 from pathlib import Path
 import boto3
 import pandas as pd

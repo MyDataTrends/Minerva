@@ -58,28 +58,132 @@ class DataPreprocessor:
 
         original_df = data.copy()
         imputed_mask = data.isna()
+        preprocessing_errors = []
 
+        # Resilient preprocessing - try each step, skip on failure
         metadata = parse_metadata(data)
+        
         for column in metadata["columns"]:
-            if metadata["dtypes"][column] == "object":
-                data = normalize_text_columns(data, column)
-                data = encode_categorical_columns(data, column)
-            elif "date" in column.lower():
-                data = convert_to_datetime(data, column)
-            elif metadata["dtypes"][column] in ["int64", "float64"]:
-                data = remove_outliers(data, column)
+            if column not in data.columns:
+                continue
+                
+            col_dtype = metadata["dtypes"].get(column, "unknown")
+            
+            # Try text normalization and encoding for object columns
+            if col_dtype == "object":
+                try:
+                    data = normalize_text_columns(data, column)
+                except Exception as e:
+                    preprocessing_errors.append(f"normalize_text({column}): {e}")
+                
+                try:
+                    data = encode_categorical_columns(data, column)
+                except Exception as e:
+                    preprocessing_errors.append(f"encode_categorical({column}): {e}")
+                    # Fallback: try label encoding or just drop
+                    try:
+                        data[column] = pd.factorize(data[column])[0]
+                    except:
+                        try:
+                            data = data.drop(columns=[column])
+                        except:
+                            pass
+            
+            # Try datetime conversion
+            elif "date" in column.lower() or col_dtype == "datetime64[ns]":
+                try:
+                    data = convert_to_datetime(data, column)
+                except Exception as e:
+                    preprocessing_errors.append(f"convert_datetime({column}): {e}")
+                    # Fallback: convert to numeric timestamp or drop
+                    try:
+                        data[column] = pd.to_datetime(data[column], errors='coerce')
+                        # Convert to numeric for modeling
+                        if data[column].dtype == 'datetime64[ns]':
+                            data[column] = data[column].astype('int64') // 10**9  # Unix timestamp
+                    except:
+                        try:
+                            data = data.drop(columns=[column])
+                        except:
+                            pass
+            
+            # Try outlier removal for numeric columns
+            elif col_dtype in ["int64", "float64"]:
+                try:
+                    data = remove_outliers(data, column)
+                except Exception as e:
+                    preprocessing_errors.append(f"remove_outliers({column}): {e}")
+                    # Fallback: clip extreme values instead
+                    try:
+                        q1, q99 = data[column].quantile([0.01, 0.99])
+                        data[column] = data[column].clip(q1, q99)
+                    except:
+                        pass
+        
+        # Convert any remaining datetime columns to numeric
+        for col in data.columns:
+            if data[col].dtype == 'datetime64[ns]':
+                try:
+                    data[col] = data[col].astype('int64') // 10**9
+                except:
+                    try:
+                        data = data.drop(columns=[col])
+                    except:
+                        pass
+            # Handle Timestamp objects
+            elif data[col].dtype == 'object':
+                try:
+                    # Check if it's actually timestamps stored as objects
+                    sample = data[col].dropna().iloc[0] if len(data[col].dropna()) > 0 else None
+                    if sample is not None and hasattr(sample, 'timestamp'):
+                        data[col] = pd.to_datetime(data[col], errors='coerce').astype('int64') // 10**9
+                except:
+                    pass
 
-        data = clean_missing_values(data, strategy="fill", fill_value=0)
+        # Clean missing values with fallback strategies
+        try:
+            data = clean_missing_values(data, strategy="fill", fill_value=0)
+        except Exception as e:
+            preprocessing_errors.append(f"clean_missing_values: {e}")
+            # Fallback: simple fillna
+            try:
+                for col in data.columns:
+                    if data[col].dtype in ['int64', 'float64']:
+                        data[col] = data[col].fillna(0)
+                    else:
+                        data[col] = data[col].fillna('')
+            except:
+                pass
 
         if score_imputations_flag:
-            diagnostics["imputation_confidence"] = score_imputations(
-                data,
-                imputed_mask,
-                {c: "fill" for c in data.columns},
-                df_original=original_df,
-            )
+            try:
+                common_cols = [c for c in imputed_mask.columns if c in data.columns]
+                common_rows = imputed_mask.index.intersection(data.index)
+                if common_cols and len(common_rows) > 0:
+                    aligned_mask = imputed_mask.loc[common_rows, common_cols].reindex(
+                        index=data.index, columns=data.columns, fill_value=False
+                    )
+                    diagnostics["imputation_confidence"] = score_imputations(
+                        data,
+                        aligned_mask,
+                        {c: "fill" for c in data.columns},
+                        df_original=original_df,
+                    )
+                else:
+                    diagnostics["imputation_confidence"] = {"skipped": "shape_mismatch"}
+            except Exception as e:
+                diagnostics["imputation_confidence"] = {"error": str(e)}
 
-        data = remove_duplicates(data)
+        # Remove duplicates with fallback
+        try:
+            data = remove_duplicates(data)
+        except Exception as e:
+            preprocessing_errors.append(f"remove_duplicates: {e}")
+        
+        # Log preprocessing issues but don't fail
+        if preprocessing_errors:
+            diagnostics["preprocessing_warnings"] = preprocessing_errors
+            logging.warning(f"Preprocessing completed with {len(preprocessing_errors)} warnings")
 
         if monitor_drift:
             stats = baseline_stats or generate_historical_stats(data)
@@ -154,7 +258,7 @@ class DataPreprocessor:
             return None, None, {"error": "Feature not available for free-tier users"}, Path()
 
         info = usage_info(user_id)
-        from orchestrate_workflow import MAX_REQUESTS_FREE, MAX_GB_FREE
+        from config import MAX_REQUESTS_FREE, MAX_GB_FREE
         if info.get("requests", 0) >= MAX_REQUESTS_FREE or info.get("bytes", 0) >= MAX_GB_FREE * 1024 * 1024 * 1024:
             increment_request(user_id, 0)
             logging.warning("User %s exceeded free tier limits", user_id)
@@ -179,7 +283,8 @@ class DataPreprocessor:
         if run_id:
             stored = load_run_metadata(run_id)
             if stored and stored.get("model_path"):
-                from orchestrate_workflow import load_model, evaluate_model
+                from modeling.model_training import load_model
+                from modeling.model_selector import evaluate_model
                 if target_column is None:
                     try:
                         target_column = self.guess_target_column(data)

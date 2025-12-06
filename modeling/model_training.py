@@ -1,6 +1,6 @@
 import pickle
 
-from config.feature_flags import ENABLE_HEAVY_EXPLANATIONS
+from config.feature_flags import ENABLE_HEAVY_EXPLANATIONS, ENABLE_SHAP_EXPLANATIONS
 from preprocessing.llm_preprocessor import preprocess_data_with_llm
 from preprocessing.llm_analyzer import analyze_dataset, score_dataset_similarity
 from preprocessing.data_cleaning import (
@@ -35,9 +35,14 @@ def get_model_explanations(model, X):
         explanations["explanations_disabled"] = True
         return explanations
 
+    # SHAP explanations - controlled by separate flag for granular control
+    if not ENABLE_SHAP_EXPLANATIONS:
+        return explanations
+
     try:  # optional dependency
         import shap  # type: ignore
     except Exception:  # pragma: no cover - SHAP may be unavailable
+        explanations["shap_unavailable"] = True
         return explanations
 
     if hasattr(model, "feature_importances_"):
@@ -48,6 +53,14 @@ def get_model_explanations(model, X):
                 explanations["shap_values"] = shap_vals.tolist()
             except Exception:  # pragma: no cover - when shap returns list
                 explanations["shap_values"] = [sv.tolist() for sv in shap_vals]
+            # Add mean absolute SHAP values for feature importance ranking
+            import numpy as np
+            if isinstance(shap_vals, list):
+                # Multi-class case
+                mean_shap = np.mean([np.abs(sv).mean(axis=0) for sv in shap_vals], axis=0)
+            else:
+                mean_shap = np.abs(shap_vals).mean(axis=0)
+            explanations["shap_importance"] = mean_shap.tolist()
         except Exception:  # pragma: no cover - shap may fail
             pass
 
@@ -55,55 +68,149 @@ def get_model_explanations(model, X):
 
 
 def train_model(X, y, datalake_dfs):
+    """Train a model with resilient preprocessing - tries multiple strategies on failure."""
+    import numpy as np
+    import logging
+    
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame({"text_column": list(X)})
     if not isinstance(y, pd.Series):
         y = pd.Series(y)
 
-    analysis = analyze_dataset(X)
-    print("Dataset Analysis and Recommendations:", analysis["summary"])
+    # Resilient analysis - don't fail if LLM unavailable
+    try:
+        analysis = analyze_dataset(X)
+        print("Dataset Analysis and Recommendations:", analysis.get("summary", "N/A"))
+    except Exception as e:
+        logging.warning(f"Dataset analysis failed: {e}")
+        analysis = {"summary": "Analysis unavailable"}
 
-    similarity_scores = score_dataset_similarity(X, datalake_dfs)
-    print("Similarity Scores with Datalake:", similarity_scores)
+    try:
+        similarity_scores = score_dataset_similarity(X, datalake_dfs)
+        print("Similarity Scores with Datalake:", similarity_scores)
+    except Exception as e:
+        logging.warning(f"Similarity scoring failed: {e}")
 
-
-    X_processed = preprocess_data_with_llm(X)
-    X_processed = clean_missing_values(X_processed, strategy="fill", fill_value=0)
-    if "text_column" in X_processed.columns:
-        X_processed = normalize_text_columns(X_processed, column_name="text_column")
-        if X_processed["text_column"].dtype == object:
-            X_processed["text_column"] = (
-                X_processed["text_column"].str.extract(r"(\d+)").astype(int)
-            )
-
-    model = select_best_model(X_processed, y)
-    model.fit(X_processed, y)
-    initial_score = model.score(X_processed, y)
-
-    if initial_score < 0.8:
-        if "date_column" in X_processed.columns:
-            X_processed = convert_to_datetime(X_processed, column_name="date_column")
-        if "numeric_column" in X_processed.columns:
-            X_processed = remove_outliers(X_processed, column_name="numeric_column")
-        if "category_column" in X_processed.columns:
-            X_processed = encode_categorical_columns(X_processed, column_name="category_column")
-        if "product_name" in X_processed.columns:
-            X_processed = fuzzy_match_columns(X_processed, column_name="product_name")
-
-        model = select_best_model(X_processed, y)
-        model.fit(X_processed, y)
+    # Resilient preprocessing with multiple fallback strategies
+    X_processed = X.copy()
+    
+    # Strategy 1: Try LLM preprocessing
+    try:
+        X_processed = preprocess_data_with_llm(X_processed)
+    except Exception as e:
+        logging.warning(f"LLM preprocessing failed: {e}")
+    
+    # Strategy 2: Clean missing values
+    try:
+        X_processed = clean_missing_values(X_processed, strategy="fill", fill_value=0)
+    except Exception as e:
+        logging.warning(f"clean_missing_values failed: {e}")
+        # Fallback: simple fillna
+        for col in X_processed.columns:
+            try:
+                if X_processed[col].dtype in ['int64', 'float64']:
+                    X_processed[col] = X_processed[col].fillna(0)
+                else:
+                    X_processed[col] = X_processed[col].fillna('')
+            except:
+                pass
+    
+    # Ensure all columns are numeric for modeling
+    cols_to_drop = []
+    for col in X_processed.columns:
+        # Handle datetime columns
+        if X_processed[col].dtype == 'datetime64[ns]':
+            try:
+                X_processed[col] = X_processed[col].astype('int64') // 10**9
+            except:
+                cols_to_drop.append(col)
+        # Handle object columns
+        elif X_processed[col].dtype == 'object':
+            try:
+                # Try numeric conversion first
+                X_processed[col] = pd.to_numeric(X_processed[col], errors='coerce')
+                X_processed[col] = X_processed[col].fillna(0)
+            except:
+                try:
+                    # Try label encoding
+                    X_processed[col] = pd.factorize(X_processed[col])[0]
+                except:
+                    cols_to_drop.append(col)
+        # Handle any remaining non-numeric types
+        elif not np.issubdtype(X_processed[col].dtype, np.number):
+            try:
+                X_processed[col] = pd.to_numeric(X_processed[col], errors='coerce').fillna(0)
+            except:
+                cols_to_drop.append(col)
+    
+    # Drop columns that couldn't be converted
+    if cols_to_drop:
+        logging.warning(f"Dropping non-numeric columns: {cols_to_drop}")
+        X_processed = X_processed.drop(columns=cols_to_drop, errors='ignore')
+    
+    # Final cleanup - ensure no NaN/inf values
+    X_processed = X_processed.replace([np.inf, -np.inf], np.nan).fillna(0)
+    
+    # Ensure we have at least one feature
+    if X_processed.shape[1] == 0:
+        raise ValueError("No valid features remaining after preprocessing")
+    
+    # Align y with X_processed
+    y_aligned = y.loc[X_processed.index] if hasattr(y, 'loc') else y[:len(X_processed)]
+    
+    # Try multiple model training strategies
+    model = None
+    training_errors = []
+    
+    # Strategy 1: Best model selection
+    try:
+        model = select_best_model(X_processed, y_aligned)
+        model.fit(X_processed, y_aligned)
+    except Exception as e:
+        training_errors.append(f"select_best_model: {e}")
+        model = None
+    
+    # Strategy 2: Fallback to simple models
+    if model is None:
+        from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+        from sklearn.linear_model import LogisticRegression, Ridge
+        
+        is_classification = len(y_aligned.unique()) <= 20
+        
+        fallback_models = [
+            RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42) if is_classification 
+            else RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42),
+            LogisticRegression(max_iter=1000, random_state=42) if is_classification 
+            else Ridge(random_state=42),
+        ]
+        
+        for fallback in fallback_models:
+            try:
+                fallback.fit(X_processed, y_aligned)
+                model = fallback
+                logging.info(f"Fallback model succeeded: {type(fallback).__name__}")
+                break
+            except Exception as e:
+                training_errors.append(f"{type(fallback).__name__}: {e}")
+    
+    if model is None:
+        raise ValueError(f"All model training strategies failed: {training_errors}")
 
     class TextModel:
         def __init__(self, model):
             self.model = model
+            self.training_warnings = training_errors if training_errors else None
 
         def _transform(self, texts):
             if not isinstance(texts, list):
                 texts = [texts]
             df = pd.DataFrame({"text_column": texts})
-            df["text_column"] = (
-                df["text_column"].astype(str).str.extract(r"(\d+)").astype(int)
-            )
+            try:
+                df["text_column"] = (
+                    df["text_column"].astype(str).str.extract(r"(\d+)").astype(float).fillna(0).astype(int)
+                )
+            except:
+                df["text_column"] = 0
             return df
 
         def predict(self, X):
@@ -115,7 +222,14 @@ def train_model(X, y, datalake_dfs):
             return self.model.predict(df)
 
     text_model = TextModel(model)
-    text_model.explanations = get_model_explanations(model, X_processed)
+    
+    # Get explanations with error handling
+    try:
+        text_model.explanations = get_model_explanations(model, X_processed)
+    except Exception as e:
+        logging.warning(f"Model explanations failed: {e}")
+        text_model.explanations = {"error": str(e)}
+    
     return text_model
 
 

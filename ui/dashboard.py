@@ -1,3 +1,10 @@
+# === Ensure project root is in Python path ===
+import sys
+from pathlib import Path
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 # === Debug & crash logging (optional) ===
 import logging, faulthandler
 faulthandler.enable()
@@ -15,7 +22,7 @@ import os
 os.environ.setdefault("STREAMLIT_SERVER_ENABLECORS", "true")
 import streamlit as st
 
-from orchestrate_workflow import run_workflow
+from orchestration.orchestrate_workflow import run_workflow, orchestrate_workflow
 from chatbot.chatbot import chatbot_interface
 import pandas as pd
 import json
@@ -25,7 +32,6 @@ from feedback.ratings import store_rating
 from feedback.role_corrections import store_role_corrections
 from ui.column_review import column_review
 from orchestration.analysis_selector import select_analyzer
-from orchestrate_workflow import orchestrate_workflow
 from storage.local_backend import load_datalake_dfs
 from preprocessing.save_meta import (
     load_column_descriptions,
@@ -43,6 +49,7 @@ from ui.visualizations import (
     generate_area_chart,
 )
 from orchestration.orchestrator import orchestrate_dashboard
+from orchestration.data_quality_scorer import summarize_for_display
 from ui import redaction_banner
 
 
@@ -272,6 +279,35 @@ if result:
     target_col = result.get("model_info", {}).get("target") or (
         data.columns[-1] if len(data.columns) else ""
     )
+    
+    # Display Data Quality Report (if diagnostics available)
+    diagnostics = result.get("diagnostics", {})
+    if diagnostics:
+        quality_summary = summarize_for_display(diagnostics)
+        with st.expander(f"{quality_summary['status_emoji']} Data Quality Report", expanded=quality_summary['status'] != 'good'):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Quality Score", f"{quality_summary['score']}%")
+            with col2:
+                st.metric("Data Completeness", f"{quality_summary['completeness_pct']}%")
+            with col3:
+                st.metric("Complete Rows", f"{quality_summary['rows_complete_pct']}%")
+            
+            if quality_summary['warnings']:
+                st.warning("**Warnings:**")
+                for warning in quality_summary['warnings']:
+                    st.write(f"- {warning}")
+            
+            if quality_summary['high_risk_columns']:
+                st.error(f"**High-risk columns:** {', '.join(quality_summary['high_risk_columns'])}")
+            
+            if quality_summary['missing_columns']:
+                with st.expander("Columns with missing data"):
+                    st.write(", ".join(quality_summary['missing_columns']))
+            
+            if quality_summary['proceed_with_caution']:
+                st.info("💡 Consider reviewing column roles or providing additional data to improve results.")
+    
     dash = build_dashboard(data, result, target_col)
     if dash.get("chart_result") is not None:
         st.write(dash["chart_result"])

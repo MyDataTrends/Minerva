@@ -27,7 +27,7 @@ class OutputGenerator:
         file_name: str,
     ) -> Dict[str, Any]:
         sys.modules.pop("streamlit", None)
-        from orchestrate_workflow import save_model
+        from modeling.model_training import save_model
 
         save_model(model, "best_model", run_id)
         output_dir = Path("output_files")
