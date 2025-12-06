@@ -26,7 +26,8 @@ class AnalyzerSelector:
     """Select and run the best analyzer for the dataset."""
 
     def _run_pipeline(self, df: pd.DataFrame, meta, target_column, datalake_dfs):
-        from orchestrate_workflow import train_model, evaluate_model
+        from modeling.model_training import train_model
+        from modeling.model_selector import evaluate_model
         df_run, report = rank_and_merge(df, meta)
         if target_column not in df_run.columns:
             logging.warning("Target column %s not in dataset after merge", target_column)

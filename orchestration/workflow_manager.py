@@ -53,13 +53,26 @@ class WorkflowManager:
     def preprocess_and_cache(
         self, diagnostics_config: Optional[Dict[str, Any]] = None
     ) -> Optional[dict]:
-        """Load, validate and optionally run diagnostics on the dataset."""
+        """Load, validate and optionally run diagnostics on the dataset.
+        
+        Diagnostics are now enabled by default for better data quality visibility:
+        - check_misalignment: Always enabled
+        - score_imputations: Always enabled  
+        - monitor_drift: Enabled for datasets > 1000 rows
+        """
 
         diagnostics_config = diagnostics_config or {}
-        check_misalignment = diagnostics_config.get("check_misalignment", False)
+        
+        # Auto-enable diagnostics by default (per Opus findings recommendation)
+        diagnostics_config.setdefault("check_misalignment", True)
+        diagnostics_config.setdefault("score_imputations", True)
+        # Drift monitoring enabled by default, can be disabled via config
+        diagnostics_config.setdefault("monitor_drift", True)
+        
+        check_misalignment = diagnostics_config.get("check_misalignment", True)
         check_context_missing = diagnostics_config.get("check_context_missing", False)
-        score_imputations = diagnostics_config.get("score_imputations", False)
-        monitor_drift = diagnostics_config.get("monitor_drift", False)
+        score_imputations = diagnostics_config.get("score_imputations", True)
+        monitor_drift = diagnostics_config.get("monitor_drift", True)
         expected_schema = diagnostics_config.get("expected_schema")
 
         activated = [

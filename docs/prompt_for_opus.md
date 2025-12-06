@@ -13,7 +13,7 @@ Perfect! Now I have enough context to create specific, ready-to-use prompts for 
 
 ```markdown
 Analyze the Minerva data analysis platform and identify its novel contributions compared to existing solutions like DataRobot, H2O.ai, and Dataiku.
-
+Start by reading docs/Architecture_Design_Guide.md, docs/Unique_Value_Props.md, docs/Use_Cases.md, and docs/semantic_merge.md to build a mental model of Minerva before you dive into code.
 **Core Architecture:**
 - Entry point: `orchestration/orchestrate_workflow.py` with [WorkflowManager](cci:2://file:///C:/Projects/Minerva/Minerva/orchestration/workflow_manager.py:17:0-228:9) coordinating 5 workflow steps
 - Main workflow: preprocess → enrich → analyze → generate outputs → trigger agents
@@ -41,6 +41,9 @@ Analyze the Minerva data analysis platform and identify its novel contributions 
    - `infer_visualization_type()` uses heuristics (datetime + numeric → line chart, categorical + numeric → bar chart) with 70% confidence threshold
    - Falls back to LLM-based selection when heuristics are uncertain
    - Context-aware: considers question, model type, and industry
+   
+5. **Diagnostics and Drift Tooling** (`scripts/alignment_drift_monitor.py`, `scripts/imputation_confidence.py`):
+   - Provide sanity checks and confidence scores on imputed values and batch drift, complementing the automated analysis.
 
 **Evaluation Questions:**
 
@@ -61,6 +64,7 @@ Provide specific examples of scenarios where Minerva's approach would outperform
 
 ```markdown
 Evaluate the technical viability and production-readiness of the Minerva data analysis platform.
+Cross-reference your findings with docs/MVP_Readiness_Report.md and call out any disagreements or gaps between the code and that document.
 
 **System Architecture:**
 
@@ -116,10 +120,12 @@ class WorkflowManager:
    - The system has multiple fallback paths (modeling → baseline → descriptive). How robust is error handling?
    - Model persistence uses run_id. What happens with concurrent workflows?
    - How does the system handle malformed data, missing columns, or type mismatches?
+   - How well do the diagnostics in scripts/alignment_drift_monitor.py and scripts/imputation_confidence.py integrate with the main workflow?
+   - What is the strength of the current test suite, including unit tests, integration tests, and end-to-end tests?
 
 3. **Production Readiness:**
    - What's missing for production deployment? (monitoring, logging, security, etc.)
-   - The LLM integration is optional. How gracefully does the system degrade without LLM access?
+   - Evaluate how the system behaves if preprocessing/llm_preprocessor.py and preprocessing/llm_analyzer.py are effectively no-ops. Identify any hard failures vs graceful degradation in orchestration/output_generator.py, chatbot/chatbot.py, and the dashboard flows.
    - What testing coverage exists? (check `tests/` directory)
 
 4. **Technical Debt:**
@@ -182,7 +188,10 @@ class OutputGenerator:
    - `needs_role_review`: Boolean indicating if user should review column role assignments
    - `actions`: List of suggested next steps
 
-**Visualization System** (`scripts/visualization_selector.py`):
+9. **Chatbot** 
+   - Chatbot responses and follow-up questions in chatbot/chatbot.py that expose model results in conversational form.
+
+**Visualization System** (`ui/visualizations.py`, `scripts/visualization_selector.py`):
 - Auto-selects from: line_chart, bar_chart, scatter_plot, histogram
 - Heuristic rules: datetime+numeric → line (90% confidence), categorical+numeric → bar (90% confidence)
 - LLM fallback for uncertain cases
@@ -212,11 +221,13 @@ class OutputGenerator:
    - Does `needs_role_review=True` provide enough guidance on what to review?
    - Are the recommended models actually useful, or just generic suggestions?
    - What would make the "actions" list more actionable?
+   - Does the chatbot make sense in the context of the dashboard? Does it make insights more actionable?
 
 5. **Benchmarking:**
    - Compare Minerva's output format to industry standards (Tableau, Power BI, DataRobot)
    - What would make the outputs more shareable/exportable?
    - How could the outputs be enhanced for different audiences (executives vs. data scientists)?
+   ` Compare your recommendations to how outputs are described in docs/Use_Cases.md and docs/Architecture_Design_Guide.md. If anything in the docs claims behavior that the code does not implement, call that out.
 
 Provide specific examples of improvements to each output component, with before/after samples where possible. Prioritize changes by impact on user decision-making.
 ```
@@ -225,6 +236,7 @@ Provide specific examples of improvements to each output component, with before/
 
 ```markdown
 Develop a strategic enhancement roadmap for Minerva based on its current capabilities and market positioning.
+Treat docs/Architecture_Design_Guide.md, docs/MVP_Readiness_Report.md, docs/Unique_Value_Props.md, and docs/Use_Cases.md as the product brief. Your roadmap should explicitly refer back to them when proposing changes.
 
 **Current Capabilities Summary:**
 
@@ -291,6 +303,7 @@ Develop a strategic enhancement roadmap for Minerva based on its current capabil
    - Reliability improvements (better error handling, monitoring, alerting)
    - Security hardening (authentication, authorization, data encryption)
    - Testing expansion (integration tests, performance tests, chaos engineering)
+   - Data quality and diagnostics consolidation (centralizing and exposing scripts/alignment_drift_monitor.py, scripts/imputation_confidence.py, and preprocessing validators in preprocessing/advanced_schema_validator.py, preprocessing/context_missing_finder.py, preprocessing/misaligned_row_detector.py).
 
 4. **Differentiation Strategy:**
    How can Minerva differentiate from competitors?
@@ -298,6 +311,7 @@ Develop a strategic enhancement roadmap for Minerva based on its current capabil
    - Focus on ease-of-use for non-technical users?
    - Emphasize interpretability and explainability?
    - Target a specific vertical (healthcare, finance, retail)?
+   - Leverage the chatbot layer (chatbot/) as a guided interface for non-technical users instead of treating it as an afterthought.
 
 5. **Monetization & Growth:**
    - What features belong in free vs. paid tiers?
@@ -319,6 +333,7 @@ Be specific and actionable. Reference actual code files and existing infrastruct
 
 ```markdown
 Compare Minerva's technical approach to leading data analysis and AutoML platforms, identifying competitive advantages and gaps.
+Base your understanding of Minerva on both the code and docs/Unique_Value_Props.md, docs/Use_Cases.md, and docs/Architecture_Design_Guide.md.
 
 **Minerva's Architecture:**
 
@@ -451,3 +466,124 @@ These prompts are ready to copy/paste into Claude Opus. Each one:
 - Asks for actionable, specific recommendations
 
 Would you like me to create additional prompts for other aspects of the evaluation?
+
+
+### 6. “Repo Orientation and Docs Consistency” Prompt
+```markdown
+You are reviewing the Minerva data analysis platform. Start with the documentation, then verify it against the code.
+
+1. Read these docs first and build a concise mental model:
+   - `docs/Architecture_Design_Guide.md`
+   - `docs/MVP_Readiness_Report.md`
+   - `docs/Unique_Value_Props.md`
+   - `docs/Use_Cases.md`
+   - `docs/semantic_merge.md`
+
+2. Then cross-check that model against these code areas:
+   - Workflow: `orchestration/workflow_manager.py`, `orchestration/orchestrate_workflow.py`
+   - Semantic enrichment: `Integration/semantic_merge.py`, `catalog/semantic_index.py`
+   - Analyzers: `modeling/*.py`, `modeling/analyzers/*.py`
+   - LLM helpers: `preprocessing/llm_preprocessor.py`, `preprocessing/llm_analyzer.py`, `preprocessing/llm_cache.py`, `preprocessing/prompt_templates.py`
+   - UI: `ui/dashboard.py`, `ui/visualizations.py`, `ui/session_history.py`
+   - Chatbot: `chatbot/chatbot.py`, `chatbot/intent_parser.py`, `chatbot/llm_intent_classifier.py`
+   - Diagnostics: `scripts/alignment_drift_monitor.py`, `scripts/imputation_confidence.py`
+
+Deliverables:
+
+1. A one-page narrative that explains:
+   - how a dataset flows from upload to enriched model to outputs
+   - how semantic merge 2.0 changes the story
+   - where LLMs are involved vs where everything is deterministic
+
+2. A table with three columns:
+   - “Doc claim” (quote or paraphrase from `docs/*`)
+   - “Code location” (file and function)
+   - “Status” (matches code, partially implemented, out of date)
+
+3. A short list of the three most important mismatches between docs and code, with concrete suggestions for either doc updates or code changes to restore consistency.
+```
+
+### 7. “Diagnostics, Guardrails, and Safety Net” Prompt
+```markdown
+Analyze Minerva's diagnostics, guardrails, and safety net for data quality and model reliability.
+
+Focus on:
+
+- Drift and distribution checks:
+  - `scripts/alignment_drift_monitor.py`
+- Imputation confidence scoring:
+  - `scripts/imputation_confidence.py`
+- Schema and data quality helpers:
+  - `preprocessing/advanced_schema_validator.py`
+  - `preprocessing/context_missing_finder.py`
+  - `preprocessing/misaligned_row_detector.py`
+  - `preprocessing/sanitize.py`
+- LLM quality helpers:
+  - `preprocessing/llm_preprocessor.py`
+  - `preprocessing/llm_analyzer.py`
+  - `preprocessing/llm_cache.py`
+  - tests in `preprocessing/test_*.py`
+- Core integration points:
+  - `orchestration/data_preprocessor.py`
+  - `orchestration/workflow_manager.py`
+  - `orchestration/output_generator.py`
+  - `ui/dashboard.py` and `ui/column_review.py`
+
+Questions:
+
+1. Map out where each diagnostic or guardrail is actually invoked in the end-to-end path (upload → enriched model → outputs → agents). Identify any tools that are implemented but not yet wired in.
+
+2. Evaluate how easy it would be for a user to:
+   - notice if their input data is “bad” or drifting
+   - understand which columns are misaligned or suspicious
+   - trust imputed values and model predictions
+
+3. Suggest a minimal set of integration changes that would make diagnostics visible in the UI and outputs:
+   - where to call which functions
+   - what additional metadata to pass through
+   - what small changes in `ui/dashboard.py` and `orchestration/output_generator.py` would expose this clearly
+
+4. Propose a short checklist of “data safety” metrics that Minerva should compute by default for every run, and indicate where in the codebase they should live.
+
+Keep the output focused on wiring and UX, not big rewrites. Assume any changes should be incremental and respect the current architecture.
+```
+### 8. “Developer Experience and Onboarding” Prompt
+```markdown
+Evaluate and improve the developer experience and onboarding flow for Minerva.
+
+Use:
+
+- `docs/Onboarding_Windows.md`
+- `README.md`
+- `config/environment.yml`
+- `config/requirements.txt` and `config/requirements.codex.txt`
+- `config/feature_flags.py`
+- Representative tests:
+  - `tests/test_end_to_end_workflow.py`
+  - `tests/test_dashboard_sections.py`
+  - `tests/test_cli_flags.py`
+  - preprocessing tests in `preprocessing/test_*.py`
+
+Tasks:
+
+1. From a new developer viewpoint:
+   - Describe the exact steps to get Minerva running locally on Windows.
+   - Point out any missing or ambiguous steps in `docs/Onboarding_Windows.md` and `README.md`.
+   - Identify environment or dependency pitfalls (for example, Python version assumptions, data paths, or environment variables).
+
+2. From a contributor viewpoint:
+   - Describe the easiest way to run a fast “sanity test” (for example, one or two tests that give quick confidence).
+   - Propose a minimal, realistic “contribution workflow” that uses the existing tests and tooling.
+   - Identify friction points in `config/feature_flags.py`, `config/model_allowlist.py`, and the current CLI flags.
+
+3. Produce:
+   - A revised onboarding checklist with 10 or fewer steps.
+   - A short “developer quickstart” section that could be added to the README, including:
+     - the one test to run after cloning
+     - one example dataset to use (`datasets/*.csv`)
+     - one example end-to-end run and where to inspect its outputs
+
+Flag separately:
+   - changes that only require documentation updates
+   - changes that would require code modifications
+```

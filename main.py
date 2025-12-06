@@ -111,7 +111,7 @@ def rerun_session(run_id: str, payload: RerunPayload | None = None):
     session = session_db.get_session(run_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    from orchestrate_workflow import orchestrate_workflow
+    from orchestration.orchestrate_workflow import orchestrate_workflow
     from storage.local_backend import load_datalake_dfs
 
     params = json.loads(session.get("params") or "{}")

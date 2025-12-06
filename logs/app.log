@@ -192,3 +192,17 @@ User u1 exceeded free tier limits
 {"query": "compare categories", "visualization_type": "bar_chart", "confidence": 0.9, "reasoning": "heuristic", "event": "intent_decision", "timestamp": "2025-11-14T03:16:23.755306Z", "level": "info"}
 {"query": "", "visualization_type": "scatter_plot", "confidence": 0.6, "reasoning": "heuristic", "event": "intent_decision", "timestamp": "2025-11-14T03:16:23.763073Z", "level": "info"}
 {"query": "random", "visualization_type": "scatter_plot", "confidence": 0.6, "reasoning": "heuristic", "event": "intent_decision", "timestamp": "2025-11-14T03:16:23.770035Z", "level": "info"}
+HTTP Request: GET http://testserver/healthz "HTTP/1.1 200 OK"
+Dataset over caps - rows: 83488 cols: 3 mem_mb: 5.97
+Dataset over caps - rows: 83488 cols: 3 mem_mb: 5.97
+Dataset over caps - rows: 83488 cols: 3 mem_mb: 5.97
+Diagnostics enabled: misalignment, score_imputations, monitor_drift
+Diagnostics enabled: misalignment, score_imputations, monitor_drift
+Diagnostics enabled: misalignment, score_imputations, monitor_drift
+Diagnostics enabled: misalignment, score_imputations, monitor_drift
+Diagnostics enabled: misalignment, score_imputations, monitor_drift
+Attempting LLM-powered dynamic analysis
+Attempting LLM-generated analysis
+Error executing generated code: expected an indented block after function definition on line 1 (<string>, line 1)
+Using fallback analysis
+LLM dynamic analysis succeeded: regression

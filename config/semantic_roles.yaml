@@ -158,3 +158,94 @@ shipping_date:
   - shipping date
   - ship date
   - delivery date
+
+# Additional roles for enrichment
+fips_code:
+  - fips
+  - fips code
+  - county fips
+  - county code
+
+income:
+  - income
+  - median income
+  - household income
+  - earnings
+
+population:
+  - population
+  - pop
+  - total population
+
+temperature:
+  - temperature
+  - temp
+  - avg temp
+  - avg temperature
+
+precipitation:
+  - precipitation
+  - precip
+  - rainfall
+  - rain
+
+weather_conditions:
+  - conditions
+  - weather
+  - weather conditions
+
+oil_price:
+  - oil price
+  - crude price
+  - wti
+  - brent
+
+churn_flag:
+  - churn
+  - churned
+  - attrition
+
+tenure:
+  - tenure
+  - months
+  - customer tenure
+
+monthly_amount:
+  - monthly charges
+  - monthly amount
+  - monthly fee
+
+total_amount:
+  - total charges
+  - total amount
+  - lifetime value
+
+holiday_date:
+  - holiday date
+  - holiday
+  - event date
+
+holiday_name:
+  - holiday name
+  - holiday
+  - event name
+
+event_type:
+  - event type
+  - type
+  - holiday type
+
+store_type:
+  - store type
+  - type
+  - format
+
+store_cluster:
+  - cluster
+  - store cluster
+  - grouping
+
+transaction_count:
+  - transactions
+  - transaction count
+  - num transactions

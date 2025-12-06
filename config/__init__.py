@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 try:
     from dotenv import load_dotenv
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
@@ -6,6 +8,11 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
         return False
 
 load_dotenv()
+
+# Auto-create required directories to avoid setup friction
+_REQUIRED_DIRS = ["logs", "User_Data", "local_data", "models", "output_files", "metadata"]
+for _dir in _REQUIRED_DIRS:
+    Path(_dir).mkdir(exist_ok=True)
 
 
 def get_env(name: str, default: str | None = None, required: bool = False) -> str:
@@ -58,19 +65,23 @@ LARGE_FILE_BYTES = get_int("LARGE_FILE_BYTES", 100 * 1024 * 1024)
 
 LLM_CACHE_TTL = get_int("LLM_CACHE_TTL", 900)
 LLM_MAX_CONCURRENCY = get_int("LLM_MAX_CONCURRENCY", 2)
-MISTRAL_MODEL_PATH = get_env("MISTRAL_MODEL_PATH", None)
-LLM_TOKEN_BUDGET = get_int("LLM_TOKEN_BUDGET", 128)
-LLM_SUMMARY_TOKEN_BUDGET = get_int("LLM_SUMMARY_TOKEN_BUDGET", 256)
-LLM_INTENT_TOKEN_BUDGET = get_int("LLM_INTENT_TOKEN_BUDGET", 128)
-LLM_VISUALIZATION_TOKEN_BUDGET = get_int("LLM_VISUALIZATION_TOKEN_BUDGET", 64)
+# Path to local Mistral model - auto-detected from adm/llm_backends/local_model/
+_LOCAL_MODEL_DIR = Path(__file__).parent.parent / "adm" / "llm_backends" / "local_model"
+_MISTRAL_GGUF = _LOCAL_MODEL_DIR / "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+MISTRAL_MODEL_PATH = get_env("MISTRAL_MODEL_PATH", str(_MISTRAL_GGUF) if _MISTRAL_GGUF.exists() else None)
+LLM_TOKEN_BUDGET = get_int("LLM_TOKEN_BUDGET", 2048)  # Increased for code generation
+LLM_SUMMARY_TOKEN_BUDGET = get_int("LLM_SUMMARY_TOKEN_BUDGET", 512)
+LLM_INTENT_TOKEN_BUDGET = get_int("LLM_INTENT_TOKEN_BUDGET", 256)
+LLM_VISUALIZATION_TOKEN_BUDGET = get_int("LLM_VISUALIZATION_TOKEN_BUDGET", 128)
 LLM_TEMPERATURE = float(get_env("LLM_TEMPERATURE", "0.7"))
 LLM_INTENT_TEMPERATURE = float(get_env("LLM_INTENT_TEMPERATURE", "0"))
-LLM_MAX_INPUT_CHARS = get_int("LLM_MAX_INPUT_CHARS", 8000)
+LLM_MAX_INPUT_CHARS = get_int("LLM_MAX_INPUT_CHARS", 16000)  # Increased for data profiles
 LLM_NON_PRINTABLE_THRESHOLD = float(get_env("LLM_NON_PRINTABLE_THRESHOLD", "0.1"))
-LLM_REPO_ID = get_env("LLM_REPO_ID", "Qwen/Qwen2.5-0.5B-Instruct-GGUF")
-LLM_FILENAME = get_env("LLM_FILENAME", "qwen2.5-0.5b-instruct-q4_k_m.gguf")
+# Use Mistral 7B as default - much more capable than Qwen 0.5B
+LLM_REPO_ID = get_env("LLM_REPO_ID", "TheBloke/Mistral-7B-Instruct-v0.2-GGUF")
+LLM_FILENAME = get_env("LLM_FILENAME", "mistral-7b-instruct-v0.2.Q4_K_M.gguf")
 LLM_PROVIDER = get_env("LLM_PROVIDER", "auto")
-LLM_HF_REPO_ID = get_env("LLM_HF_REPO_ID", "Qwen/Qwen2.5-0.5B-Instruct")
+LLM_HF_REPO_ID = get_env("LLM_HF_REPO_ID", "mistralai/Mistral-7B-Instruct-v0.2")
 
 # Free-tier limits
 MAX_REQUESTS_FREE = get_int("MAX_REQUESTS_FREE", 20)
@@ -136,6 +147,9 @@ from .feature_flags import (
     ALLOW_FULL_COMPARE_MODELS,
     PROFILE_MAX_COLS,
     PROFILE_SAMPLE_ROWS,
+    ENABLE_HEAVY_EXPLANATIONS,
+    ENABLE_SHAP_EXPLANATIONS,
+    DEV_MODE,
 )
 
 

@@ -1,0 +1,10 @@
+{
+  "runs": [
+    {
+      "filename": "Store_Sales_20251206_011151.json",
+      "data_name": "Store Sales",
+      "timestamp": "20251206_011151",
+      "analysis_type": "regression"
+    }
+  ]
+}

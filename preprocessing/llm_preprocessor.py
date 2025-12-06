@@ -74,6 +74,26 @@ def load_local_llm(info_path: Path = LLM_INFO_PATH):
     """Load the local LLM if available."""
     if Llama is None:
         return None
+    
+    # Strategy 1: Use MISTRAL_MODEL_PATH if set and exists
+    if MISTRAL_MODEL_PATH:
+        model_path = Path(MISTRAL_MODEL_PATH)
+        if model_path.exists():
+            _logger.info(f"Loading LLM from MISTRAL_MODEL_PATH: {model_path}")
+            return Llama(model_path=str(model_path))
+    
+    # Strategy 2: Look for any .gguf file in the local_model directory
+    try:
+        model_dir = info_path.parent
+        gguf_files = list(model_dir.glob("*.gguf"))
+        if gguf_files:
+            model_file = gguf_files[0]  # Use first found
+            _logger.info(f"Loading LLM from: {model_file}")
+            return Llama(model_path=str(model_file))
+    except Exception:
+        pass
+    
+    # Strategy 3: Try model_info.json naming convention
     try:
         info = json.loads(info_path.read_text())
         model_file = info_path.parent / f"{info['model_name']}.{info['quantization']}.{info['format']}"
@@ -81,6 +101,8 @@ def load_local_llm(info_path: Path = LLM_INFO_PATH):
             return Llama(model_path=str(model_file))
     except Exception:
         pass
+    
+    # Strategy 4: Auto-download if enabled (skip if we already have a model)
     if AUTO_DOWNLOAD_LLM:
         try:
             from huggingface_hub import hf_hub_download

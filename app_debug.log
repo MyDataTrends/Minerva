@@ -1,0 +1,12 @@
+2025-12-05 23:39:10,602 DEBUG matplotlib: matplotlib data path: C:\Users\ryanm\AppData\Roaming\Python\Python313\site-packages\matplotlib\mpl-data
+2025-12-05 23:39:10,620 DEBUG matplotlib: CONFIGDIR=C:\Users\ryanm\.matplotlib
+2025-12-05 23:39:10,621 DEBUG matplotlib: interactive is False
+2025-12-05 23:39:10,622 DEBUG matplotlib: platform is win32
+2025-12-05 23:39:10,678 DEBUG matplotlib: CACHEDIR=C:\Users\ryanm\.matplotlib
+2025-12-05 23:39:10,690 DEBUG matplotlib.font_manager: Using fontManager instance from C:\Users\ryanm\.matplotlib\fontlist-v390.json
+2025-12-05 23:43:03,883 DEBUG matplotlib: matplotlib data path: c:\Projects\Minerva\Minerva\.venv\Lib\site-packages\matplotlib\mpl-data
+2025-12-05 23:43:03,899 DEBUG matplotlib: CONFIGDIR=C:\Users\ryanm\.matplotlib
+2025-12-05 23:43:03,903 DEBUG matplotlib: interactive is False
+2025-12-05 23:43:03,903 DEBUG matplotlib: platform is win32
+2025-12-05 23:43:04,078 DEBUG matplotlib: CACHEDIR=C:\Users\ryanm\.matplotlib
+2025-12-05 23:43:04,081 DEBUG matplotlib.font_manager: Using fontManager instance from C:\Users\ryanm\.matplotlib\fontlist-v390.json
