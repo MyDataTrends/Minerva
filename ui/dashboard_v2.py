@@ -30,6 +30,7 @@ from preprocessing.sanitize import scrub_df
 from storage.local_backend import load_datalake_dfs
 from feedback.ratings import store_rating
 from ui import redaction_banner
+from ui.exploratory_tab import render_exploratory_tab
 from datetime import datetime
 
 # ============================================================================
@@ -360,7 +361,7 @@ def render_analyze():
     data = st.session_state.data
     
     # Data overview tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Preview", "📊 Statistics", "🎯 Configure", "🚀 Run Analysis"])
+    tab1, tab2, tab_explore, tab3, tab4 = st.tabs(["📋 Preview", "📊 Statistics", "🔍 Explore", "🎯 Configure", "🚀 Run Analysis"])
     
     with tab1:
         st.markdown("### Data Preview")
@@ -417,6 +418,10 @@ def render_analyze():
             })
         
         st.dataframe(pd.DataFrame(col_data), hide_index=True)
+    
+    with tab_explore:
+        # Interactive Plotly visualizations with AI insights
+        render_exploratory_tab(data, meta)
     
     with tab3:
         st.markdown("### Analysis Configuration")
@@ -789,7 +794,7 @@ def _generate_chat_response(question: str, data: pd.DataFrame) -> str:
     question_lower = question.lower()
     
     # Simple pattern matching for common questions
-    if "missing" in question_lower or "null" in question_lower:
+    if any(kw in question_lower for kw in ["missing", "null", "na ", "nan"]):
         missing = data.isna().sum()
         missing = missing[missing > 0]
         if len(missing) == 0:
@@ -799,62 +804,145 @@ def _generate_chat_response(question: str, data: pd.DataFrame) -> str:
             for col, count in missing.items()
         )
     
-    if "summary" in question_lower or "describe" in question_lower:
+    if any(kw in question_lower for kw in ["summary", "describe", "statistics", "stats"]):
         desc = data.describe().round(2)
         return f"Here's a statistical summary of your numeric columns:\n\n{desc.to_markdown()}"
     
-    if "columns" in question_lower or "features" in question_lower:
-        return f"Your dataset has {len(data.columns)} columns:\n\n" + "\n".join(
-            f"- **{col}** ({data[col].dtype})"
-            for col in data.columns
-        )
+    if any(kw in question_lower for kw in ["column", "feature", "field", "variable"]):
+        lines = [f"Your dataset has **{len(data.columns)} columns**:\n"]
+        for col in data.columns:
+            dtype = str(data[col].dtype)
+            nunique = data[col].nunique()
+            missing_pct = data[col].isna().mean() * 100
+            lines.append(f"- **{col}** — {dtype}, {nunique:,} unique values" + 
+                        (f", {missing_pct:.1f}% missing" if missing_pct > 0 else ""))
+        return "\n".join(lines)
     
-    if "rows" in question_lower or "size" in question_lower:
-        return f"Your dataset has **{len(data):,} rows** and **{len(data.columns)} columns**."
+    if any(kw in question_lower for kw in ["rows", "size", "shape", "how many", "count"]):
+        mem_mb = data.memory_usage(deep=True).sum() / 1024 / 1024
+        return f"Your dataset has **{len(data):,} rows** and **{len(data.columns)} columns** ({mem_mb:.1f} MB in memory)."
     
-    if "pattern" in question_lower or "insight" in question_lower:
+    if any(kw in question_lower for kw in ["time series", "timeseries", "temporal", "date", "time"]):
+        # Look for date/time columns
+        date_cols = []
+        for col in data.columns:
+            if data[col].dtype == "datetime64[ns]":
+                date_cols.append((col, "datetime"))
+            elif "date" in col.lower() or "time" in col.lower():
+                date_cols.append((col, str(data[col].dtype)))
+        
+        if date_cols:
+            lines = ["📅 **Time-related columns found:**\n"]
+            for col, dtype in date_cols:
+                sample = data[col].dropna().iloc[0] if len(data[col].dropna()) > 0 else "N/A"
+                lines.append(f"- **{col}** ({dtype}) — e.g., `{sample}`")
+            lines.append("\nThis data appears suitable for time-series analysis!")
+            return "\n".join(lines)
+        return "No obvious date/time columns found. Check if dates are stored as strings or integers."
+    
+    if any(kw in question_lower for kw in ["pattern", "insight", "interesting", "notice"]):
         insights = []
         # Check for date columns
         date_cols = [c for c in data.columns if "date" in c.lower() or data[c].dtype == "datetime64[ns]"]
         if date_cols:
-            insights.append(f"📅 Found date columns: {', '.join(date_cols)} - this could be time-series data")
+            insights.append(f"📅 Found date columns: {', '.join(date_cols)} — this could be time-series data")
         
-        # Check for high cardinality
+        # Check for high cardinality (ID columns)
         for col in data.columns:
             if data[col].nunique() == len(data):
-                insights.append(f"🔑 Column '{col}' has all unique values - likely an ID column")
+                insights.append(f"🔑 Column '{col}' has all unique values — likely an ID column")
         
         # Check for binary columns
         binary_cols = [c for c in data.columns if data[c].nunique() == 2]
         if binary_cols:
-            insights.append(f"✅ Binary columns found: {', '.join(binary_cols)} - good for classification")
+            insights.append(f"✅ Binary columns found: {', '.join(binary_cols)} — good for classification")
+        
+        # Check for low cardinality (categorical)
+        cat_cols = [c for c in data.columns if 2 < data[c].nunique() <= 20]
+        if cat_cols:
+            insights.append(f"📊 Categorical columns: {', '.join(cat_cols[:5])} — good for grouping/segmentation")
+        
+        # Check for numeric columns
+        num_cols = data.select_dtypes(include=["int64", "float64"]).columns.tolist()
+        if num_cols:
+            insights.append(f"📈 Numeric columns: {', '.join(num_cols[:5])} — suitable for regression/correlation")
         
         if insights:
             return "Here are some patterns I noticed:\n\n" + "\n".join(insights)
         return "I'd need to run a deeper analysis to find patterns. Try running the full analysis!"
     
-    if "target" in question_lower or "predict" in question_lower:
+    if any(kw in question_lower for kw in ["target", "predict", "forecast", "model"]):
         # Suggest potential targets
         suggestions = []
         for col in data.columns:
             if data[col].nunique() <= 10 and data[col].nunique() > 1:
-                suggestions.append(f"- **{col}** (categorical, {data[col].nunique()} classes)")
+                suggestions.append(f"- **{col}** (categorical, {data[col].nunique()} classes) — classification")
             elif data[col].dtype in ["int64", "float64"] and "id" not in col.lower():
-                suggestions.append(f"- **{col}** (numeric)")
+                suggestions.append(f"- **{col}** (numeric) — regression")
         
         if suggestions:
-            return "Here are potential target columns for prediction:\n\n" + "\n".join(suggestions[:5])
+            return "Here are potential target columns for prediction:\n\n" + "\n".join(suggestions[:8])
         return "I couldn't identify obvious target columns. What are you trying to predict?"
+    
+    if any(kw in question_lower for kw in ["correlation", "correlate", "related", "relationship"]):
+        num_data = data.select_dtypes(include=["int64", "float64"])
+        if len(num_data.columns) < 2:
+            return "Need at least 2 numeric columns to compute correlations."
+        corr = num_data.corr()
+        # Find top correlations
+        pairs = []
+        for i, col1 in enumerate(corr.columns):
+            for col2 in corr.columns[i+1:]:
+                pairs.append((col1, col2, corr.loc[col1, col2]))
+        pairs.sort(key=lambda x: abs(x[2]), reverse=True)
+        
+        lines = ["**Top correlations:**\n"]
+        for col1, col2, r in pairs[:5]:
+            strength = "strong" if abs(r) > 0.7 else "moderate" if abs(r) > 0.4 else "weak"
+            direction = "positive" if r > 0 else "negative"
+            lines.append(f"- **{col1}** ↔ **{col2}**: {r:.3f} ({strength} {direction})")
+        return "\n".join(lines)
+    
+    if any(kw in question_lower for kw in ["type", "dtype", "data type"]):
+        type_counts = data.dtypes.value_counts()
+        lines = ["**Column data types:**\n"]
+        for dtype, count in type_counts.items():
+            cols = data.select_dtypes(include=[dtype]).columns.tolist()
+            lines.append(f"- **{dtype}**: {count} columns — {', '.join(cols[:5])}" + 
+                        (f"... (+{len(cols)-5} more)" if len(cols) > 5 else ""))
+        return "\n".join(lines)
+    
+    # Try LLM if available
+    try:
+        from preprocessing.llm_preprocessor import llm_completion
+        # Build context about the data
+        context = f"""Dataset info:
+- Rows: {len(data):,}
+- Columns: {', '.join(data.columns[:20])}
+- Dtypes: {dict(data.dtypes.value_counts())}
+- Sample values: {data.head(3).to_dict()}
+
+User question: {question}
+
+Provide a helpful, concise answer about this data."""
+        
+        response = llm_completion(context)
+        if response and len(response) > 10:
+            return response
+    except Exception:
+        pass
     
     # Default response
     return (
-        "I'm not sure how to answer that specific question yet. "
+        "I'm not sure how to answer that specific question. "
         "Try asking about:\n"
-        "- Missing values\n"
-        "- Data summary\n"
-        "- Column information\n"
-        "- Patterns in the data\n"
-        "- What to predict"
+        "- **Column information** — list all columns with types\n"
+        "- **Missing values** — find columns with nulls\n"
+        "- **Data summary** — statistical overview\n"
+        "- **Time series** — find date/time columns\n"
+        "- **Correlations** — relationships between numeric columns\n"
+        "- **Patterns** — interesting insights\n"
+        "- **What to predict** — target variable suggestions"
     )
 
 # ============================================================================

@@ -51,6 +51,7 @@ from ui.visualizations import (
 from orchestration.orchestrator import orchestrate_dashboard
 from orchestration.data_quality_scorer import summarize_for_display
 from ui import redaction_banner
+from ui.exploratory_tab import render_exploratory_tab
 
 
 def _hash_df(df: pd.DataFrame) -> str:
@@ -228,7 +229,15 @@ st.session_state["column_descriptions"] = descriptions
 preview = scrub_df(data.head(50))
 if descriptions:
     preview["Description"] = preview.index.map(lambda c: descriptions.get(c, ""))
-st.dataframe(preview)
+
+# Main content tabs
+main_tab, explore_tab, chat_tab = st.tabs(["📊 Data Preview", "🔍 Explore", "💬 Chat"])
+
+with main_tab:
+    st.dataframe(preview)
+
+with explore_tab:
+    render_exploratory_tab(data, meta)
 
 # Suggest analyses based on data
 if "analysis_suggestions" not in st.session_state:
@@ -262,9 +271,10 @@ if st.session_state.get("show_column_review"):
         st.session_state["user_roles"] = new_roles
         store_role_corrections(data, new_roles)
 
-# Integrate chatbot interface with error handling
-st.write("Chat with your data below.")
-chatbot_interface(data, visualizations, models, prefill=st.session_state.pop("suggestion", None))
+# Put chatbot in the chat tab
+with chat_tab:
+    st.write("Chat with your data below.")
+    chatbot_interface(data, visualizations, models, prefill=st.session_state.pop("suggestion", None))
 
 # Rating widget
 st.subheader("Rate the results")
