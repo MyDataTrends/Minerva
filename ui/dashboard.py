@@ -52,6 +52,9 @@ from orchestration.orchestrator import orchestrate_dashboard
 from orchestration.data_quality_scorer import summarize_for_display
 from ui import redaction_banner
 from ui.exploratory_tab import render_exploratory_tab
+from ui.action_center import render_action_center
+from ui.llm_settings import render_llm_settings, render_llm_settings_compact
+from reports.report_generator import generate_report_bytes
 
 
 def _hash_df(df: pd.DataFrame) -> str:
@@ -193,9 +196,24 @@ if run_history:
         if st.sidebar.button("Rerun", key=f"rerun_{rid}_{idx}"):
             res = orchestrate_workflow(rid, rid, load_datalake_dfs())
             st.session_state["result"] = res
-            st.experimental_rerun()
+            st.rerun()
 
 # Sidebar for data upload and selection
+
+# LLM Model Status
+try:
+    from llm_manager.registry import get_registry
+    _llm_registry = get_registry()
+    _active_model = _llm_registry.get_active_model()
+    if _active_model:
+        st.sidebar.success(f"🤖 {_active_model.name}")
+    else:
+        st.sidebar.warning("🤖 No LLM selected")
+except Exception:
+    st.sidebar.info("🤖 LLM: Setup needed")
+
+st.sidebar.divider()
+
 uploaded_files = st.sidebar.file_uploader(
     "Upload CSV files", type="csv", accept_multiple_files=True
 )
@@ -231,13 +249,29 @@ if descriptions:
     preview["Description"] = preview.index.map(lambda c: descriptions.get(c, ""))
 
 # Main content tabs
-main_tab, explore_tab, chat_tab = st.tabs(["📊 Data Preview", "🔍 Explore", "💬 Chat"])
+main_tab, explore_tab, action_tab, chat_tab, llm_tab = st.tabs([
+    "📊 Data Preview", "🔍 Explore", "🎯 Actions", "💬 Chat", "🤖 LLM Settings"
+])
 
 with main_tab:
     st.dataframe(preview)
 
 with explore_tab:
-    render_exploratory_tab(data, meta)
+    try:
+        render_exploratory_tab(data, meta)
+    except Exception as e:
+        st.error(f"⚠️ Exploratory analysis encountered an issue: {str(e)}")
+        st.info("Try refreshing the page or uploading a different dataset.")
+
+with action_tab:
+    try:
+        render_action_center(data, meta)
+    except Exception as e:
+        st.error(f"⚠️ Action Center encountered an issue: {str(e)}")
+        st.info("Try refreshing the page or check your data format.")
+
+with llm_tab:
+    render_llm_settings()
 
 # Suggest analyses based on data
 if "analysis_suggestions" not in st.session_state:
@@ -248,7 +282,7 @@ if st.session_state["analysis_suggestions"]:
     for idx, sugg in enumerate(st.session_state["analysis_suggestions"]):
         if st.sidebar.button(sugg, key=f"sugg_{idx}"):
             st.session_state["suggestion"] = sugg
-            st.experimental_rerun()
+            st.rerun()
 
 models = {
     "scenario_generator": generate_scenario,
@@ -397,6 +431,18 @@ if result:
                 file_name="best_model.pkl",
                 mime="application/octet-stream",
             )
+    
+    # HTML Report Export
+    try:
+        report_bytes = generate_report_bytes(data, result, title="Minerva Analysis Report")
+        st.sidebar.download_button(
+            "📄 Export Full Report (HTML)",
+            report_bytes,
+            file_name="analysis_report.html",
+            mime="text/html",
+        )
+    except Exception as e:
+        st.sidebar.caption(f"Report generation unavailable")
             
     explanations = result.get("model_info", {}).get("explanations")
     if explanations:

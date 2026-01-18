@@ -39,10 +39,11 @@ def _apply_cli_env_flags() -> None:
 
 _apply_cli_env_flags()
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr, constr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictFloat, StrictInt, StrictStr, constr
 from utils.logging import configure_logging
 from utils.metrics import REQUESTS
 from config import ENABLE_PROMETHEUS, get_bool
@@ -53,9 +54,23 @@ from storage import session_db
 
 configure_logging()
 
-app = FastAPI()
-
 _metrics_started = False
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown events."""
+    global _metrics_started
+    # Startup
+    if ENABLE_PROMETHEUS and not _metrics_started:
+        addr = "0.0.0.0" if get_bool("METRICS_PUBLIC", False) else "127.0.0.1"
+        start_http_server(8000, addr=addr)
+        _metrics_started = True
+    yield
+    # Shutdown (nothing to clean up)
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.exception_handler(RequestValidationError)
@@ -67,6 +82,9 @@ Scalar = StrictBool | StrictInt | StrictFloat | StrictStr
 
 
 class RerunPayload(BaseModel):
+    """Payload for rerunning a workflow session."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    
     user_id: constr(strict=True, max_length=100) | None = None
     file_name: constr(strict=True, max_length=100) | None = None
     target_column: constr(strict=True, max_length=100) | None = None
@@ -74,17 +92,6 @@ class RerunPayload(BaseModel):
     user_labels: dict[constr(strict=True, max_length=100), constr(strict=True, max_length=100)] | None = None
     diagnostics_config: dict[constr(strict=True, max_length=100), Scalar] | None = None
 
-    class Config:
-        extra = "forbid"
-
-
-@app.on_event("startup")
-def _start_prometheus() -> None:
-    global _metrics_started
-    if ENABLE_PROMETHEUS and not _metrics_started:
-        addr = "0.0.0.0" if get_bool("METRICS_PUBLIC", False) else "127.0.0.1"
-        start_http_server(8000, addr=addr)
-        _metrics_started = True
 
 @app.get("/healthz")
 def healthz():
@@ -116,7 +123,7 @@ def rerun_session(run_id: str, payload: RerunPayload | None = None):
 
     params = json.loads(session.get("params") or "{}")
     if payload:
-        params.update(payload.dict(exclude_none=True))
+        params.update(payload.model_dump(exclude_none=True))
     result = orchestrate_workflow(datalake_dfs=load_datalake_dfs(), **params)
     session_db.record_session(result.get("run_id"), params, result)
     return result

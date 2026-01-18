@@ -47,6 +47,11 @@ _llm_cache = OrderedDict()
 _cache_lock = threading.Lock()
 _semaphore = threading.BoundedSemaphore(LLM_MAX_CONCURRENCY)
 
+# Singleton pattern for LLM model instance - prevents loading model for every call
+_llm_instance = None
+_llm_instance_lock = threading.Lock()
+_llm_load_attempted = False
+
 
 def _cached_llm_call(key: tuple, call):
     now = time.time()
@@ -70,17 +75,28 @@ def _cached_llm_call(key: tuple, call):
     return result
 
 
-def load_local_llm(info_path: Path = LLM_INFO_PATH):
-    """Load the local LLM if available."""
+def _load_llm_once(info_path: Path = LLM_INFO_PATH):
+    """Load the LLM model once (internal helper for singleton pattern)."""
     if Llama is None:
         return None
+    
+    # Safer loading parameters
+    load_kwargs = {
+        "n_ctx": 2048,       # Limited context for stability
+        "n_gpu_layers": 0,   # CPU only to avoid CUDA crashes
+        "verbose": False,
+    }
     
     # Strategy 1: Use MISTRAL_MODEL_PATH if set and exists
     if MISTRAL_MODEL_PATH:
         model_path = Path(MISTRAL_MODEL_PATH)
         if model_path.exists():
             _logger.info(f"Loading LLM from MISTRAL_MODEL_PATH: {model_path}")
-            return Llama(model_path=str(model_path))
+            try:
+                return Llama(model_path=str(model_path), **load_kwargs)
+            except Exception as e:
+                _logger.error(f"Failed to load model: {e}")
+                return None
     
     # Strategy 2: Look for any .gguf file in the local_model directory
     try:
@@ -89,7 +105,11 @@ def load_local_llm(info_path: Path = LLM_INFO_PATH):
         if gguf_files:
             model_file = gguf_files[0]  # Use first found
             _logger.info(f"Loading LLM from: {model_file}")
-            return Llama(model_path=str(model_file))
+            try:
+                return Llama(model_path=str(model_file), **load_kwargs)
+            except Exception as e:
+                _logger.error(f"Failed to load model: {e}")
+                return None
     except Exception:
         pass
     
@@ -98,7 +118,11 @@ def load_local_llm(info_path: Path = LLM_INFO_PATH):
         info = json.loads(info_path.read_text())
         model_file = info_path.parent / f"{info['model_name']}.{info['quantization']}.{info['format']}"
         if model_file.exists():
-            return Llama(model_path=str(model_file))
+            try:
+                return Llama(model_path=str(model_file), **load_kwargs)
+            except Exception as e:
+                _logger.error(f"Failed to load model: {e}")
+                return None
     except Exception:
         pass
     
@@ -107,10 +131,62 @@ def load_local_llm(info_path: Path = LLM_INFO_PATH):
         try:
             from huggingface_hub import hf_hub_download
             dl_path = hf_hub_download(repo_id=LLM_REPO_ID, filename=LLM_FILENAME)
-            return Llama(model_path=str(dl_path))
+            return Llama(model_path=str(dl_path), **load_kwargs)
         except Exception:
             return None
     return None
+
+
+def load_local_llm(info_path: Path = LLM_INFO_PATH):
+    """
+    Load the local LLM if available (singleton pattern).
+    
+    The model is loaded once and cached for all subsequent calls.
+    This prevents the massive memory overhead of loading the model
+    multiple times during testing or normal operation.
+    """
+    global _llm_instance, _llm_load_attempted
+    
+    # Fast path: already loaded
+    if _llm_instance is not None:
+        return _llm_instance
+    
+    # Fast path: already tried and failed
+    if _llm_load_attempted:
+        return None
+    
+    with _llm_instance_lock:
+        # Double-check after acquiring lock
+        if _llm_instance is not None:
+            return _llm_instance
+        if _llm_load_attempted:
+            return None
+        
+        _llm_load_attempted = True
+        _llm_instance = _load_llm_once(info_path)
+        
+        if _llm_instance is not None:
+            _logger.info("LLM model loaded successfully (singleton)")
+        else:
+            _logger.debug("No LLM model available")
+        
+        return _llm_instance
+
+
+def unload_llm():
+    """
+    Unload the cached LLM instance to free memory.
+    
+    Call this when you're done with LLM operations and want to reclaim RAM.
+    Useful in tests or long-running processes that need to free resources.
+    """
+    global _llm_instance, _llm_load_attempted
+    with _llm_instance_lock:
+        if _llm_instance is not None:
+            _logger.info("Unloading LLM model to free memory")
+            del _llm_instance
+            _llm_instance = None
+        _llm_load_attempted = False
 
 
 def _guard_input(text: str) -> str:

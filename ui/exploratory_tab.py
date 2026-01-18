@@ -15,20 +15,25 @@ try:
 except ImportError:
     PLOTLY_AVAILABLE = False
 
-from preprocessing.llm_preprocessor import llm_completion
 from config.feature_flags import ENABLE_LOCAL_LLM
 
 
 def _get_ai_insight(prompt: str, max_tokens: int = 256) -> str:
-    """Get AI-generated insight for the data."""
+    """Get AI-generated insight for the data using LLM Manager or fallback."""
     if not ENABLE_LOCAL_LLM:
         return ""
+    
     try:
-        response = llm_completion(prompt, max_tokens=max_tokens)
-        if response and "LLM unavailable" not in response and "LLM error" not in response:
-            return response.strip()
-    except Exception:
+        # Try new LLM Manager first
+        from llm_manager.llm_interface import get_llm_completion, is_llm_available
+        if is_llm_available():
+            response = get_llm_completion(prompt, max_tokens=max_tokens)
+            if response and len(response) > 10:
+                return response.strip()
+    except ImportError:
         pass
+    
+    # Fallback disabled - causes C-level crashes
     return ""
 
 
@@ -123,18 +128,99 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
         mem_mb = df.memory_usage(deep=True).sum() / 1024 / 1024
         st.metric("Memory", f"{mem_mb:.1f} MB")
     
+    
     # AI Dataset Summary
     with st.expander("🤖 AI Dataset Summary", expanded=True):
         if st.button("Generate Summary", key="gen_summary"):
             with st.spinner("Generating AI summary..."):
                 summary = _generate_dataset_summary(df)
                 if summary:
-                    st.info(summary)
+                    st.session_state["ai_summary"] = summary
                 else:
-                    st.write("AI summary not available. Here's a statistical overview:")
-                    st.dataframe(df.describe())
+                    st.session_state["ai_summary"] = None
+        
+        # Display persisted summary
+        if st.session_state.get("ai_summary"):
+            st.info(st.session_state["ai_summary"])
+        elif "ai_summary" in st.session_state:
+            st.write("AI summary not available. Here's a statistical overview:")
+            st.dataframe(df.describe())
         else:
             st.write("Click 'Generate Summary' for an AI-powered dataset description.")
+    
+    # AI Chart Suggestions
+    with st.expander("🎨 AI Chart Suggestions", expanded=False):
+        if st.button("Suggest Visualizations", key="suggest_charts"):
+            with st.spinner("AI is analyzing your data..."):
+                try:
+                    from llm_manager.llm_interface import suggest_visualizations, is_llm_available, get_active_model_name
+                    
+                    if not is_llm_available():
+                        st.session_state["chart_suggestions"] = {"error": "no_llm"}
+                    else:
+                        model_name = get_active_model_name()
+                        suggestions = suggest_visualizations(df)
+                        st.session_state["chart_suggestions"] = {
+                            "model": model_name,
+                            "suggestions": suggestions
+                        }
+                except ImportError as e:
+                    st.session_state["chart_suggestions"] = {"error": f"import: {e}"}
+                except Exception as e:
+                    st.session_state["chart_suggestions"] = {"error": f"exception: {e}"}
+        
+        # Display persisted suggestions
+        chart_data = st.session_state.get("chart_suggestions", {})
+        
+        if "error" in chart_data:
+            error = chart_data["error"]
+            if error == "no_llm":
+                st.warning("⚠️ No LLM available. Configure one in the '🤖 LLM Settings' tab first.")
+            else:
+                st.error(f"Error: {error}")
+        elif "suggestions" in chart_data:
+            suggestions = chart_data["suggestions"]
+            model_name = chart_data.get("model", "Unknown")
+            st.caption(f"Using model: {model_name}")
+            
+            if suggestions:
+                st.success(f"Found {len(suggestions)} chart recommendations!")
+                for i, sug in enumerate(suggestions):
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"**{i+1}. {sug.get('title', 'Chart')}**")
+                        st.caption(f"{sug.get('type', 'chart').title()} chart: {sug.get('x', '')} vs {sug.get('y', 'count')}")
+                        st.write(f"💡 {sug.get('reason', '')}")
+                    with col2:
+                        if st.button("View", key=f"view_sug_{i}"):
+                            st.session_state[f"show_sug_{i}"] = True
+                    
+                    # Show chart if requested
+                    if st.session_state.get(f"show_sug_{i}"):
+                        chart_type = sug.get('type', 'bar').lower()
+                        x = sug.get('x')
+                        y = sug.get('y')
+                        
+                        if x in df.columns:
+                            if chart_type == 'bar':
+                                fig = px.bar(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                            elif chart_type == 'line':
+                                fig = px.line(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                            elif chart_type == 'scatter':
+                                fig = px.scatter(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                            elif chart_type == 'histogram':
+                                fig = px.histogram(df, x=x, title=sug.get('title', ''))
+                            elif chart_type == 'pie':
+                                fig = px.pie(df, names=x, title=sug.get('title', ''))
+                            else:
+                                fig = px.bar(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                            
+                            fig.update_layout(template="plotly_dark")
+                            st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("💡 LLM couldn't parse chart suggestions. This usually means the model needs to be loaded first.\n\n**Try:** Go to '🤖 LLM Settings' tab and click 'Load Model', then try again.")
+        else:
+            st.write("Let AI recommend the best visualizations for your data.")
     
     # Column selector
     st.subheader("📊 Column Analysis")

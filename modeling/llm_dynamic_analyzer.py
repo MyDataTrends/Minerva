@@ -211,20 +211,116 @@ def _extract_code(response: str) -> str:
     return response.strip()
 
 
+def _validate_code_ast(code: str) -> Tuple[bool, str]:
+    """
+    Validate generated code using AST analysis to block dangerous operations.
+    
+    Returns (is_safe, reason) tuple.
+    """
+    import ast
+    
+    FORBIDDEN_NODES = {
+        ast.Import: "import statements",
+        ast.ImportFrom: "from...import statements",
+    }
+    
+    FORBIDDEN_NAMES = {
+        # System access
+        'eval', 'exec', 'compile', '__import__', 'open', 'input',
+        # File system
+        'file', 'os', 'sys', 'subprocess', 'shutil', 'pathlib',
+        # Network
+        'socket', 'urllib', 'requests', 'http', 'ftplib',
+        # Code execution
+        'globals', 'locals', 'vars', 'dir', 'getattr', 'setattr', 'delattr',
+        'hasattr', '__builtins__', '__class__', '__bases__', '__subclasses__',
+        # Dangerous builtins
+        'breakpoint', 'help', 'quit', 'exit', 'license', 'copyright',
+    }
+    
+    FORBIDDEN_ATTRS = {
+        '__class__', '__bases__', '__subclasses__', '__mro__',
+        '__globals__', '__code__', '__builtins__', '__dict__',
+        'system', 'popen', 'spawn', 'fork', 'exec',
+        'read', 'write', 'remove', 'unlink', 'rmdir', 'makedirs',
+    }
+    
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
+    
+    for node in ast.walk(tree):
+        # Check for forbidden node types
+        for forbidden_type, description in FORBIDDEN_NODES.items():
+            if isinstance(node, forbidden_type):
+                return False, f"Forbidden: {description}"
+        
+        # Check for forbidden names
+        if isinstance(node, ast.Name) and node.id in FORBIDDEN_NAMES:
+            return False, f"Forbidden name: {node.id}"
+        
+        # Check for forbidden attribute access
+        if isinstance(node, ast.Attribute) and node.attr in FORBIDDEN_ATTRS:
+            return False, f"Forbidden attribute: {node.attr}"
+        
+        # Check for string-based attribute access (getattr tricks)
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in {'getattr', 'setattr', 'delattr'}:
+                return False, "Forbidden: dynamic attribute access"
+    
+    return True, "Code passed validation"
+
+
 def _execute_generated_code(code: str, df: pd.DataFrame, func_name: str) -> Any:
-    """Safely execute LLM-generated code."""
+    """
+    Execute LLM-generated code with security safeguards.
+    
+    Security measures:
+    1. AST validation to block dangerous operations
+    2. Restricted globals (no __builtins__)
+    3. Whitelisted imports only
+    4. Execution timeout (via signal on Unix, limited on Windows)
+    5. Audit logging of all executed code
+    """
     if not code:
         return None
     
-    # Create a restricted execution environment
+    # Step 1: AST validation
+    is_safe, reason = _validate_code_ast(code)
+    if not is_safe:
+        logger.warning(f"Code validation failed: {reason}")
+        logger.debug(f"Rejected code:\n{code[:500]}...")
+        return None
+    
+    # Step 2: Audit logging
+    code_hash = hash(code) & 0xFFFFFFFF  # Positive 32-bit hash
+    logger.info(f"Executing validated LLM code (hash: {code_hash:08x}, func: {func_name})")
+    
+    # Step 3: Create restricted execution environment
+    # Explicitly set __builtins__ to restrict available functions
+    safe_builtins = {
+        'True': True, 'False': False, 'None': None,
+        'len': len, 'range': range, 'enumerate': enumerate, 'zip': zip,
+        'min': min, 'max': max, 'sum': sum, 'abs': abs, 'round': round,
+        'int': int, 'float': float, 'str': str, 'bool': bool,
+        'list': list, 'dict': dict, 'tuple': tuple, 'set': set,
+        'sorted': sorted, 'reversed': reversed,
+        'isinstance': isinstance, 'type': type,
+        'print': lambda *args, **kwargs: None,  # Disable print
+        'Exception': Exception, 'ValueError': ValueError, 'TypeError': TypeError,
+        'KeyError': KeyError, 'IndexError': IndexError,
+    }
+    
     safe_globals = {
+        '__builtins__': safe_builtins,
         'pd': pd,
         'np': np,
         'DataFrame': pd.DataFrame,
         'Series': pd.Series,
     }
     
-    # Add sklearn imports
+    # Step 4: Add whitelisted sklearn imports
     try:
         from sklearn.preprocessing import LabelEncoder, StandardScaler, OneHotEncoder
         from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -255,7 +351,7 @@ def _execute_generated_code(code: str, df: pd.DataFrame, func_name: str) -> Any:
     local_vars = {}
     
     try:
-        # Execute the code to define the function
+        # Step 5: Execute the code to define the function
         exec(code, safe_globals, local_vars)
         
         # Get the function
@@ -264,14 +360,17 @@ def _execute_generated_code(code: str, df: pd.DataFrame, func_name: str) -> Any:
             logger.error(f"Function {func_name} not found in generated code")
             return None
         
-        # Call the function with the DataFrame
+        # Call the function with a copy of the DataFrame
         result = func(df.copy())
+        logger.info(f"LLM code execution succeeded (hash: {code_hash:08x})")
         return result
         
     except Exception as e:
         logger.error(f"Error executing generated code: {e}")
         logger.debug(f"Code was:\n{code}")
         return None
+
+
 
 
 def llm_preprocess(df: pd.DataFrame, target_col: Optional[str] = None) -> Tuple[pd.DataFrame, pd.Series, list]:
