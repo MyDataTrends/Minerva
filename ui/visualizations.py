@@ -1,5 +1,5 @@
 import streamlit as st
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt - moved to functions
 import pandas as pd
 
 
@@ -12,6 +12,8 @@ def generate_bar_chart(data: pd.DataFrame):
     if len(y_col) == 0:
         return "No numeric column available for bar chart"
     y_col = y_col[0]
+    y_col = y_col[0]
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(8, 4))
     plt.bar(data[x_col], data[y_col])
     plt.xlabel(x_col)
@@ -26,6 +28,8 @@ def generate_scatter_plot(data: pd.DataFrame):
     if numeric.shape[1] < 2:
         return "Need two numeric columns for scatter plot"
     x_col, y_col = numeric.columns[:2]
+    x_col, y_col = numeric.columns[:2]
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(8, 6))
     plt.scatter(data[x_col], data[y_col])
     plt.xlabel(x_col)
@@ -40,6 +44,8 @@ def generate_histogram(data: pd.DataFrame):
     if numeric.empty:
         return "No numeric data for histogram"
     col = numeric.columns[0]
+    col = numeric.columns[0]
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(8, 4))
     plt.hist(data[col], bins=20, edgecolor="black")
     plt.xlabel(col)
@@ -53,6 +59,8 @@ def generate_heatmap(data: pd.DataFrame):
     if numeric.shape[1] < 2:
         return "Need multiple numeric columns for heatmap"
     corr = numeric.corr()
+    corr = numeric.corr()
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(6, 5))
     plt.imshow(corr, cmap="viridis", aspect="auto")
     plt.colorbar()
@@ -69,6 +77,8 @@ def generate_pie_chart(data: pd.DataFrame):
     cat_cols = data.select_dtypes(exclude="number").columns
     col = cat_cols[0] if len(cat_cols) else data.columns[0]
     counts = data[col].value_counts().head(10)
+    counts = data[col].value_counts().head(10)
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(6, 6))
     plt.pie(counts, labels=counts.index, autopct="%1.1f%%")
     plt.title(f"Pie Chart of {col}")
@@ -84,6 +94,8 @@ def generate_area_chart(data: pd.DataFrame):
     if len(y_col) == 0:
         return "No numeric column available for area chart"
     y_col = y_col[0]
+    y_col = y_col[0]
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(10, 5))
     plt.fill_between(data[x_col], data[y_col], alpha=0.4)
     plt.plot(data[x_col], data[y_col], color="blue")

@@ -1,3 +1,5 @@
+import re
+import numpy as np
 import pandas as pd
 from rapidfuzz import process
 
@@ -57,3 +59,55 @@ def fuzzy_match_columns(df, column_name, threshold=80):
     df[column_name] = df[column_name].apply(lambda x: matched_values.get(x, x))
     return df
 
+
+def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert column names to snake_case."""
+    df = df.copy()
+    new_cols = []
+    for col in df.columns:
+        s = str(col).strip()
+        s = re.sub(r'[^a-zA-Z0-9]', '_', s)
+        s = re.sub(r'(?<!^)(?=[A-Z])', '_', s).lower()
+        s = re.sub(r'_+', '_', s)
+        new_cols.append(s.strip('_'))
+    df.columns = new_cols
+    return df
+
+
+def standardize_dates(df: pd.DataFrame) -> pd.DataFrame:
+    """Attempt to identify and parse date columns."""
+    df = df.copy()
+    date_patterns = ['date', 'time', 'period', 'year', 'month', 'timestamp', 'day']
+    for col in df.columns:
+        if any(p in col.lower() for p in date_patterns):
+            try:
+                if df[col].dtype == 'object' or 'int' in str(df[col].dtype):
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+            except Exception:
+                pass
+    return df
+
+
+def standardize_numerics(df: pd.DataFrame) -> pd.DataFrame:
+    """Attempt to coerce numeric-looking object columns."""
+    df = df.copy()
+    for col in df.select_dtypes(include=['object']).columns:
+        try:
+            sample = df[col].dropna().head(10).astype(str)
+            if sample.empty:
+                continue
+            check_vals = sample.str.replace(r'[$,%]', '', regex=True)
+            pd.to_numeric(check_vals)
+            clean_col = df[col].astype(str).str.replace(r'[$,%]', '', regex=True)
+            df[col] = pd.to_numeric(clean_col, errors='coerce')
+        except (ValueError, TypeError):
+            continue
+    return df
+
+
+def standardize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Run full standardization pipeline."""
+    df = normalize_column_names(df)
+    df = standardize_dates(df)
+    df = standardize_numerics(df)
+    return df

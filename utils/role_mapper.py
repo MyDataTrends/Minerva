@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.metrics.pairwise import cosine_similarity
 
 
 _ROLES_PATH = Path(__file__).resolve().parents[1] / "config" / "semantic_roles.yaml"
@@ -24,13 +24,12 @@ def _encode(texts: list[str]) -> np.ndarray:
     """Return embeddings for ``texts`` using MiniLM if available."""
     try:
         from sentence_transformers import SentenceTransformer
-
         model = SentenceTransformer("all-MiniLM-L6-v2")
         return model.encode(texts)
     except Exception:
+        from sklearn.feature_extraction.text import TfidfVectorizer
         vec = TfidfVectorizer().fit(texts)
         return vec.transform(texts).toarray()
-
 
 def map_description_to_role(description: str) -> str:
     """Map a free-text ``description`` to the closest known role."""
@@ -39,6 +38,8 @@ def map_description_to_role(description: str) -> str:
         return "unknown"
     texts = [description] + roles
     emb = _encode(texts)
+    
+    from sklearn.metrics.pairwise import cosine_similarity
     sims = cosine_similarity([emb[0]], emb[1:])[0]
     best = int(np.argmax(sims))
     return roles[best]

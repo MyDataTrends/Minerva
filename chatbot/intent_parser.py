@@ -13,27 +13,38 @@ from utils.logging import log_decision
 
 from . import llm_intent_classifier
 
-try:  # pragma: no cover - spaCy optional
-    import spacy
-    from spacy.matcher import PhraseMatcher
+# Lazy loaded globals
+nlp = None
+_matcher = None
 
-    nlp = spacy.blank("en")
-    _matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
-    _phrases: Dict[str, Tuple[str, ...]] = {
-        "line_chart": ("line chart",),
-        "bar_chart": ("bar chart", "compare"),
-        "scatter_plot": ("scatter plot",),
-        "heat_map": ("heat map", "heatmap"),
-        "pie_chart": ("pie chart",),
-        "forecast": ("forecast", "forecasting"),
-        "clustering": ("cluster", "clustering"),
-        "classification": ("classify", "classification"),
-    }
-    for key, patterns in _phrases.items():
-        _matcher.add(key.upper(), [nlp.make_doc(p) for p in patterns])
-except Exception:  # pragma: no cover - spaCy optional
-    nlp = None
-    _matcher = None
+def _load_spacy():
+    global nlp, _matcher, _phrases
+    if nlp is not None:
+        return nlp, _matcher
+    
+    try:
+        import spacy
+        from spacy.matcher import PhraseMatcher
+        nlp = spacy.blank("en")
+        _matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
+        
+        _phrases = {
+            "line_chart": ("line chart",),
+            "bar_chart": ("bar chart", "compare"),
+            "scatter_plot": ("scatter plot",),
+            "heat_map": ("heat map", "heatmap"),
+            "pie_chart": ("pie chart",),
+            "forecast": ("forecast", "forecasting"),
+            "clustering": ("cluster", "clustering"),
+            "classification": ("classify", "classification"),
+        }
+        for key, patterns in _phrases.items():
+            _matcher.add(key.upper(), [nlp.make_doc(p) for p in patterns])
+    except Exception:
+        nlp = False  # Sentinel for failed load
+        _matcher = None
+    
+    return nlp, _matcher
 
 
 def parse_intent(user_query: str):
@@ -50,10 +61,12 @@ def parse_intent(user_query: str):
     params: Dict[str, str] = {}
 
     # Use spaCy matcher when available for more flexible detection
-    if _matcher is not None:
-        doc = nlp(text)
-        for match_id, start, end in _matcher(doc):
-            label = nlp.vocab.strings[match_id]
+    # Use spaCy matcher when available for more flexible detection
+    _nlp, _match = _load_spacy()
+    if _match is not None:
+        doc = _nlp(text)
+        for match_id, start, end in _match(doc):
+            label = _nlp.vocab.strings[match_id]
             if label == "LINE_CHART":
                 intent, params = "visualization", {"type": "line_chart"}
                 break

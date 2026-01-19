@@ -62,7 +62,7 @@ Description:"""
     return _get_ai_insight(prompt, max_tokens=100)
 
 
-def _generate_dataset_summary(df: pd.DataFrame) -> str:
+def _generate_dataset_summary(df: pd.DataFrame, context: str = "") -> str:
     """Generate AI summary of the entire dataset."""
     cols_info = []
     for col in df.columns[:10]:  # Limit to first 10 columns
@@ -70,9 +70,11 @@ def _generate_dataset_summary(df: pd.DataFrame) -> str:
         n_unique = df[col].nunique()
         cols_info.append(f"- {col} ({dtype}, {n_unique} unique)")
     
+    context_str = f"Context: {context}\n" if context else ""
+    
     prompt = f"""Provide a brief 2-3 sentence summary of this dataset:
 
-Shape: {df.shape[0]} rows × {df.shape[1]} columns
+{context_str}Shape: {df.shape[0]} rows × {df.shape[1]} columns
 Columns:
 {chr(10).join(cols_info)}
 
@@ -133,7 +135,17 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
     with st.expander("🤖 AI Dataset Summary", expanded=True):
         if st.button("Generate Summary", key="gen_summary"):
             with st.spinner("Generating AI summary..."):
-                summary = _generate_dataset_summary(df)
+                # Try to find context/description for the current primary dataset
+                context_info = ""
+                try:
+                     # This is a bit tricky since we need the ID, not just the DF
+                     # Optimally we'd pass the meta in render_exploratory_tab
+                     if meta and isinstance(meta, dict):
+                          context_info = meta.get("context") or meta.get("description", "")
+                except Exception:
+                     pass
+
+                summary = _generate_dataset_summary(df, context=context_info)
                 if summary:
                     st.session_state["ai_summary"] = summary
                 else:
@@ -216,7 +228,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                                 fig = px.bar(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
                             
                             fig.update_layout(template="plotly_dark")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width="stretch")
             else:
                 st.info("💡 LLM couldn't parse chart suggestions. This usually means the model needs to be loaded first.\n\n**Try:** Go to '🤖 LLM Settings' tab and click 'Load Model', then try again.")
         else:
@@ -249,7 +261,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
             )
-            st.plotly_chart(fig_hist, use_container_width=True)
+            st.plotly_chart(fig_hist, width="stretch")
         
         with col2:
             # Box plot
@@ -263,7 +275,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
             )
-            st.plotly_chart(fig_box, use_container_width=True)
+            st.plotly_chart(fig_box, width="stretch")
         
         # AI insight for selected column
         if st.button(f"🤖 Get AI Insight for {dist_col}", key="col_insight"):
@@ -298,7 +310,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                 yaxis_title="Count",
                 showlegend=False
             )
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, width="stretch")
         
         with col2:
             fig_pie = px.pie(
@@ -312,7 +324,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, width="stretch")
     
     # Correlation heatmap
     if len(numeric_cols) >= 2:
@@ -332,7 +344,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
         )
-        st.plotly_chart(fig_corr, use_container_width=True)
+        st.plotly_chart(fig_corr, width="stretch")
         
         # AI correlation insight
         if st.button("🤖 Explain Correlations", key="corr_insight"):
@@ -367,7 +379,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
         )
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        st.plotly_chart(fig_scatter, width="stretch")
     
     # Time series if datetime column exists
     if datetime_cols and numeric_cols:
@@ -392,7 +404,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
         )
-        st.plotly_chart(fig_time, use_container_width=True)
+        st.plotly_chart(fig_time, width="stretch")
     
     # Data quality summary
     st.markdown("### Data Quality")
@@ -414,4 +426,4 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
         })
     
     quality_df = pd.DataFrame(quality_data)
-    st.dataframe(quality_df, use_container_width=True)
+    st.dataframe(quality_df, width="stretch")

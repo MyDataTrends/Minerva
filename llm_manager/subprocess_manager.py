@@ -229,7 +229,7 @@ class LLMSubprocess:
                     "temperature": temperature,
                     "stop": stop or ["</s>", "\n\n"],
                 },
-                timeout=120,
+                timeout=300,
             )
             
             if resp.status_code == 200:
@@ -265,7 +265,7 @@ class LLMSubprocess:
                     "max_tokens": max_tokens,
                     "temperature": temperature,
                 },
-                timeout=120,
+                timeout=300,
             )
             
             if resp.status_code == 200:

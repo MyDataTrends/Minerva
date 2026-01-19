@@ -220,14 +220,28 @@ def suggest_visualizations(df) -> List[Dict[str, Any]]:
     columns = df.columns.tolist()
     dtypes = df.dtypes.to_dict()
     dtype_str = ", ".join(f"{col}: {str(dtype)}" for col, dtype in dtypes.items())
+
+    try:
+        sample_data = df.head(3).to_string(index=False)
+        # Limit description to save tokens
+        stats = df.describe().to_string() 
+    except Exception:
+        sample_data = "N/A"
+        stats = "N/A"
     
-    prompt = f"""Suggest 3 visualizations for this dataset.
+    prompt = f"""Suggest 3 visualizations for this dataset based on its actual content patterns.
 
 COLUMNS: {columns}
 TYPES: {dtype_str}
 
+DATA SAMPLES:
+{sample_data}
+
+STATISTICS:
+{stats}
+
 Return ONLY a JSON array, no other text. Format:
-[{{"type": "bar", "x": "column_name", "y": "column_name", "title": "Chart title", "reason": "Why this visualization"}}]
+[{{"type": "bar", "x": "column_name", "y": "column_name", "title": "Chart title", "reason": "Why this visualization based on the data values"}}]
 
 Valid types: bar, line, scatter, histogram, pie
 

@@ -8,10 +8,7 @@ from collections import OrderedDict
 from pathlib import Path
 import pandas as pd
 
-try:
-    from sklearn.metrics.pairwise import cosine_similarity
-except ModuleNotFoundError:  # pragma: no cover - optional dependency
-    cosine_similarity = None
+# from sklearn.metrics.pairwise import cosine_similarity - moved to local import
 
 from preprocessing.prompt_templates import generate_prompt
 from preprocessing.metadata_parser import parse_metadata
@@ -31,10 +28,8 @@ from config import (
     LLM_HF_REPO_ID,
 )
 
-try:
-    from llama_cpp import Llama
-except Exception:  # pragma: no cover - optional dependency
-    Llama = None
+# Lazy load placeholder
+Llama = None
 
 LLM_INFO_PATH = Path(__file__).resolve().parents[1] / "adm" / "llm_backends" / "local_model" / "model_info.json"
 
@@ -77,13 +72,23 @@ def _cached_llm_call(key: tuple, call):
 
 def _load_llm_once(info_path: Path = LLM_INFO_PATH):
     """Load the LLM model once (internal helper for singleton pattern)."""
+    # Lazy import
+    global Llama
     if Llama is None:
-        return None
-    
+        try:
+            from llama_cpp import Llama as _Llama
+            Llama = _Llama
+        except ImportError:
+            _logger.warning("llama_cpp not installed")
+            return None
+        except Exception as e:
+            _logger.warning(f"llama_cpp import failed: {e}")
+            return None
+
     # Safer loading parameters
     load_kwargs = {
         "n_ctx": 2048,       # Limited context for stability
-        "n_gpu_layers": 0,   # CPU only to avoid CUDA crashes
+        "n_gpu_layers": 20,  # Hybrid offload (safe for RTX 3070 8GB + Desktop)
         "verbose": False,
     }
     
@@ -343,8 +348,11 @@ def preprocess_data_with_agents(data: pd.DataFrame) -> pd.DataFrame:
 
 def score_similarity(uploaded_df: pd.DataFrame, datalake_dfs: dict) -> list:
     """Return datalake files sorted by similarity to the uploaded DataFrame."""
-    if cosine_similarity is None:
+    try:
+        from sklearn.metrics.pairwise import cosine_similarity
+    except ImportError:
         raise RuntimeError("scikit-learn is required for similarity scoring")
+        
     uploaded_metadata = parse_metadata(uploaded_df)
     uploaded_vector = pd.DataFrame(uploaded_metadata["summary"]).values.flatten()
     uploaded_tags = set(str(col).lower() for col in uploaded_metadata["columns"])
@@ -390,6 +398,16 @@ def recommend_models_with_llm(df: pd.DataFrame) -> str:
 
 def load_mistral_model(model_path: str):
     """Load the Mistral model from ``model_path`` using ``llama_cpp``."""
+    """Load the Mistral model from ``model_path`` using ``llama_cpp``."""
+    # Lazy import
+    global Llama
+    if Llama is None:
+        try:
+            from llama_cpp import Llama as _Llama
+            Llama = _Llama
+        except Exception:
+            pass
+    
     if Llama is None:
         return None
     if model_path is not None:

@@ -297,7 +297,7 @@ Code:"""
                 exec(code, namespace)
                 
                 if namespace.get("fig"):
-                    st.plotly_chart(namespace["fig"], use_container_width=True)
+                    st.plotly_chart(namespace["fig"], width="stretch")
                 else:
                     st.error("Chart generation failed - no figure created")
             except SyntaxError as e:

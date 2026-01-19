@@ -19,6 +19,17 @@ def _apply_cli_env_flags() -> None:
         action="store_true",
         help="Relax checks for local development",
     )
+    parser.add_argument(
+        "--mcp-server",
+        action="store_true",
+        help="Start MCP server for AI tool access",
+    )
+    parser.add_argument(
+        "--mcp-port",
+        type=int,
+        default=8766,
+        help="MCP server HTTP port (default: 8766)",
+    )
     args, _ = parser.parse_known_args()
 
     if args.no_llm:
@@ -35,6 +46,11 @@ def _apply_cli_env_flags() -> None:
         os.environ["REDACTION_ENABLED"] = "1"
     if args.dev_lenient:
         os.environ["LOCAL_DEV_LENIENT"] = "1"
+    
+    # MCP server settings
+    if args.mcp_server:
+        os.environ["MCP_ENABLED"] = "1"
+        os.environ["MCP_PORT"] = str(args.mcp_port)
 
 
 _apply_cli_env_flags()
@@ -55,19 +71,44 @@ from storage import session_db
 configure_logging()
 
 _metrics_started = False
+_mcp_server = None
+_mcp_task = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
-    global _metrics_started
+    global _metrics_started, _mcp_server, _mcp_task
+    import asyncio
+    
     # Startup
     if ENABLE_PROMETHEUS and not _metrics_started:
         addr = "0.0.0.0" if get_bool("METRICS_PUBLIC", False) else "127.0.0.1"
         start_http_server(8000, addr=addr)
         _metrics_started = True
+    
+    # Start MCP server if enabled
+    if get_bool("MCP_ENABLED", False):
+        try:
+            from mcp_server import create_server
+            from mcp_server.config import MCPConfig
+            
+            config = MCPConfig()
+            _mcp_server = create_server(config=config)
+            _mcp_task = asyncio.create_task(_mcp_server.run_http())
+            import logging
+            logging.getLogger(__name__).info(f"MCP server started on http://{config.host}:{config.port}")
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to start MCP server: {e}")
+    
     yield
-    # Shutdown (nothing to clean up)
+    
+    # Shutdown
+    if _mcp_server:
+        _mcp_server.stop()
+        if _mcp_task:
+            _mcp_task.cancel()
 
 
 app = FastAPI(lifespan=lifespan)

@@ -5,7 +5,8 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-import boto3
+# Lazy load boto3
+boto3 = None
 from .base import StorageBackend
 from config import BUCKET_NAME
 
@@ -14,6 +15,7 @@ class S3Storage(StorageBackend):
     """Storage backend that interacts with S3."""
 
     def __init__(self, bucket: str | None = None):
+        import boto3
         self.bucket = bucket or BUCKET_NAME
         self.s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-east-1"))
 

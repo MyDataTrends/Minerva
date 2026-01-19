@@ -56,3 +56,12 @@ Thumbs.db
 *.tmp
 *.temp
 *.bak
+
+# === Secure Storage ===
+*.key
+*.enc
+secrets.json
+
+# Models
+*.gguf
+models/*.gguf
