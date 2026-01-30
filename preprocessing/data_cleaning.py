@@ -110,4 +110,61 @@ def standardize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = normalize_column_names(df)
     df = standardize_dates(df)
     df = standardize_numerics(df)
+    df = standardize_complex_types(df)
     return df
+
+
+def standardize_complex_types(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert list/dict columns to strings to prevent unhashable type errors."""
+    df = df.copy()
+    for col in df.columns:
+        # Check if column has object dtype and contains unhashable types (dict/list)
+        if df[col].dtype == 'object':
+            # Sampling check for performance
+            try:
+                sample = df[col].dropna().head(10).tolist()
+                if any(isinstance(x, (dict, list)) for x in sample):
+                    df[col] = df[col].astype(str)
+            except Exception:
+                # If checking fails, safeguard by converting to string if it smells complex
+                df[col] = df[col].astype(str)
+    return df
+
+
+from typing import Any, List, Dict
+
+def find_table_data(data: Any) -> List[Dict]:
+    """
+    Recursively search for the largest list of dictionaries in a JSON structure.
+    This allows automatic extraction of data from nested API responses without
+    hardcoded paths.
+    """
+    candidates = []
+
+    def crawl(obj, depth=0):
+        # Limit recursion depth to prevent stack overflow on deep json
+        if depth > 5:
+            return
+            
+        if isinstance(obj, list):
+            # Check if this list looks like a table (list of dicts)
+            if obj and isinstance(obj[0], dict):
+                candidates.append(obj)
+            # Recurse into items if they are lists (e.g. World Bank [meta, data])
+            for item in obj:
+                if isinstance(item, (list, dict)):
+                    crawl(item, depth + 1)
+                    
+        elif isinstance(obj, dict):
+            # Recurse into values
+            for key, value in obj.items():
+                if isinstance(value, (list, dict)):
+                    crawl(value, depth + 1)
+
+    crawl(data)
+    
+    if not candidates:
+        return []
+        
+    # Return the candidate with the most rows (heuristic: largest table is the data)
+    return max(candidates, key=len)

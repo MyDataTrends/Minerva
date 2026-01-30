@@ -50,7 +50,7 @@ def _get_data_profile(df: pd.DataFrame) -> str:
         elif dtype == 'object':
             # Check if it looks like dates
             try:
-                pd.to_datetime(non_null.head(5))
+                pd.to_datetime(non_null.head(5), format='mixed')
                 profile.append(f"      note: appears to be datetime strings")
             except:
                 pass
@@ -437,7 +437,7 @@ def _fallback_preprocess(df: pd.DataFrame, target_col: Optional[str] = None) -> 
         if X[col].dtype == 'object':
             # Try datetime conversion first
             try:
-                dt = pd.to_datetime(X[col], errors='coerce')
+                dt = pd.to_datetime(X[col], errors='coerce', format='mixed')
                 if dt.notna().sum() > len(X) * 0.5:  # More than 50% valid dates
                     X[col] = dt.astype('int64') // 10**9
                     continue

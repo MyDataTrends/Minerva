@@ -9,6 +9,7 @@ from storage.local_backend import log_run_metadata
 from output.output_formatter import format_output, format_analysis
 from preprocessing.llm_summarizer import generate_summary
 from preprocessing.llm_analyzer import ask_follow_up_question
+from preprocessing.metadata_parser import parse_metadata, infer_column_meta
 
 
 class OutputGenerator:
@@ -65,10 +66,15 @@ class OutputGenerator:
             "Given these data statistics and model outputs, write a one-page business summary, "
             "list the top 3 next steps, and include a clear call to action."
         )
+        # Generate rich metadata for the summarizer
+        dataset_meta = parse_metadata(data)
+        column_meta = infer_column_meta(data)
         summary_output = generate_summary(
             data_stats=metrics,
             model_results=model_info,
             prompt=summary_prompt,
+            dataset_meta=dataset_meta,
+            column_meta=column_meta,
         )
         result.update(summary_output)
         return result

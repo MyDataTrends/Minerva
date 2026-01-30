@@ -589,28 +589,20 @@ class RESTConnector(BaseConnector):
         response.raise_for_status()
         data = response.json()
         
-        # Try to normalize JSON to DataFrame
-        if isinstance(data, list):
-            # Detect World Bank pattern: [metadata_dict, data_list]
-            if len(data) > 1 and isinstance(data[0], dict) and isinstance(data[1], list):
-                 # Use the inner list which contains actual records
-                 data = data[1]
-            
-            df = pd.DataFrame(data)
-        elif isinstance(data, dict):
-            # Look for common data keys
-            for key in ["data", "results", "items", "records", "rows", "Data", "observations", "series", "Time Series (Daily)"]:
-                if key in data and isinstance(data[key], list):
-                    df = pd.DataFrame(data[key])
-                    break
-            else:
-                # Check for nested Data.Data pattern (CryptoCompare)
-                if "Data" in data and isinstance(data["Data"], dict) and "Data" in data["Data"]:
-                     df = pd.DataFrame(data["Data"]["Data"])
-                else:
-                     df = pd.json_normalize(data)
+        data = response.json()
+        
+        # Use recursive table finder to locate the actual data
+        from preprocessing.data_cleaning import find_table_data
+        
+        table_data = find_table_data(data)
+        
+        if table_data:
+            df = pd.DataFrame(table_data)
         else:
-            df = pd.DataFrame([data])
+            # Fallback for flat lists or single dicts
+            df = pd.json_normalize(data) if isinstance(data, (dict, list)) else pd.DataFrame([data])
+            
+        # Infer types (convert string numbers to numeric)
             
         # Infer types (convert string numbers to numeric)
         for col in df.columns:

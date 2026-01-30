@@ -19,7 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("server_debug.log", mode='w')
+    ]
 )
 logger = logging.getLogger("llm_server")
 
@@ -83,7 +87,7 @@ def create_app():
         prompt = data.get("prompt", "")
         max_tokens = data.get("max_tokens", 256)
         temperature = data.get("temperature", 0.7)
-        stop = data.get("stop", ["</s>", "\n\n"])
+        stop = data.get("stop", ["</s>", "<|eot_id|>", "<|end_of_text|>"])
         
         try:
             result = _llm(
@@ -93,6 +97,9 @@ def create_app():
                 stop=stop,
             )
             text = result["choices"][0]["text"].strip()
+            if not text:
+               logger.warning("Model generated empty text")
+               
             return jsonify({
                 "text": text,
                 "usage": result.get("usage", {}),
@@ -104,6 +111,9 @@ def create_app():
     @app.route("/chat", methods=["POST"])
     def chat():
         """Chat completion."""
+        import time
+        start_time = time.time()
+        
         if _llm is None:
             return jsonify({"error": "Model not loaded"}), 503
         
@@ -120,12 +130,17 @@ def create_app():
                     temperature=temperature,
                 )
                 text = result["choices"][0]["message"]["content"].strip()
+                usage = result.get("usage", {})
             else:
                 # Fallback to prompt
                 prompt = "\n".join(f"{m['role'].upper()}: {m['content']}" for m in messages)
                 prompt += "\nASSISTANT:"
                 result = _llm(prompt, max_tokens=max_tokens, temperature=temperature)
                 text = result["choices"][0]["text"].strip()
+                usage = result.get("usage", {})
+            
+            duration = time.time() - start_time
+            logger.info(f"Chat completed in {duration:.2f}s | Tokens: {usage.get('total_tokens', 'N/A')}")
             
             return jsonify({"text": text})
         except Exception as e:

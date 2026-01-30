@@ -86,7 +86,7 @@ class LocalProvider(LLMProvider):
                 prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                stop=kwargs.get("stop", ["</s>", "\n\n"]),
+                stop=kwargs.get("stop", ["</s>", "<|eot_id|>", "<|end_of_text|>"]),
             )
             return result
             

@@ -1,3 +1,16 @@
+import logging
+
+# Configure logging to file
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("app_debug.log", mode='w')
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # === Ensure project root is in Python path ===
 import sys
 import time
@@ -41,6 +54,15 @@ import os
 os.environ.setdefault("STREAMLIT_SERVER_ENABLECORS", "true")
 log_profile("Importing streamlit...")
 import streamlit as st
+
+# Temporary cache clear to resolve unhashable dict error from previous sessions
+if "cache_cleared" not in st.session_state:
+    try:
+        st.cache_data.clear()
+        st.cache_resource.clear()
+        st.session_state["cache_cleared"] = True
+    except Exception:
+        pass
 
 log_profile("Importing orchestration...")
 from orchestration.orchestrate_workflow import run_workflow, orchestrate_workflow
@@ -320,160 +342,114 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
             st.rerun()
 
     elif add_mode == "Connect API":
-        from config.api_presets import API_PRESETS
+        st.caption("Load data directly from external sources")
+        source = st.selectbox("Source", ["FRED (Econ)", "World Bank", "Custom / Generic API"], key="side_connect_source")
         
-        # Preset selection
-        presets = list(API_PRESETS.keys())
-        presets.insert(0, "Custom URL")
-        
-        preset_choice = st.selectbox("Connector", presets, format_func=lambda x: API_PRESETS[x]["name"] if x in API_PRESETS else x)
-        
-        api_url = ""
-        endpoint = ""
-        params_str = "{}"
-        enable_auth = False
-        headers_str = "{}"
-        
-        if preset_choice != "Custom URL":
-            p_config = API_PRESETS[preset_choice]
-            st.caption(p_config["description"])
-            api_url = p_config["base_url"]
-            
-            # Auth UI
-            auth_meta = p_config.get("auth", {})
-            if auth_meta.get("type") == "api_key":
-                 env_var = auth_meta.get("env_var")
-                 signup_url = auth_meta.get("signup_url")
-                 
-                 has_key = env_var and os.getenv(env_var)
-                 
-                 if env_var and not has_key:
-                     st.warning(f"⚠️ {preset_choice} requires an API Key")
-                     if signup_url:
-                         st.markdown(f"[🔑 **Get Free API Key**]({signup_url})")
-                     
-                     col_k1, col_k2 = st.columns([3, 1])
-                     with col_k1:
-                        manual_key = st.text_input("Enter API Key", type="password")
-                     with col_k2:
-                        save_key = st.checkbox("Save")
-                     
-                     if manual_key and save_key and key_store:
-                         # normalize service name
-                         svc_name = preset_choice.lower()
-                         if "fred" in svc_name: svc_name = "fred"
-                         if "alpha" in svc_name: svc_name = "alphavantage"
-                         
-                         key_store.save_key(svc_name, manual_key)
-                         st.success("Saved!")
-                         time.sleep(1) # feedback
-                         st.rerun()
-                         
-                 elif env_var:
-                     st.success(f"✅ Key found in environment")
-                     # Option to clear/update?
-                     if st.checkbox("Update Key", key=f"upd_{preset_choice}"):
-                         new_key = st.text_input("New Key", type="password")
-                         if st.button("Save New Key"):
-                             svc_name = preset_choice.lower()
-                             if "fred" in svc_name: svc_name = "fred"
-                             if "alpha" in svc_name: svc_name = "alphavantage"
-                             key_store.save_key(svc_name, new_key)
-                             st.rerun()
-            
-            # Endpoints
-            if "endpoints" in p_config:
-                 ep_choices = list(p_config["endpoints"].keys())
-                 ep_selection = st.selectbox("Indicator", ep_choices)
-                 ep_meta = p_config["endpoints"][ep_selection]
-                 endpoint = ep_meta["path"]
-                 st.caption(ep_meta.get("description", ""))
-                 if "params" in ep_meta:
-                     import json
-                     params_str = json.dumps(ep_meta["params"])
-            else:
-                 endpoint = st.text_input("Endpoint")
-
-        else:
-            api_url = st.text_input("Base URL")
-            endpoint = st.text_input("Endpoint")
-            enable_auth = st.checkbox("Auth")
-            if enable_auth:
-                 token = st.text_input("Token", type="password")
-        
-        dataset_name = st.text_input("Save as (Name)", value=f"{preset_choice}_data" if preset_choice != "Custom URL" else "api_data")
-
-        if st.button("Fetch"):
-            import asyncio
-            from mcp_server.tools.connectors import ConnectAPITool, FetchAPIDataTool
-            from mcp_server.session import MCPSession
-            
-            temp_sess = MCPSession("temp_dash")
-            
-            status_cont = st.empty()
-            status_cont.info("Connecting...")
-            
-            c = ConnectAPITool()
-            c_args = {}
-            if preset_choice != "Custom URL":
-                c_args["preset"] = preset_choice
-                # If manual key provided for preset
-                if 'manual_key' in locals() and manual_key:
-                     c_args["auth"] = {
-                         "type": "api_key", 
-                         "token": manual_key, 
-                         "header_name": API_PRESETS[preset_choice]["auth"].get("param_name", "X-API-Key")
-                     }
-            else:
-                c_args["url"] = api_url
-                if enable_auth and 'token' in locals():
-                     c_args["auth"] = {"type": "bearer", "token": token}
-
+        if source == "FRED (Econ)":
             try:
-                # Run sync wrapper for async
-               def run_async(coro):
-                   loop = asyncio.new_event_loop()
-                   asyncio.set_event_loop(loop)
-                   return loop.run_until_complete(coro)
+                from public_data.connectors import FREDConnector
+                fred = FREDConnector()
+                series = [s.id for s in fred.get_available_series()]
+                selected_series = st.multiselect("Select Series", series, default=["GDP"], key="side_fred_sel")
+                if st.button("Load FRED Data", key="side_load_fred"):
+                    with st.spinner("Fetching..."):
+                        loaded_count = 0
+                        for s_id in selected_series:
+                            try:
+                                df = fred.fetch_data(s_id)
+                                if not df.empty:
+                                    st.session_state["datasets"][f"FRED_{s_id}"] = df
+                                    # Set last one as primary for immediate view
+                                    st.session_state["primary_dataset_id"] = f"FRED_{s_id}"
+                                    loaded_count += 1
+                            except Exception as e:
+                                st.error(f"Failed to load {s_id}: {e}")
+                        
+                        if loaded_count > 0:
+                            st.success(f"Successfully loaded {loaded_count} datasets")
+                            time.sleep(1)
+                            st.rerun()
+                            
+            except ImportError:
+                st.error("FRED connector missing")
 
-               # Connect
-               res = run_async(c.execute(c_args, session=temp_sess))
-               if not res["success"]:
-                   status_cont.error(f"Connect failed: {res.get('error')}")
-               else:
-                   conn_id = res["data"]["connection_id"]
-                   status_cont.info(f"Connected! Fetching {endpoint}...")
-                   
-                   # Fetch
-                   f = FetchAPIDataTool()
-                   p_dict = json.loads(params_str)
-                   
-                   # Use the human-readable label as the context for why/what this data is
-                   context_label = f"Indicator: {endpoint} ({dataset_name})"
-                   # If we have the full indicator object from presets, use its name 
-                   
-                   f_res = run_async(f.execute({
-                       "connection_id": conn_id,
-                       "endpoint": endpoint,
-                       "params": p_dict,
-                       "save_as": dataset_name,
-                       "context": context_label
-                   }, session=temp_sess))
-                   
-                   if f_res["success"]:
-                       new_df = temp_sess.get_dataset(dataset_name)
-                       if new_df is not None:
-                           st.session_state["datasets"][dataset_name] = new_df
-                           if not st.session_state["primary_dataset_id"]:
-                               st.session_state["primary_dataset_id"] = dataset_name
-                           status_cont.success("Success!")
-                           time.sleep(1)
-                           st.rerun()
-                   else:
-                       status_cont.error(f"Fetch failed: {f_res.get('error')}")
+        elif source == "World Bank":
+             try:
+                from public_data.connectors import WorldBankConnector
+                wb = WorldBankConnector()
+                indicators = [s.id for s in wb.get_available_series()]
+                selected_inds = st.multiselect("Select Indicators", indicators, default=["NY.GDP.MKTP.KD.ZG"], key="side_wb_sel")
+                country = st.text_input("Country Code", "USA", key="side_wb_country")
+                
+                if st.button("Load World Bank Data", key="side_load_wb"):
+                     with st.spinner("Fetching..."):
+                        loaded_count = 0
+                        for ind in selected_inds:
+                            try:
+                                new_df = wb.fetch_data(ind, countries=country)
+                                if not new_df.empty:
+                                     name = f"WB_{ind}_{country}"
+                                     st.session_state["datasets"][name] = new_df
+                                     st.session_state["primary_dataset_id"] = name
+                                     loaded_count += 1
+                            except Exception as e:
+                                st.error(f"Failed to load {ind}: {e}")
+                                
+                        if loaded_count > 0:
+                             st.success(f"Loaded {loaded_count} datasets")
+                             time.sleep(1)
+                             st.rerun()
+             except ImportError:
+                  st.error("World Bank connector missing")
+                  
+        elif source == "Custom / Generic API":
+            api_url = st.text_input("API URL", "https://api.coindesk.com/v1/bpi/currentprice.json")
+            method = st.selectbox("Method", ["GET", "POST"])
+            headers_str = st.text_area("Headers (JSON)", "{}")
+            data_key = st.text_input("Data Key (JSON path to entries)", value=None, help="If response is {data: [...]}, enter 'data'")
+            
+            if st.button("Fetch Custom API"):
+                try:
+                    import requests
+                    import json
+                    headers = json.loads(headers_str)
+                    
+                    with st.spinner(f"Fetching {api_url}..."):
+                        if method == "GET":
+                            resp = requests.get(api_url, headers=headers)
+                        else:
+                            resp = requests.post(api_url, headers=headers)
+                            
+                        resp.raise_for_status()
+                        data_json = resp.json()
+                        
+                        # Extract list if key provided
+                        if data_key and data_key in data_json:
+                            data_json = data_json[data_key]
+                            
+                        # Convert to DataFrame
+                        if isinstance(data_json, dict):
+                            # Try to normalize
+                            df = pd.json_normalize(data_json)
+                        elif isinstance(data_json, list):
+                            df = pd.DataFrame(data_json)
+                        else:
+                            st.error("Could not parse response into DataFrame")
+                            df = pd.DataFrame()
+                            
+                        if not df.empty:
+                            from preprocessing.data_cleaning import standardize_dataframe
+                            df = standardize_dataframe(df)
+                            name = "API_Custom_Data"
+                            st.session_state["datasets"][name] = df
+                            st.session_state["primary_dataset_id"] = name
+                            st.success("Loaded Custom Data")
+                            st.rerun()
+                            
+                except Exception as e:
+                    st.error(f"API Error: {e}")
 
-            except Exception as e:
-                status_cont.error(f"Error: {e}")
+
 
     elif add_mode == "Sample Data":
         from preprocessing.data_cleaning import standardize_dataframe
@@ -531,7 +507,19 @@ with explore_tab:
         # Get metadata for the current dataset
         dataset_id = st.session_state.get("primary_dataset_id")
         current_meta = st.session_state.get("dataset_metadata", {}).get(dataset_id, {})
-        render_exploratory_tab(data, meta=current_meta)
+        
+        # Include dataset name in context - helps LLM infer data domain
+        # e.g., "fred_data" implies Federal Reserve Economic Data
+        context_parts = []
+        if dataset_id:
+            context_parts.append(f"Dataset name: {dataset_id}")
+        if current_meta.get("context"):
+            context_parts.append(current_meta.get("context"))
+        elif current_meta.get("description"):
+            context_parts.append(current_meta.get("description"))
+        context_str = ". ".join(context_parts)
+        
+        render_exploratory_tab(data, context=context_str)
     except Exception as e:
         st.error(f"⚠️ Exploratory analysis encountered an issue: {str(e)}")
         st.info("Try refreshing the page or uploading a different dataset.")
@@ -545,6 +533,23 @@ with action_tab:
 
 with llm_tab:
     render_llm_settings()
+    
+    # Learning Progress gamification widget
+    st.divider()
+    try:
+        from ui.learning_progress import render_learning_progress
+        render_learning_progress(compact=False)
+    except ImportError:
+        pass  # Module not yet available
+        
+    st.divider()
+    
+    # Teaching Mode Integration
+    try:
+        from ui.teach_logic import render_teaching_mode
+        render_teaching_mode()
+    except ImportError:
+        st.info("Teaching module not loaded.")
 
 # Suggest analyses based on data
 if "analysis_suggestions" not in st.session_state:
@@ -578,10 +583,207 @@ if st.session_state.get("show_column_review"):
         st.session_state["user_roles"] = new_roles
         store_role_corrections(data, new_roles)
 
-# Put chatbot in the chat tab
+# Put integrated chat in the chat tab (using new chat_mode.py components)
 with chat_tab:
-    st.write("Chat with your data below.")
-    chatbot_interface(data, visualizations, models, prefill=st.session_state.pop("suggestion", None))
+    st.subheader("💬 Chat with Your Data")
+    
+    # Initialize chat state
+    if "dashboard_chat_messages" not in st.session_state:
+        st.session_state.dashboard_chat_messages = []
+        
+
+    
+    # Import chat mode functions and logger
+    try:
+        from ui.chat_logic import (
+            detect_intent, generate_visualization_code, generate_analysis_code, generate_informational_response,
+            safe_execute, safe_execute_viz, generate_natural_answer, 
+            fallback_visualization, is_llm_ready
+        )
+        from llm_learning.interaction_logger import get_interaction_logger, InteractionType
+        interaction_logger = get_interaction_logger()
+        chat_available = True
+    except ImportError as e:
+        chat_available = False
+        interaction_logger = None
+        st.warning(f"Chat functionality not available: {e}")
+    
+    # First-run tutorial for LLM Learning
+    if "seen_learning_tutorial" not in st.session_state:
+        st.session_state.seen_learning_tutorial = False
+    
+    if not st.session_state.seen_learning_tutorial:
+        with st.expander("🎓 **New! Your LLM Gets Smarter Over Time**", expanded=True):
+            st.markdown("""
+            **Minerva now learns from your interactions!**
+            
+            - 💬 **Chat naturally** - Every question helps improve responses
+            - ⭐ **Rate answers** - Your ratings train the model on what works
+            - 📊 **Track progress** - See your LLM's learning journey in the **LLM Settings** tab
+            
+            The more you use Minerva, the smarter it becomes for *your* data patterns!
+            """)
+            if st.button("Got it!", key="dismiss_tutorial"):
+                st.session_state.seen_learning_tutorial = True
+                st.rerun()
+    
+    if chat_available:
+        llm_ready = is_llm_ready()
+        
+        if not llm_ready:
+            st.warning("⚠️ LLM unavailable — configure one in the LLM Settings tab")
+        
+        # Build rich context from all available sources
+        dataset_id = st.session_state.get("primary_dataset_id", "")
+        context_parts = []
+        if dataset_id:
+            context_parts.append(f"Active Dataset: {dataset_id}")
+            # Add dataframe schema if available
+            if dataset_id in st.session_state.get("datasets", {}):
+                df = st.session_state["datasets"][dataset_id]
+                schema_str = f"Columns: {', '.join(df.columns)}\nTypes: {df.dtypes.to_dict()}\nSample:\n{df.head(3).to_string()}"
+                context_parts.append(schema_str)
+        
+        # Include AI Summary if already generated
+        ai_summary = st.session_state.get("ai_summary")
+        if ai_summary:
+            context_parts.append(f"AI Summary: {ai_summary}")
+        # Include chart suggestions context if available
+        chart_data = st.session_state.get("chart_suggestions", {})
+        if "suggestions" in chart_data and chart_data["suggestions"]:
+            sugs = [s.get("title", "") for s in chart_data["suggestions"][:3]]
+            context_parts.append(f"Suggested visualizations: {', '.join(sugs)}")
+        
+        chat_context = ". ".join(context_parts)
+        
+        # Display chat history
+        for msg in st.session_state.dashboard_chat_messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+                if "data" in msg and msg["data"] is not None:
+                    if hasattr(msg["data"], 'show'):  # Plotly figure
+                        st.plotly_chart(msg["data"], use_container_width=True)
+                    elif isinstance(msg["data"], pd.DataFrame):
+                        st.dataframe(msg["data"])
+                    else:
+                        st.write(msg["data"])
+        
+        # Chat input
+        if prompt := st.chat_input("Ask about your data..."):
+            st.session_state.dashboard_chat_messages.append({"role": "user", "content": prompt})
+            
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            with st.chat_message("assistant"):
+                if not llm_ready:
+                    response = "⚠️ LLM not configured. Go to LLM Settings tab to set up a model."
+                    st.markdown(response)
+                    st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                else:
+                    with st.spinner("Thinking..."):
+                        intent = detect_intent(prompt, context=chat_context)
+                        
+                        if intent == "visualization":
+                            code = generate_visualization_code(data, prompt, context=chat_context)
+                            fig = None
+                            if code:
+                                success, fig, error = safe_execute_viz(code, data)
+                            if not fig:
+                                fig = fallback_visualization(data, prompt)
+                            
+                            if fig:
+                                st.markdown("Here's your visualization:")
+                                st.plotly_chart(fig, use_container_width=True)
+                                st.session_state.dashboard_chat_messages.append({
+                                    "role": "assistant", "content": "Here's your visualization:", "data": fig
+                                })
+                                # Log successful interaction
+                                if interaction_logger:
+                                    interaction_logger.log(
+                                        prompt=prompt,
+                                        response="Visualization created",
+                                        interaction_type=InteractionType.VISUALIZATION,
+                                        code_generated=code or "",
+                                        execution_success=True,
+                                        dataset_name=st.session_state.get("primary_dataset_id", "")
+                                    )
+                            else:
+                                response = "I couldn't create that visualization. Try 'show a bar chart of X'."
+                                st.markdown(response)
+                                st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                                # Log failed interaction
+                                if interaction_logger:
+                                    interaction_logger.log(
+                                        prompt=prompt,
+                                        response=response,
+                                        interaction_type=InteractionType.VISUALIZATION,
+                                        code_generated=code or "",
+                                        execution_success=False,
+                                    dataset_name=st.session_state.get("primary_dataset_id", "")
+                                    )
+                        
+                        elif intent == "informational":
+                            response = generate_informational_response(prompt, context=chat_context)
+                            if not response:
+                                response = "⚠️ I'm unable to generate a response right now. Please check if the LLM is running correctly."
+                            st.markdown(response)
+                            st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                            
+                            # Log informational interaction
+                            if interaction_logger:
+                                interaction_logger.log(
+                                    prompt=prompt,
+                                    response=response,
+                                    interaction_type=InteractionType.CHAT,
+                                    dataset_name=st.session_state.get("primary_dataset_id", "")
+                                )
+                            
+                        else:
+                            code = generate_analysis_code(data, prompt, context=chat_context)
+                            if code:
+                                success, result, error = safe_execute(code, data)
+                                if success:
+                                    natural = generate_natural_answer(prompt, result)
+                                    response = natural or "Here's what I found:"
+                                    st.markdown(response)
+                                    if result is not None:
+                                        if isinstance(result, pd.DataFrame):
+                                            st.dataframe(result)
+                                        else:
+                                            st.write(result)
+                                    st.session_state.dashboard_chat_messages.append({
+                                        "role": "assistant", "content": response, "data": result
+                                    })
+                                    # Log successful analysis
+                                    if interaction_logger:
+                                        interaction_logger.log(
+                                            prompt=prompt,
+                                            response=response,
+                                            interaction_type=InteractionType.ANALYSIS,
+                                            code_generated=code,
+                                            execution_success=True,
+                                            dataset_name=st.session_state.get("primary_dataset_id", "")
+                                        )
+                                else:
+                                    response = f"Error: {error}"
+                                    st.markdown(response)
+                                    st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                                    # Log failed analysis
+                                    if interaction_logger:
+                                        interaction_logger.log(
+                                            prompt=prompt,
+                                            response=response,
+                                            interaction_type=InteractionType.ANALYSIS,
+                                            code_generated=code,
+                                            execution_success=False,
+                                            dataset_name=st.session_state.get("primary_dataset_id", "")
+                                        )
+                            else:
+                                response = "I couldn't understand that. Try rephrasing your question."
+                                st.markdown(response)
+                                st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                    st.rerun()
 
 # Rating widget
 st.subheader("Rate the results")

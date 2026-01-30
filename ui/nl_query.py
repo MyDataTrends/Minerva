@@ -26,11 +26,55 @@ def _get_llm_response(prompt: str, max_tokens: int = 1024) -> str:
     return ""
 
 
+
+# ============================================================================
+# Learning System Integration
+# ============================================================================
+
+@st.cache_resource
+def init_learning_system():
+    """Initialize vector store and logger."""
+    try:
+        from learning.vector_store import VectorStore
+        from learning.embeddings import EmbeddingModel
+        from learning.interaction_logger import InteractionLogger
+        
+        vs = VectorStore()
+        emb = EmbeddingModel()
+        logger = InteractionLogger()
+        return vs, emb, logger
+    except Exception as e:
+        # Silent failure for dashboard components
+        return None, None, None
+
+def get_rag_context(query: str) -> str:
+    """Retrieve similar code examples for the query."""
+    vs, emb, _ = init_learning_system()
+    if not vs or not emb:
+        return ""
+        
+    try:
+        vector = emb.embed_query(query)
+        results = vs.search(vector, limit=2, threshold=0.7)
+        if not results:
+            return ""
+            
+        examples_str = "\nRELEVANT EXAMPLES:\n"
+        for res in results:
+            examples_str += f"- Intent: {res['intent']}\n  Code:\n{res['code']}\n"
+        return examples_str
+    except Exception:
+        return ""
+
+
 def _generate_code_for_query(df: pd.DataFrame, query: str) -> str:
     """Generate pandas code to answer a natural language query."""
     columns = df.columns.tolist()
     dtypes = {col: str(df[col].dtype) for col in columns}
     sample = df.head(3).to_dict()
+    
+    # RAG Injection
+    rag_context = get_rag_context(query)
     
     prompt = f"""You are a data analyst. Generate Python pandas code to answer this question.
 
@@ -41,6 +85,7 @@ DATAFRAME INFO:
 - Sample: {sample}
 
 QUESTION: {query}
+{rag_context}
 
 Generate ONLY the Python code (no markdown, no explanation). The code should:
 1. Use the 'df' variable
@@ -78,7 +123,7 @@ def _safe_execute_code(code: str, df: pd.DataFrame) -> tuple:
     # Remove markdown code blocks if present
     if code.startswith("```"):
         lines = code.split("\n")
-        code = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+        code = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
     
     # Security checks
     dangerous_patterns = [
@@ -174,6 +219,15 @@ def render_nl_query_panel(df: pd.DataFrame):
             success, result, error = _safe_execute_code(generated_code, df)
             
             if success:
+                # Implicit Logging
+                _, _, logger = init_learning_system()
+                if logger:
+                    logger.log_interaction(
+                        messages=[{"role": "user", "content": query}, {"role": "assistant", "content": generated_code}],
+                        metadata={"type": "analysis", "code": generated_code},
+                        success=True
+                    )
+                
                 # Generate natural answer
                 natural_answer = _generate_natural_answer(df, query, result)
                 
@@ -241,6 +295,9 @@ def render_chart_from_description(df: pd.DataFrame):
             columns = df.columns.tolist()
             dtypes = {col: str(df[col].dtype) for col in columns}
             
+            # RAG Injection for charts
+            rag_context = get_rag_context(description)
+            
             prompt = f"""Generate Python code to create a Plotly chart based on this description.
 
 DATAFRAME (df):
@@ -248,6 +305,7 @@ DATAFRAME (df):
 - Types: {dtypes}
 
 DESCRIPTION: {description}
+{rag_context}
 
 Generate ONLY Python code that:
 1. Uses 'df' variable
@@ -298,6 +356,15 @@ Code:"""
                 
                 if namespace.get("fig"):
                     st.plotly_chart(namespace["fig"], width="stretch")
+                    
+                    # Implicit Logging
+                    _, _, logger = init_learning_system()
+                    if logger:
+                        logger.log_interaction(
+                            messages=[{"role": "user", "content": description}, {"role": "assistant", "content": code}],
+                            metadata={"type": "visualization", "code": code},
+                            success=True
+                        )
                 else:
                     st.error("Chart generation failed - no figure created")
             except SyntaxError as e:

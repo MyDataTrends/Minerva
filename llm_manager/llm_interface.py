@@ -69,23 +69,24 @@ def get_llm_completion(
     except Exception as e:
         logger.error(f"LLM Manager error: {e}")
     
-    # Fallback: Try subprocess directly with first gguf file found
-    try:
-        from pathlib import Path
-        from llm_manager.subprocess_manager import get_llm_subprocess
-        
-        model_dir = Path(__file__).resolve().parents[1] / "adm" / "llm_backends" / "local_model"
-        gguf_files = list(model_dir.glob("*.gguf"))
-        
-        if gguf_files:
-            subprocess_mgr = get_llm_subprocess()
-            if subprocess_mgr.load_model(str(gguf_files[0])):
-                result = subprocess_mgr.complete(prompt, max_tokens=max_tokens, temperature=temperature)
-                if result:
-                    return result
-    except Exception as e:
-        logger.error(f"Subprocess fallback error: {e}")
-    #     logger.debug(f"Fallback LLM not available: {e}")
+    # Fallback: Only try subprocess if NO active model is configured (first run scenario)
+    if not active_model:
+        try:
+            from pathlib import Path
+            from llm_manager.subprocess_manager import get_llm_subprocess
+            
+            model_dir = Path(__file__).resolve().parents[1] / "adm" / "llm_backends" / "local_model"
+            gguf_files = list(model_dir.glob("*.gguf"))
+            
+            if gguf_files:
+                logger.info(f"No active model config, falling back to found model: {gguf_files[0].name}")
+                subprocess_mgr = get_llm_subprocess()
+                if subprocess_mgr.load_model(str(gguf_files[0])):
+                    result = subprocess_mgr.complete(prompt, max_tokens=max_tokens, temperature=temperature)
+                    if result:
+                        return result
+        except Exception as e:
+            logger.error(f"Subprocess fallback error: {e}")
     
     return ""
 

@@ -53,6 +53,7 @@ class ModelRegistry:
         self._models: Dict[str, ModelInfo] = {}
         self._active_model_id: Optional[str] = None
         self._active_provider: Optional[LLMProvider] = None
+        self.n_gpu_layers: int = 0
         self._initialized = True
         
         # Load saved config
@@ -70,6 +71,7 @@ class ModelRegistry:
                 with open(CONFIG_FILE) as f:
                     config = json.load(f)
                     self._active_model_id = config.get("active_model")
+                    self.n_gpu_layers = config.get("n_gpu_layers", 0)
             except Exception as e:
                 logger.warning(f"Failed to load LLM config: {e}")
     
@@ -79,6 +81,7 @@ class ModelRegistry:
         try:
             config = {
                 "active_model": self._active_model_id,
+                "n_gpu_layers": self.n_gpu_layers,
             }
             with open(CONFIG_FILE, "w") as f:
                 json.dump(config, f, indent=2)
@@ -245,7 +248,7 @@ class ModelRegistry:
         try:
             if model_info.provider_type == ProviderType.LOCAL:
                 from llm_manager.providers.local import LocalProvider
-                return LocalProvider(model_info)
+                return LocalProvider(model_info, n_gpu_layers=self.n_gpu_layers)
             
             elif model_info.provider_type == ProviderType.OPENAI:
                 from llm_manager.providers.openai_provider import OpenAIProvider

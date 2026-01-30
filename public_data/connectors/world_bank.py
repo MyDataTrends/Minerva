@@ -175,12 +175,14 @@ class WorldBankConnector(DataConnector):
             response.raise_for_status()
             data = response.json()
             
-            # World Bank returns [metadata, data] array
-            if not data or len(data) < 2 or not data[1]:
-                logger.warning(f"No data in World Bank response for {series_id}")
-                return pd.DataFrame()
+            # Use recursive table finder to locate the actual data
+            from preprocessing.data_cleaning import find_table_data
             
-            observations = data[1]
+            observations = find_table_data(data)
+            
+            if not observations:
+                logger.warning(f"No table data found in World Bank response for {series_id}")
+                return pd.DataFrame()
             
             # Extract relevant fields
             records = []

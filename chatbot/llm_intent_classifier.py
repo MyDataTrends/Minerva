@@ -1,40 +1,28 @@
 import json
 import logging
-from functools import lru_cache
 from typing import Dict
 
-from preprocessing.llm_preprocessor import load_mistral_model, run_mistral_inference
+from llm_manager.llm_interface import get_llm_completion
 from preprocessing.sanitize import redact
 from config import (
-    MISTRAL_MODEL_PATH,
     LLM_INTENT_TOKEN_BUDGET,
     LLM_INTENT_TEMPERATURE,
 )
 
 _logger = logging.getLogger(__name__)
 
-@lru_cache(maxsize=1)
-def _load_model():
-    """Load and cache the local Mistral model."""
-    return load_mistral_model(MISTRAL_MODEL_PATH)
-
 
 def _query_llm(prompt: str):
     """Query the LLM if available, otherwise return an error structure."""
-    model = _load_model()
-    if model is None:
-        return {"status": "error", "reason": "LLM unavailable: model not loaded"}
-
-    resp = run_mistral_inference(
-        model,
-        input=redact(prompt),
+    resp = get_llm_completion(
+        redact(prompt),
         max_tokens=LLM_INTENT_TOKEN_BUDGET,
         temperature=LLM_INTENT_TEMPERATURE,
     )
-    if isinstance(resp, str) and (
-        resp == "LLM unavailable" or resp.startswith("LLM error")
-    ):
-        return {"status": "error", "reason": resp}
+    
+    if not resp or resp.startswith("LLM error"):
+        return {"status": "error", "reason": resp or "LLM unavailable"}
+    
     return resp
 
 

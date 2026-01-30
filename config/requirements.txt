@@ -37,6 +37,7 @@ responses
 moto
 pillow
 selenium
+fastembed>=0.2.0
 
 # Security pins for transitive dependencies (Snyk CVE fixes)
 urllib3>=2.6.3

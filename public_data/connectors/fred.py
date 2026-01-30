@@ -235,11 +235,14 @@ class FREDConnector(DataConnector):
             response.raise_for_status()
             data = response.json()
             
-            if "observations" not in data:
-                logger.warning(f"No observations in FRED response for {series_id}")
-                return pd.DataFrame()
+            # Use recursive table finder to locate the actual data
+            from preprocessing.data_cleaning import find_table_data
             
-            observations = data["observations"]
+            observations = find_table_data(data)
+            
+            if not observations:
+                logger.warning(f"No table data found in FRED response for {series_id}")
+                return pd.DataFrame()
             
             df = pd.DataFrame(observations)
             

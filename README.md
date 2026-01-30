@@ -1,263 +1,116 @@
-# Minerva – Modular Data Analysis Platform
+# Minerva: The Local, Trainable AI Analyst
 
-Minerva ingests user data, enriches it with public datasets, selects a suitable analysis path, trains a model when appropriate, and renders results in a Streamlit dashboard and a small FastAPI service.
+Minerva is a privacy-first data analysis platform that runs **entirely on your local machine**.
+It combines the power of **Large Language Models (LLMs)** with **Deterministic Python Code Execution** to give you an AI analyst that you can actually trust.
 
-This refactor clarifies module boundaries, improves performance, and adds backward-compatible shims to ease migration.
+![Dashboard](https://via.placeholder.com/800x400?text=Minerva+Dashboard+Screenshot)
 
-## What’s new (refactor highlights)
+## 🚀 Why Minerva?
 
-- **Structure**
+### 1. 🔒 Privacy First (Local)
 
-  - `orchestration/analysis_selector.py` now owns analyzer selection. A shim at project root re-exports `select_analyzer`.
+Unlike web-based tools (ChatGPT, Julius AI), Minerva runs on your hardware.
 
-  - `integration/semantic_merge.py` contains semantic merge logic. `Integration/semantic_integration.py` is now a documented compatibility shim with a deprecation warning.
+- **No data leaves your machine.**
+- Great for sensitive financial, healthcare, or proprietary data.
+- Supports **GPU Acceleration** (CUDA) for real-time performance.
 
-  - Analyzers live under `modeling/analyzers/` with shims in old locations.
+### 2. 🧠 Trainable Memory (The "Teach" Button)
 
-- **Reliability**
+Minerva doesn't just chat; it learns.
 
-  - Models persist per run at `models/<run_id>/best_model` and are loaded reliably on reruns.
+- Use **Teaching Mode** to save specific business logic (e.g., "This is how we calculate Churn").
+- These skills are stored in a local **Vector Database** (`.vector_store`).
+- Next time you ask, it retrieves *your* specific formula, not a generic one.
 
-- **Correctness**
+### 3. 🔌 Auto-Enrichment
 
-  - Categorical encoding only applies to object dtype columns; numeric columns are no longer encoded as categories.
+Stop downloading CSVs manually. Minerva automatically connects your data to public sources:
 
-  - The model wrapper now passes through DataFrame inputs to `predict`.
+- **World Bank** (GDP, Population)
+- **FRED** (Interest Rates, Inflation)
+- **Census Bureau** (Demographics)
+- **Alpha Vantage** (Stock Prices)
 
-- **Performance**
+It uses **Semantic Matching** to find the right join keys (Zip/FIPS/ISO) automatically.
 
-  - Quick model search uses parallel CV (`ML_N_JOBS`), histogram tree method for XGBoost, and reasonable estimator counts.
+---
 
-## Quick start
+## 🛠️ Installation
 
-1) Install dependencies
+### Prerequisites
 
-   - pip
+- **OS**: Windows, Linux, or Mac
+- **Python**: 3.10+
+- **GPU (Recommended)**: NVIDIA GPU with CUDA 12+ (for fast inference)
 
-     ```bash
-     python -m venv venv && . venv/bin/activate
-     pip install -r requirements.txt
-     ```
+### Quick Start
 
-   - conda
+1. **Clone & Install**
 
-     ```bash
-     conda env create -f environment.yml
-     conda activate my_env
-     ```
+    ```powershell
+    git clone https://github.com/your-repo/minerva.git
+    cd minerva
+    python -m venv .venv
+    .venv\Scripts\Activate.ps1
+    pip install -r config/requirements.txt
+    ```
 
-2) Optional: ingest sample data and build semantic index
+2. **Enable GPU (Optional but Recommended)**
+    If you have an NVIDIA GPU, install the CUDA-enabled engine:
 
-   ```bash
-   python -m Data_Intake.datalake_ingestion s3 --bucket my-bucket --prefix retail/ --dest datasets
-   # or
-   python -m Data_Intake.datalake_ingestion api https://example.com/data.csv --dest datasets
-   ```
+    ```powershell
+    $env:CMAKE_ARGS="-DGGML_CUDA=on"
+    pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+    ```
 
-3) Run tests and launch the dashboard
+3. **Run the Dashboard**
 
-   ```bash
-   pytest -q
-   streamlit run ui/dashboard.py
-   ```
+    ```powershell
+    python -m streamlit run ui/dashboard.py
+    ```
 
-4) View session history
+---
 
-   ```bash
-   streamlit run ui/session_history.py
-   ```
+## 🏗️ Architecture
 
-## Directory overview
+Minerva follows a modular "Model Context Protocol" (MCP) design:
 
-- `orchestration/` – preprocessing, enrichment, analyzer selection, output generation, agent triggers
+- **`ui/`**: User Interfaces (Streamlit)
+  - `dashboard.py`: Main entry point.
+  - `chat_logic.py`: "Smart Routing" intent classifier (Code vs. Text).
+  - `teach_logic.py`: Interface for saving new skills to memory.
+- **`llm_manager/`**: The Brain.
+  - `subprocess_manager.py`: Runs Llama-3 in a detached process (prevents UI freezing).
+  - `providers/local.py`: Wraps `llama_cpp` execution.
+- **`learning/`**: Long-Term Memory.
+  - `vector_store.py`: SQLite + FastEmbed for storing user-taught skills.
+  - `interaction_logger.py`: Implicitly learns from your usage.
+- **`public_data/`**: External Connectors.
+  - `connectors/`: Clients for World Bank, FRED, etc.
+- **`orchestration/`**: The "Do-er".
+  - `analysis_router.py`: Decides which statistical model to run.
+  - `llm_dynamic_analyzer.py`: Generates safe Pandas code on the fly.
 
-- `integration/` – semantic dataset merge logic (`semantic_merge.py`)
+---
 
-- `modeling/` – analyzers, model selection/training, metrics
+## 💡 Key Features
 
-- `preprocessing/` – data cleaning, metadata parsing, LLM helpers
+| Feature | Description | Status |
+| :--- | :--- | :--- |
+| **Smart Routing** | Detects if you want a Chart (`viz`), a Calculation (`analysis`), or Text (`info`). | ✅ Active |
+| **Code Sandboxing** | All LLM-generated code is scanned for dangerous imports (`os`, `sys`) before running. | ✅ Active |
+| **Context Window** | Automatically injects dataframe schema + sample rows so the LLM knows your data. | ✅ Active |
+| **Project Memory** | "Teach" specific SQL queries or formulas once, use forever. | ✅ Active |
 
-- `storage/` – local and cloud storage helpers, session DB
+---
 
-- `ui/` – Streamlit dashboard and session history
+## ⚠️ Commercial Licensing
 
-- `Data_Intake/` – ingestion CLI for S3/API and semantic index build
+Minerva is **Open Core** software.
 
-- `config/` – env parsing and feature flags
+- **Personal License**: Free for individuals and students.
+- **Commercial License**: Required for business use.
+- **Enterprise Edition**: Includes Team Skill Sync (share your vector store) and SSO.
 
-- `tests/` – unit/integration tests
-
-- `docs/` – architecture, onboarding, and use cases documentation
-
-- `infra/environments` – Conda env specs
-
-- `infra/requirements` – pip requirement pins
-
-- `examples/` – runnable demos (e.g., `test_workflow_demo.py`, `imputation_confidence_demo.py`)
-
-- `tools/` – CLI utilities (e.g., `alignment_drift_monitor.py`)
-
-## Configuration
-
-Set in `.env` or environment variables. Key options:
-
-- General
-
-  - `LOCAL_DATA_DIR` (default: `local_data`)
-
-  - `LOG_LEVEL` (default: `INFO`), `LOG_FILE` (default: `app.log`)
-
-  - `LOG_DIR` (default: `logs`) – centralized log folder; logs go to `LOG_DIR/LOG_FILE`
-
-- Feature flags (config/feature_flags.py)
-
-  - `ALLOW_FULL_COMPARE_MODELS` (default: `False`) – restricts heavy model comparison runs (now using lightweight sklearn/xgboost/lightgbm stack)
-
-  - `MAX_ROWS_FIRST_PASS` (default: `25000`), `MAX_FEATURES_FIRST_PASS` (default: `100`)
-
-  - `MAX_ROWS_FULL` (default: `5000`, via env in analysis_router)
-
-  - `MODEL_TIME_BUDGET_SECONDS` (default: `60`)
-
-  - `ENABLE_HEAVY_EXPLANATIONS` (default: `False`)
-
-- Performance
-
-  - `ML_N_JOBS` (default: `-1`) – parallelism for quick model search and RandomForest
-
-- Free tier limits
-
-  - `MAX_REQUESTS_FREE` (default: `20`), `MAX_GB_FREE` (default: `1`)
-
-## How it works
-
-1) Ingest: `Data_Intake.datalake_ingestion` pulls data into `datasets/` and builds a semantic index.
-
-2) Orchestrate: `orchestrate_workflow.py` loads the file, runs light validation/cleaning, and optional diagnostics.
-
-3) Enrich: `integration.semantic_merge` ranks public tables and merges the best fit.
-
-4) Analyze: `orchestration.analysis_selector.select_analyzer` picks one Analyzer from the registry and runs it.
-
-5) Output: predictions, summaries, and artifacts are generated and stored; agents may trigger follow-ups.
-
-## Modeling policy and routing
-
-- `modeling/suitability_check.assess_modelability` does a cheap feasibility pass.
-
-- `orchestration.analysis_router.route_analysis` decides `no_model | baseline | full` based on stats, flags, row caps, and optional hints.
-
-- `modeling/model_selector.select_best_model` uses:
-
-  - Heavy compare only if `ALLOW_FULL_COMPARE_MODELS=True` and constrained by `MODEL_ALLOWLIST` (using lightweight sklearn/xgboost/lightgbm stack).
-
-  - Otherwise, a fast CV sweep over a small curated candidate set.
-
-## API (FastAPI)
-
-- `GET /healthz` – service health
-
-- `GET /sessions` – list recent sessions
-
-- `GET /sessions/{run_id}` – fetch one
-
-- `POST /sessions/{run_id}/rerun` – rerun a session
-
-Run locally:
-
-```bash
-uvicorn main:app --reload
-```
-
-## Fresh setup (Windows + VS Code)
-
-- Create venv and activate
-
-  - `python -m venv .venv`
-
-  - `\.venv\Scripts\Activate.ps1`
-
-- Install dependencies
-
-  - `pip install -r infra\requirements\requirements.txt`
-
-- Configure env
-
-  - `copy config/.env.example config/.env` and edit (set `LOG_DIR`, `LOCAL_DATA_DIR`, etc.)
-
-- Run tests
-
-  - `pytest -q`
-
-- Demos
-
-  - `python -m examples.test_workflow_demo`
-
-  - `python -m examples.imputation_confidence_demo`
-
-- Services
-
-  - API: `uvicorn main:app --reload`
-
-  - Dashboard: `streamlit run ui\dashboard.py`
-
-See `docs/Onboarding_Windows.md` for a detailed walkthrough and `docs/Use_Cases.md` for common scenarios.
-
-## CLI flags (mirrored to env vars)
-
-- `--no-llm` → `ENABLE_LOCAL_LLM=0`
-
-- `--enable-prometheus` → `ENABLE_PROMETHEUS=1`
-
-- `--safe-logs` → `REDACTION_ENABLED=1`
-
-- `--dev-lenient` → `LOCAL_DEV_LENIENT=1`
-
-## Reruns and persistence
-
-- Best model is saved at `models/<run_id>/best_model`.
-
-- Reruns load the persisted model and re-evaluate metrics without retraining when possible.
-
-## Deprecations and migration notes
-
-- `Integration.semantic_integration` is deprecated in favor of `integration.semantic_merge`.
-
-  - A compatibility shim remains and emits a `DeprecationWarning`.
-
-- Analyzer files at `modeling/*_analyzer.py` re-export classes from `modeling/analyzers/`.
-
-- The top-level `analysis_selector.py` re-exports from `orchestration.analysis_selector`.
-
-## Development
-
-- Tests
-
-  ```bash
-  pytest -q
-  pytest tests/test_end_to_end_workflow.py
-  ```
-
-- Dashboard
-
-  ```bash
-  streamlit run ui/dashboard.py
-  ```
-
-## Example: end-to-end (Python)
-
-```python
-import pandas as pd
-from orchestrate_workflow import orchestrate_workflow
-
-datalake = {
-    "merge_df1.csv": pd.read_csv("datasets/merge_df1.csv"),
-    "merge_df2.csv": pd.read_csv("datasets/merge_df2.csv"),
-}
-result = orchestrate_workflow(
-    user_id="demo",
-    file_name="sample_dataset.csv",
-    datalake_dfs=datalake,
-)
-print(result.get("summary"))
-```
+*Built with ❤️ (and Llama 3) by the Minerva Team.*

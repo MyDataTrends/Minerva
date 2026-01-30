@@ -72,9 +72,18 @@ def _generate_dataset_summary(df: pd.DataFrame, context: str = "") -> str:
     
     context_str = f"Context: {context}\n" if context else ""
     
+    # Get a text sample of the data to help the AI infer meaning
+    try:
+        sample_str = df.head(3).to_markdown(index=False)
+    except ImportError:
+        sample_str = df.head(3).to_string(index=False)
+    
     prompt = f"""Provide a brief 2-3 sentence summary of this dataset:
 
 {context_str}Shape: {df.shape[0]} rows × {df.shape[1]} columns
+Sample Data:
+{sample_str}
+
 Columns:
 {chr(10).join(cols_info)}
 
@@ -108,7 +117,7 @@ Insight:"""
     return _get_ai_insight(prompt, max_tokens=150)
 
 
-def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
+def render_exploratory_tab(df: pd.DataFrame, context: str = ""):
     """Render the exploratory data analysis tab."""
     
     if not PLOTLY_AVAILABLE:
@@ -135,17 +144,7 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
     with st.expander("🤖 AI Dataset Summary", expanded=True):
         if st.button("Generate Summary", key="gen_summary"):
             with st.spinner("Generating AI summary..."):
-                # Try to find context/description for the current primary dataset
-                context_info = ""
-                try:
-                     # This is a bit tricky since we need the ID, not just the DF
-                     # Optimally we'd pass the meta in render_exploratory_tab
-                     if meta and isinstance(meta, dict):
-                          context_info = meta.get("context") or meta.get("description", "")
-                except Exception:
-                     pass
-
-                summary = _generate_dataset_summary(df, context=context_info)
+                summary = _generate_dataset_summary(df, context=context)
                 if summary:
                     st.session_state["ai_summary"] = summary
                 else:
@@ -162,24 +161,57 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
     
     # AI Chart Suggestions
     with st.expander("🎨 AI Chart Suggestions", expanded=False):
+        # Mode toggle
+        suggestion_mode = st.radio(
+            "Suggestion Mode", 
+            ["Smart (Fast)", "LLM (AI-Powered)"],
+            horizontal=True,
+            help="Smart uses rule-based analysis; LLM uses AI but is slower"
+        )
+        
         if st.button("Suggest Visualizations", key="suggest_charts"):
-            with st.spinner("AI is analyzing your data..."):
-                try:
-                    from llm_manager.llm_interface import suggest_visualizations, is_llm_available, get_active_model_name
-                    
-                    if not is_llm_available():
-                        st.session_state["chart_suggestions"] = {"error": "no_llm"}
-                    else:
-                        model_name = get_active_model_name()
-                        suggestions = suggest_visualizations(df)
+            with st.spinner("Analyzing your data..."):
+                if suggestion_mode == "Smart (Fast)":
+                    # Use rule-based smart chart selection
+                    try:
+                        from visualization.smart_charts import recommend_charts, render_recommendation
+                        recommendations = recommend_charts(df, max_recommendations=5)
                         st.session_state["chart_suggestions"] = {
-                            "model": model_name,
-                            "suggestions": suggestions
+                            "model": "Smart Charts (Rule-based)",
+                            "suggestions": [
+                                {
+                                    "type": rec.chart_type.value,
+                                    "x": rec.x_col,
+                                    "y": rec.y_col,
+                                    "title": rec.title,
+                                    "reason": rec.reason,
+                                    "confidence": rec.confidence,
+                                    "color": rec.color_col,
+                                    "_recommendation": rec  # Keep original for rendering
+                                }
+                                for rec in recommendations
+                            ]
                         }
-                except ImportError as e:
-                    st.session_state["chart_suggestions"] = {"error": f"import: {e}"}
-                except Exception as e:
-                    st.session_state["chart_suggestions"] = {"error": f"exception: {e}"}
+                    except Exception as e:
+                        st.session_state["chart_suggestions"] = {"error": f"Smart charts error: {e}"}
+                else:
+                    # Use LLM-based suggestions
+                    try:
+                        from llm_manager.llm_interface import suggest_visualizations, is_llm_available, get_active_model_name
+                        
+                        if not is_llm_available():
+                            st.session_state["chart_suggestions"] = {"error": "no_llm"}
+                        else:
+                            model_name = get_active_model_name()
+                            suggestions = suggest_visualizations(df)
+                            st.session_state["chart_suggestions"] = {
+                                "model": model_name,
+                                "suggestions": suggestions
+                            }
+                    except ImportError as e:
+                        st.session_state["chart_suggestions"] = {"error": f"import: {e}"}
+                    except Exception as e:
+                        st.session_state["chart_suggestions"] = {"error": f"exception: {e}"}
         
         # Display persisted suggestions
         chart_data = st.session_state.get("chart_suggestions", {})
@@ -214,10 +246,33 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                         y = sug.get('y')
                         
                         if x in df.columns:
+                            # Smart chart type detection for time series
+                            x_col = df[x]
+                            is_time_series = False
+                            
+                            # Check if x looks like time data
+                            if 'date' in x.lower() or 'time' in x.lower() or 'year' in x.lower():
+                                is_time_series = True
+                            elif x_col.dtype in ['datetime64[ns]', 'datetime64']:
+                                is_time_series = True
+                            elif len(df) > 50 and x_col.dtype in ['int64', 'float64']:
+                                # Many numeric points in sequence - likely time series
+                                if x_col.is_monotonic_increasing or x_col.is_monotonic_decreasing:
+                                    is_time_series = True
+                            
+                            # Override bar chart to line for time series with many points
+                            if chart_type == 'bar' and is_time_series and len(df) > 30:
+                                chart_type = 'line'  # Much more readable for time series
+                            
                             if chart_type == 'bar':
-                                fig = px.bar(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                                # Limit bar charts to top N if too many categories
+                                if len(df) > 50:
+                                    df_plot = df.nlargest(30, y) if y in df.columns else df.head(30)
+                                else:
+                                    df_plot = df
+                                fig = px.bar(df_plot, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
                             elif chart_type == 'line':
-                                fig = px.line(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                                fig = px.line(df.sort_values(x) if is_time_series else df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
                             elif chart_type == 'scatter':
                                 fig = px.scatter(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
                             elif chart_type == 'histogram':
@@ -225,10 +280,10 @@ def render_exploratory_tab(df: pd.DataFrame, meta: Any = None):
                             elif chart_type == 'pie':
                                 fig = px.pie(df, names=x, title=sug.get('title', ''))
                             else:
-                                fig = px.bar(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
+                                fig = px.line(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
                             
                             fig.update_layout(template="plotly_dark")
-                            st.plotly_chart(fig, width="stretch")
+                            st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("💡 LLM couldn't parse chart suggestions. This usually means the model needs to be loaded first.\n\n**Try:** Go to '🤖 LLM Settings' tab and click 'Load Model', then try again.")
         else:

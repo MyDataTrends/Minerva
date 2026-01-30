@@ -52,6 +52,7 @@ class LLMSubprocess:
         self._port = DEFAULT_PORT
         self._host = DEFAULT_HOST
         self._model_path: Optional[str] = None
+        self._n_gpu_layers: int = 0
         self._lock = threading.Lock()
         self._health_thread: Optional[threading.Thread] = None
         self._running = False
@@ -89,8 +90,16 @@ class LLMSubprocess:
             # Use specified port or find free one
             self._port = port or self._find_free_port()
             
-            # Build command
+            # Find the correct Python executable - prefer venv
             python_exe = sys.executable
+            
+            # Check if we're in a venv but sys.executable is wrong
+            script_dir = Path(__file__).resolve().parent.parent
+            venv_python = script_dir / ".venv" / "Scripts" / "python.exe"
+            if venv_python.exists():
+                python_exe = str(venv_python)
+                logger.info(f"Using venv Python: {python_exe}")
+            
             cmd = [
                 python_exe,
                 str(SERVER_SCRIPT),
@@ -101,6 +110,8 @@ class LLMSubprocess:
             # Add model if previously loaded
             if self._model_path:
                 cmd.extend(["--model", self._model_path])
+                if self._n_gpu_layers > 0:
+                    cmd.extend(["--n-gpu-layers", str(self._n_gpu_layers)])
             
             logger.info(f"Starting LLM server: {' '.join(cmd)}")
             
@@ -161,6 +172,7 @@ class LLMSubprocess:
         # Ensure server is running
         if not self.is_running():
             self._model_path = model_path
+            self._n_gpu_layers = n_gpu_layers
             if not self.start():
                 return False
             # Model loaded during startup
@@ -229,7 +241,7 @@ class LLMSubprocess:
                     "temperature": temperature,
                     "stop": stop or ["</s>", "\n\n"],
                 },
-                timeout=300,
+                timeout=1200,  # 20 minutes
             )
             
             if resp.status_code == 200:
@@ -265,7 +277,7 @@ class LLMSubprocess:
                     "max_tokens": max_tokens,
                     "temperature": temperature,
                 },
-                timeout=300,
+                timeout=1200,  # 20 minutes
             )
             
             if resp.status_code == 200:

@@ -204,9 +204,8 @@ def cmd_info(args):
     # Check LLM availability
     print("\nLLM Status:")
     try:
-        from preprocessing.llm_preprocessor import load_local_llm
-        llm = load_local_llm()
-        if llm:
+        from llm_manager.llm_interface import is_llm_available
+        if is_llm_available():
             print("  ✓ Local LLM available")
         else:
             print("  ✗ No LLM model found")
