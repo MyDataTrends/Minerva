@@ -113,4 +113,4 @@ Minerva is **Open Core** software.
 - **Commercial License**: Required for business use.
 - **Enterprise Edition**: Includes Team Skill Sync (share your vector store) and SSO.
 
-*Built with ❤️ (and Llama 3) by the Minerva Team.*
+*Built with ❤️ (and Llama 3) by a Squad of One.*

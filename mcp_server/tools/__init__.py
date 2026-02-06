@@ -244,7 +244,14 @@ def register_all_tools(server: "MCPServer") -> int:
             workflow,
             llm,
             feedback,
+            api_discovery,  # New: API discovery and credential management
         )
+        
+        # Manually register api_discovery tools (they use a different pattern)
+        from .api_discovery import get_api_discovery_tools
+        for tool in get_api_discovery_tools():
+            server.register_tool(tool.to_definition())
+            
     except ImportError as e:
         logger.warning(f"Some tool modules not available: {e}")
     

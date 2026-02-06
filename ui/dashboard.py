@@ -55,6 +55,9 @@ os.environ.setdefault("STREAMLIT_SERVER_ENABLECORS", "true")
 log_profile("Importing streamlit...")
 import streamlit as st
 
+# Import report generation
+from reports.report_generator import generate_report_bytes
+
 # Temporary cache clear to resolve unhashable dict error from previous sessions
 if "cache_cleared" not in st.session_state:
     try:
@@ -105,7 +108,13 @@ from ui.action_center import render_action_center
 from ui.llm_settings import render_llm_settings, render_llm_settings_compact
 from reports.report_generator import generate_report_bytes
 
+# Unified session context - must be imported after streamlit
+from ui.session_context import get_context, migrate_legacy_state
+
 log_profile("Imports complete!")
+
+# Migrate any legacy session state keys to unified keys
+migrate_legacy_state()
 
 
 def _hash_df(df: pd.DataFrame) -> str:
@@ -495,8 +504,8 @@ if descriptions:
     preview["Description"] = preview.index.map(lambda c: descriptions.get(c, ""))
 
 # Main content tabs
-main_tab, explore_tab, action_tab, chat_tab, llm_tab = st.tabs([
-    "📊 Data Preview", "🔍 Explore", "🎯 Actions", "💬 Chat", "🤖 LLM Settings"
+main_tab, explore_tab, fabric_tab, action_tab, chat_tab, llm_tab = st.tabs([
+    "📊 Data Preview", "🔍 Explore", "🕸️ Data Fabric", "🎯 Actions", "💬 Chat", "🤖 LLM Settings"
 ])
 
 with main_tab:
@@ -523,6 +532,17 @@ with explore_tab:
     except Exception as e:
         st.error(f"⚠️ Exploratory analysis encountered an issue: {str(e)}")
         st.info("Try refreshing the page or uploading a different dataset.")
+
+with fabric_tab:
+    try:
+        from ui.data_fabric import render_data_fabric_tab
+        # Convert meta list to dicts for easier processing
+        meta_dicts = [{"original_name": m.name, "semantic_type": getattr(m, 'semantic_type', None)} for m in meta] if meta else []
+        render_data_fabric_tab(data, meta_dicts)
+    except ImportError as e:
+        st.warning(f"Data Fabric module not available: {e}")
+    except Exception as e:
+        st.error(f"⚠️ Data Fabric encountered an issue: {str(e)}")
 
 with action_tab:
     try:
@@ -587,9 +607,8 @@ if st.session_state.get("show_column_review"):
 with chat_tab:
     st.subheader("💬 Chat with Your Data")
     
-    # Initialize chat state
-    if "dashboard_chat_messages" not in st.session_state:
-        st.session_state.dashboard_chat_messages = []
+    # Use unified session context for chat state
+    ctx = get_context()
         
 
     
@@ -656,8 +675,8 @@ with chat_tab:
         
         chat_context = ". ".join(context_parts)
         
-        # Display chat history
-        for msg in st.session_state.dashboard_chat_messages:
+        # Display chat history (shared across all tabs)
+        for msg in ctx.chat_history:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
                 if "data" in msg and msg["data"] is not None:
@@ -670,7 +689,7 @@ with chat_tab:
         
         # Chat input
         if prompt := st.chat_input("Ask about your data..."):
-            st.session_state.dashboard_chat_messages.append({"role": "user", "content": prompt})
+            ctx.add_message("user", prompt)
             
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -679,7 +698,7 @@ with chat_tab:
                 if not llm_ready:
                     response = "⚠️ LLM not configured. Go to LLM Settings tab to set up a model."
                     st.markdown(response)
-                    st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                    ctx.add_message("assistant", response)
                 else:
                     with st.spinner("Thinking..."):
                         intent = detect_intent(prompt, context=chat_context)
@@ -695,9 +714,7 @@ with chat_tab:
                             if fig:
                                 st.markdown("Here's your visualization:")
                                 st.plotly_chart(fig, use_container_width=True)
-                                st.session_state.dashboard_chat_messages.append({
-                                    "role": "assistant", "content": "Here's your visualization:", "data": fig
-                                })
+                                ctx.add_message("assistant", "Here's your visualization:", metadata={"data": fig})
                                 # Log successful interaction
                                 if interaction_logger:
                                     interaction_logger.log(
@@ -711,7 +728,7 @@ with chat_tab:
                             else:
                                 response = "I couldn't create that visualization. Try 'show a bar chart of X'."
                                 st.markdown(response)
-                                st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                                ctx.add_message("assistant", response)
                                 # Log failed interaction
                                 if interaction_logger:
                                     interaction_logger.log(
@@ -728,7 +745,7 @@ with chat_tab:
                             if not response:
                                 response = "⚠️ I'm unable to generate a response right now. Please check if the LLM is running correctly."
                             st.markdown(response)
-                            st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                            ctx.add_message("assistant", response)
                             
                             # Log informational interaction
                             if interaction_logger:
@@ -752,9 +769,7 @@ with chat_tab:
                                             st.dataframe(result)
                                         else:
                                             st.write(result)
-                                    st.session_state.dashboard_chat_messages.append({
-                                        "role": "assistant", "content": response, "data": result
-                                    })
+                                    ctx.add_message("assistant", response, metadata={"data": result})
                                     # Log successful analysis
                                     if interaction_logger:
                                         interaction_logger.log(
@@ -768,7 +783,7 @@ with chat_tab:
                                 else:
                                     response = f"Error: {error}"
                                     st.markdown(response)
-                                    st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                                    ctx.add_message("assistant", response)
                                     # Log failed analysis
                                     if interaction_logger:
                                         interaction_logger.log(
@@ -782,8 +797,50 @@ with chat_tab:
                             else:
                                 response = "I couldn't understand that. Try rephrasing your question."
                                 st.markdown(response)
-                                st.session_state.dashboard_chat_messages.append({"role": "assistant", "content": response})
+                                ctx.add_message("assistant", response)
                     st.rerun()
+
+    # Export Report Section
+    st.divider()
+    with st.expander("📄 Export Analysis Report", expanded=False):
+        st.write("Download an interactive HTML report of this conversation, including all visualizations.")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            from datetime import datetime
+            default_title = f"Analysis Report - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            report_title = st.text_input("Report Title", value=default_title)
+        
+        with col2:
+            if st.button("Prepare Download"):
+                # Collect figures from chat history
+                figs = []
+                for msg in st.session_state.dashboard_chat_messages:
+                    if "data" in msg and msg["data"] is not None:
+                        # Check if it looks like a Plotly figure (has to_json or similar)
+                        if hasattr(msg["data"], "to_json"):
+                            figs.append(msg["data"])
+                
+                # Generate report
+                try:
+                    report_bytes = generate_report_bytes(
+                        df=data,
+                        result=None,
+                        figures=figs,
+                        chat_history=st.session_state.dashboard_chat_messages,
+                        title=report_title
+                    )
+                    
+                    st.session_state["ready_report"] = report_bytes
+                except Exception as e:
+                    st.error(f"Failed to generate report: {e}")
+
+        if "ready_report" in st.session_state:
+            st.download_button(
+                label="📥 Download Interactive HTML",
+                data=st.session_state["ready_report"],
+                file_name=f"minerva_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
+                mime="text/html"
+            )
 
 # Rating widget
 st.subheader("Rate the results")

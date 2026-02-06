@@ -1,18 +1,19 @@
 """
-Report Generator Module - Export analysis results as HTML/PDF reports.
+Report Generator Module - Export analysis results as Interactive HTML/PDF reports.
 
-Provides professional-looking analysis reports that users can download
-and share with stakeholders.
+Provides professional-looking, interactive analysis reports that users can download
+and share. Embeds Plotly.js for interactive visualizations.
 """
 
 import io
 import json
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-
+import plotly.io as pio
 
 def _generate_html_styles() -> str:
     """Generate CSS styles for the HTML report."""
@@ -40,7 +41,7 @@ def _generate_html_styles() -> str:
         }
         
         .report-container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             background: var(--card-bg);
             border-radius: 12px;
@@ -67,7 +68,7 @@ def _generate_html_styles() -> str:
         }
         
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
         
         .section h2 {
@@ -75,7 +76,7 @@ def _generate_html_styles() -> str:
             border-left: 4px solid var(--primary-color);
             padding-left: 12px;
             font-size: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .metric-grid {
@@ -124,10 +125,6 @@ def _generate_html_styles() -> str:
             color: var(--secondary-color);
         }
         
-        tr:hover {
-            background: var(--bg-color);
-        }
-        
         .insight-box {
             background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
             border-left: 4px solid var(--success-color);
@@ -135,13 +132,31 @@ def _generate_html_styles() -> str:
             border-radius: 0 8px 8px 0;
             margin: 15px 0;
         }
-        
-        .warning-box {
-            background: #fffbeb;
-            border-left: 4px solid var(--warning-color);
-            padding: 15px 20px;
-            border-radius: 0 8px 8px 0;
-            margin: 15px 0;
+
+        .chat-bubble {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #94a3b8;
+        }
+        .chat-bubble.assistant {
+            background-color: #dbeafe;
+            border-left-color: var(--primary-color);
+        }
+        .chat-role {
+            font-weight: bold;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            color: var(--secondary-color);
+        }
+
+        .plotly-graph-div {
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
         }
         
         .footer {
@@ -152,18 +167,6 @@ def _generate_html_styles() -> str:
             padding-top: 20px;
             border-top: 1px solid var(--border-color);
         }
-        
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .badge-success { background: #dcfce7; color: #166534; }
-        .badge-warning { background: #fef3c7; color: #92400e; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
     </style>
     """
 
@@ -183,139 +186,77 @@ def generate_data_summary_html(df: pd.DataFrame) -> str:
                 <div class="metric-label">Columns</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">{df.memory_usage(deep=True).sum() / 1024 / 1024:.1f} MB</div>
-                <div class="metric-label">Memory Usage</div>
-            </div>
-            <div class="metric-card">
                 <div class="metric-value">{df.isna().sum().sum():,}</div>
                 <div class="metric-label">Missing Values</div>
             </div>
         </div>
+    </div>
     """
-    
-    # Column types summary
-    type_counts = df.dtypes.value_counts()
-    html += """
-        <h3>Column Types</h3>
-        <table>
-            <tr><th>Type</th><th>Count</th></tr>
-    """
-    for dtype, count in type_counts.items():
-        html += f"<tr><td>{dtype}</td><td>{count}</td></tr>"
-    html += "</table></div>"
-    
     return html
 
 
-def generate_analysis_results_html(result: Dict[str, Any]) -> str:
-    """Generate HTML for analysis results."""
-    analysis_type = result.get("analysis_type", "unknown")
+def generate_figures_html(figures: List[Any]) -> str:
+    """Embed Plotly figures using plotly-latest.min.js."""
+    if not figures:
+        return ""
     
-    type_labels = {
-        "regression": ("📈", "Regression Analysis", "badge-info"),
-        "classification": ("🏷️", "Classification Analysis", "badge-success"),
-        "clustering": ("🔮", "Clustering Analysis", "badge-warning"),
-        "forecasting": ("📅", "Time Series Forecast", "badge-info"),
-        "descriptive": ("📋", "Descriptive Statistics", "badge-info"),
-        "anomaly": ("🔍", "Anomaly Detection", "badge-warning"),
-    }
+    html = '<div class="section"><h2>📈 Visualizations</h2>'
     
-    emoji, label, badge_class = type_labels.get(analysis_type, ("📊", "Analysis", "badge-info"))
-    
-    html = f"""
-    <div class="section">
-        <h2>{emoji} Analysis Results</h2>
-        <p><span class="badge {badge_class}">{label}</span></p>
-    """
-    
-    # Model metrics
-    model_info = result.get("model_info", {})
-    metrics = model_info.get("metrics", {})
-    
-    if metrics:
-        html += '<div class="metric-grid">'
-        for name, value in metrics.items():
-            formatted = f"{value:.3f}" if isinstance(value, float) else str(value)
-            html += f"""
-                <div class="metric-card">
-                    <div class="metric-value">{formatted}</div>
-                    <div class="metric-label">{name.replace('_', ' ').title()}</div>
-                </div>
-            """
-        html += "</div>"
-    
-    # Feature importance
-    explanations = model_info.get("explanations", {})
-    fi = explanations.get("feature_importances") or explanations.get("coefficients")
-    if fi:
-        html += "<h3>Feature Importance</h3><table><tr><th>Feature</th><th>Importance</th></tr>"
-        sorted_fi = sorted(fi.items(), key=lambda x: abs(x[1]), reverse=True)[:10]
-        for feature, importance in sorted_fi:
-            bar_width = min(abs(importance) * 100, 100)
-            html += f"""
-                <tr>
-                    <td>{feature}</td>
-                    <td>
-                        <div style="background: linear-gradient(90deg, var(--primary-color) {bar_width}%, transparent {bar_width}%); height: 20px; border-radius: 4px;"></div>
-                        {importance:.4f}
-                    </td>
-                </tr>
-            """
-        html += "</table>"
-    
+    for i, fig in enumerate(figures):
+        if fig is None:
+            continue
+            
+        # Serialize fig to JSON
+        fig_json = pio.to_json(fig)
+        div_id = f"plotly-div-{uuid.uuid4()}"
+        
+        html += f"""
+        <div id="{div_id}" class="plotly-graph-div"></div>
+        <script>
+            Plotly.newPlot('{div_id}', {fig_json}, {{responsive: true}});
+        </script>
+        """
+        
     html += "</div>"
     return html
 
 
-def generate_insights_html(result: Dict[str, Any]) -> str:
-    """Generate HTML for business insights."""
-    summary = result.get("summary", "")
-    insights = result.get("insights", [])
+def generate_chat_history_html(chat_history: List[Dict]) -> str:
+    """Generate formatted chat history."""
+    if not chat_history:
+        return ""
+        
+    html = '<div class="section"><h2>💬 Analysis Narrative</h2>'
     
-    html = '<div class="section"><h2>💡 Key Insights</h2>'
-    
-    if summary:
-        html += f'<div class="insight-box">{summary}</div>'
-    
-    if insights:
-        for insight in insights:
-            html += f'<div class="insight-box">{insight}</div>'
-    
-    # Warnings
-    diagnostics = result.get("diagnostics", {})
-    warnings = []
-    if diagnostics.get("missing_pct", 0) > 10:
-        warnings.append(f"⚠️ High percentage of missing data ({diagnostics.get('missing_pct', 0):.1f}%)")
-    if diagnostics.get("duplicate_rows", 0) > 0:
-        warnings.append(f"⚠️ {diagnostics.get('duplicate_rows', 0)} duplicate rows detected")
-    
-    for warning in warnings:
-        html += f'<div class="warning-box">{warning}</div>'
-    
-    if not summary and not insights:
-        html += '<p>No specific insights generated for this analysis.</p>'
-    
+    for msg in chat_history:
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        # Very basic markdown to html (newlines to br)
+        content_html = content.replace("\n", "<br>")
+        
+        bs_class = "assistant" if role == "assistant" else "user"
+        
+        html += f"""
+        <div class="chat-bubble {bs_class}">
+            <div class="chat-role">{role}</div>
+            <div class="chat-content">{content_html}</div>
+        </div>
+        """
+        
     html += "</div>"
     return html
 
 
 def generate_html_report(
     df: pd.DataFrame,
-    result: Dict[str, Any],
+    result: Dict[str, Any] = None,
+    figures: Optional[List[Any]] = None,
+    chat_history: Optional[List[Dict]] = None,
     title: str = "Data Analysis Report",
     include_data_preview: bool = True,
 ) -> str:
     """
-    Generate a complete HTML report.
-    
-    Args:
-        df: The analyzed DataFrame
-        result: Analysis result dictionary
-        title: Report title
-        include_data_preview: Whether to include a data preview table
-        
-    Returns:
-        Complete HTML document as string
+    Generate a complete Interactive HTML report.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -325,6 +266,8 @@ def generate_html_report(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
+    <!-- Load Plotly.js from CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     {_generate_html_styles()}
 </head>
 <body>
@@ -336,8 +279,10 @@ def generate_html_report(
         </div>
         
         {generate_data_summary_html(df)}
-        {generate_analysis_results_html(result)}
-        {generate_insights_html(result)}
+        
+        {generate_chat_history_html(chat_history) if chat_history else ""}
+        
+        {generate_figures_html(figures) if figures else ""}
     """
     
     # Data preview
@@ -348,24 +293,6 @@ def generate_html_report(
             <h2>📋 Data Preview</h2>
         """
         html += preview.to_html(classes="", index=False, border=0)
-        html += "</div>"
-    
-    # Merge report if available
-    merge_report = result.get("model_info", {}).get("merge_report")
-    if merge_report:
-        html += """
-        <div class="section">
-            <h2>🔗 Data Enrichment Report</h2>
-        """
-        if merge_report.get("successful_merges", 0) > 0:
-            html += f"""
-            <div class="insight-box">
-                Successfully merged with <strong>{merge_report.get('successful_merges', 0)}</strong> 
-                external dataset(s), adding <strong>{merge_report.get('total_new_columns', 0)}</strong> new columns.
-            </div>
-            """
-            if merge_report.get("merged_tables"):
-                html += "<p>Merged tables: " + ", ".join(merge_report["merged_tables"]) + "</p>"
         html += "</div>"
     
     html += f"""
@@ -381,49 +308,15 @@ def generate_html_report(
     return html
 
 
-def export_report_to_file(
-    df: pd.DataFrame,
-    result: Dict[str, Any],
-    output_path: str,
-    title: str = "Data Analysis Report",
-) -> str:
-    """
-    Export report to a file.
-    
-    Args:
-        df: The analyzed DataFrame
-        result: Analysis result dictionary
-        output_path: Where to save the report
-        title: Report title
-        
-    Returns:
-        Path to the saved file
-    """
-    html_content = generate_html_report(df, result, title)
-    
-    output = Path(output_path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    
-    output.write_text(html_content, encoding="utf-8")
-    
-    return str(output)
-
-
 def generate_report_bytes(
     df: pd.DataFrame,
-    result: Dict[str, Any],
+    result: Dict[str, Any] = None,
+    figures: Optional[List[Any]] = None,
+    chat_history: Optional[List[Dict]] = None,
     title: str = "Data Analysis Report",
 ) -> bytes:
     """
     Generate report as bytes for download.
-    
-    Args:
-        df: The analyzed DataFrame
-        result: Analysis result dictionary
-        title: Report title
-        
-    Returns:
-        HTML content as bytes
     """
-    html_content = generate_html_report(df, result, title)
+    html_content = generate_html_report(df, result, figures, chat_history, title)
     return html_content.encode("utf-8")

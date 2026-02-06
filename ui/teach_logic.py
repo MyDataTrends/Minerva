@@ -48,7 +48,7 @@ def render_teaching_mode():
         return
 
     # Tabs for different teaching methods
-    tab1, tab2 = st.tabs(["📝 Manual Entry", "🔍 View Memory"])
+    tab1, tab2, tab3 = st.tabs(["📝 Manual Entry", "🎨 Style Rules", "🔍 View Memory"])
 
     vs, emb = init_components()
     if not vs or not emb:
@@ -107,6 +107,35 @@ def render_teaching_mode():
                     st.error(f"❌ Error saving example: {e}")
 
     with tab2:
+        st.subheader("🎨 Style & Formatting Rules")
+        st.markdown("Teach Minerva how to format output (e.g., fonts, colors, huge numbers).")
+        
+        with st.form("style_form"):
+            rule_name = st.text_input("Rule Name", placeholder="e.g. Corporate Color Palette")
+            rule_content = st.text_area("Rule Description", placeholder="Use #0055AA for primary headers. Dates should be YYYY-MM-DD.")
+            
+            style_submitted = st.form_submit_button("Save Style Rule")
+            
+            if style_submitted and rule_name and rule_content:
+                try:
+                    # Embed the rule content so we can retrieve it based on relevance if needed
+                    # For now, we might just load ALL style rules, but embedding allows scaling.
+                    with st.spinner("Saving rule..."):
+                        vector = emb.embed_query(rule_name + " " + rule_content)
+                        
+                        vs.add_example(
+                            intent=rule_name,
+                            code=rule_content, # Storing rule text in 'code' column
+                            embedding=vector,
+                            explanation="Style Rule",
+                            source="style_rule",
+                            metadata={"type": "style", "created_at": str(pd.Timestamp.now())}
+                        )
+                    st.success("✅ Style Rule Saved!")
+                except Exception as e:
+                    st.error(f"Error saving rule: {e}")
+
+    with tab3:
         st.subheader("Existing Memories")
         stats = vs.get_stats()
         st.write("Current Knowledge Base Stats:", stats)

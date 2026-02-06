@@ -94,6 +94,38 @@ def get_rag_context(query: str) -> str:
         print(f"RAG retrieval failed: {e}")
         return ""
 
+def get_style_rules() -> str:
+    """Retrieve active style rules from the vector store."""
+    vs, emb, _ = init_learning_system()
+    if not vs:
+        return ""
+    
+    # We cheat a bit: we search for "style formatting rules" to get relevant ones,
+    # or we could just query for source='style_rule' if we added a specific method for that.
+    # For now, let's use a broad query to get the top style guides.
+    try:
+        # Check if we can filter by source in a raw query (faster/better)
+        # But stick to the public API for safety: search for "formatting style guidelines"
+        if emb:
+            vector = emb.embed_query("formatting style guidelines colors fonts")
+            results = vs.search(vector, limit=5, threshold=0.4) 
+            
+            # Filter client-side for source='style_rule' to be sure
+            style_rules = [res for res in results if res['source'] == 'style_rule']
+            
+            if not style_rules:
+                return ""
+                
+            rules_str = "\nSTYLE & FORMATTING GUIDELINES:\n"
+            for res in style_rules:
+                rules_str += f"- {res['intent']}: {res['code']}\n"
+            return rules_str
+            
+    except Exception as e:
+        print(f"Style retrieval failed: {e}")
+        
+    return ""
+
 def generate_analysis_code(df: pd.DataFrame, query: str, context: str = "") -> str:
     """Generate pandas code to answer a natural language query."""
     columns = df.columns.tolist()
@@ -104,10 +136,12 @@ def generate_analysis_code(df: pd.DataFrame, query: str, context: str = "") -> s
     
     # RAG Injection
     rag_context = get_rag_context(query)
+    style_context = get_style_rules()
     
     prompt = f"""You are a data analyst. Generate Python pandas code to answer this question.
 {context_str}
 {rag_context}
+{style_context}
 DATAFRAME INFO:
 - Variable name: df
 - Columns: {columns}
