@@ -467,6 +467,676 @@ _register(APIDefinition(
 ))
 
 
+# -----------------------------------------------------------------------------
+# Cryptocurrency & Blockchain
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="coingecko",
+    name="CoinGecko",
+    description="Cryptocurrency prices, market data, and historical data for 10,000+ coins",
+    base_url="https://api.coingecko.com/api/v3",
+    auth_type="none",  # Free tier doesn't require key
+    signup_url="https://www.coingecko.com/en/api",
+    free_tier=True,
+    data_types=[
+        "cryptocurrency", "crypto_prices", "bitcoin", "ethereum", "altcoins",
+        "market_cap", "trading_volume", "defi", "nft"
+    ],
+    keywords=[
+        "crypto", "cryptocurrency", "bitcoin", "btc", "ethereum", "eth",
+        "altcoin", "defi", "nft", "blockchain", "coin", "token", "market cap"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/coins/markets",
+            description="List coins with market data",
+            params=["vs_currency", "ids", "order", "per_page", "page"],
+            required_params=["vs_currency"],
+            example="/coins/markets?vs_currency=usd&order=market_cap_desc"
+        ),
+        APIEndpoint(
+            path="/coins/{id}/market_chart",
+            description="Historical market data for a coin",
+            params=["id", "vs_currency", "days"],
+            required_params=["id", "vs_currency", "days"],
+        ),
+    ],
+    rate_limit=30,
+    docs_url="https://www.coingecko.com/en/api/documentation",
+))
+
+
+_register(APIDefinition(
+    id="coinmarketcap",
+    name="CoinMarketCap",
+    description="Cryptocurrency market data, rankings, and metrics",
+    base_url="https://pro-api.coinmarketcap.com/v1",
+    auth_type="api_key",
+    auth_config={
+        "header_name": "X-CMC_PRO_API_KEY",
+        "env_var": "COINMARKETCAP_API_KEY",
+        "location": "header",
+    },
+    signup_url="https://coinmarketcap.com/api/",
+    free_tier=True,
+    data_types=[
+        "cryptocurrency", "crypto_rankings", "market_cap", "crypto_quotes"
+    ],
+    keywords=[
+        "coinmarketcap", "cmc", "crypto ranking", "top crypto", "market dominance"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/cryptocurrency/listings/latest",
+            description="Latest market data for all cryptocurrencies",
+            params=["start", "limit", "convert", "sort"],
+        ),
+    ],
+    rate_limit=30,
+    docs_url="https://coinmarketcap.com/api/documentation/v1/",
+))
+
+
+# -----------------------------------------------------------------------------
+# Sports Data
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="espn",
+    name="ESPN API (Unofficial)",
+    description="Sports scores, schedules, and standings for major leagues",
+    base_url="https://site.api.espn.com/apis/site/v2",
+    auth_type="none",
+    signup_url=None,
+    free_tier=True,
+    data_types=[
+        "sports", "scores", "standings", "schedules", "nfl", "nba", "mlb",
+        "nhl", "soccer", "football", "basketball", "baseball"
+    ],
+    keywords=[
+        "sports", "espn", "scores", "games", "nfl", "nba", "mlb", "nhl",
+        "football", "basketball", "baseball", "hockey", "soccer", "team"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/sports/{sport}/{league}/scoreboard",
+            description="Get current scores",
+            params=["sport", "league"],
+            required_params=["sport", "league"],
+            example="/sports/football/nfl/scoreboard"
+        ),
+        APIEndpoint(
+            path="/sports/{sport}/{league}/standings",
+            description="Get league standings",
+            params=["sport", "league"],
+            required_params=["sport", "league"],
+        ),
+    ],
+    rate_limit=60,
+    docs_url=None,  # Unofficial API
+))
+
+
+_register(APIDefinition(
+    id="football_data",
+    name="Football-Data.org",
+    description="Soccer/Football data: leagues, teams, matches, and standings",
+    base_url="https://api.football-data.org/v4",
+    auth_type="api_key",
+    auth_config={
+        "header_name": "X-Auth-Token",
+        "env_var": "FOOTBALL_DATA_API_KEY",
+        "location": "header",
+    },
+    signup_url="https://www.football-data.org/client/register",
+    free_tier=True,
+    data_types=[
+        "soccer", "football", "premier_league", "champions_league",
+        "la_liga", "bundesliga", "serie_a"
+    ],
+    keywords=[
+        "soccer", "football", "premier league", "champions league",
+        "world cup", "match", "goal", "team", "player"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/competitions/{code}/matches",
+            description="Get matches for a competition",
+            params=["code", "dateFrom", "dateTo", "status"],
+            required_params=["code"],
+        ),
+        APIEndpoint(
+            path="/competitions/{code}/standings",
+            description="Get standings for a competition",
+            params=["code"],
+            required_params=["code"],
+        ),
+    ],
+    rate_limit=10,
+    docs_url="https://www.football-data.org/documentation/quickstart",
+))
+
+
+# -----------------------------------------------------------------------------
+# Energy & Utilities
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="eia",
+    name="US Energy Information Administration",
+    description="US energy data: oil, gas, electricity, renewables, and consumption",
+    base_url="https://api.eia.gov/v2",
+    auth_type="api_key",
+    auth_config={
+        "param_name": "api_key",
+        "env_var": "EIA_API_KEY",
+        "location": "query",
+    },
+    signup_url="https://www.eia.gov/opendata/register.php",
+    free_tier=True,
+    data_types=[
+        "energy", "oil", "petroleum", "natural_gas", "electricity",
+        "coal", "renewables", "solar", "wind", "nuclear", "consumption"
+    ],
+    keywords=[
+        "energy", "oil", "gas", "petroleum", "electricity", "power",
+        "renewable", "solar", "wind", "nuclear", "coal", "fuel", "barrel"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/seriesid/{series_id}",
+            description="Get data for a specific series",
+            params=["series_id"],
+            required_params=["series_id"],
+        ),
+    ],
+    rate_limit=100,
+    docs_url="https://www.eia.gov/opendata/documentation.php",
+))
+
+
+# -----------------------------------------------------------------------------
+# Social Media & Trends
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="reddit",
+    name="Reddit API",
+    description="Reddit posts, comments, and subreddit data",
+    base_url="https://www.reddit.com",
+    auth_type="none",  # .json endpoints don't require auth
+    signup_url="https://www.reddit.com/prefs/apps",
+    free_tier=True,
+    data_types=[
+        "reddit", "social_media", "posts", "comments", "trending"
+    ],
+    keywords=[
+        "reddit", "subreddit", "post", "upvote", "trending", "viral",
+        "discussion", "community"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/r/{subreddit}/top.json",
+            description="Top posts from a subreddit",
+            params=["subreddit", "t", "limit"],
+            required_params=["subreddit"],
+            example="/r/technology/top.json?t=week"
+        ),
+    ],
+    rate_limit=60,
+    docs_url="https://www.reddit.com/dev/api/",
+))
+
+
+_register(APIDefinition(
+    id="github",
+    name="GitHub API",
+    description="GitHub repositories, users, issues, and activity",
+    base_url="https://api.github.com",
+    auth_type="api_key",  # Personal access token
+    auth_config={
+        "header_name": "Authorization",
+        "env_var": "GITHUB_TOKEN",
+        "location": "header",
+        "format": "Bearer {key}",
+    },
+    signup_url="https://github.com/settings/tokens",
+    free_tier=True,
+    data_types=[
+        "github", "repositories", "code", "issues", "pull_requests",
+        "stars", "forks", "contributors", "commits"
+    ],
+    keywords=[
+        "github", "repository", "repo", "code", "open source", "programming",
+        "developer", "git", "star", "fork", "issue", "pull request"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/repos/{owner}/{repo}",
+            description="Get repository information",
+            params=["owner", "repo"],
+            required_params=["owner", "repo"],
+        ),
+        APIEndpoint(
+            path="/search/repositories",
+            description="Search repositories",
+            params=["q", "sort", "order", "per_page"],
+            required_params=["q"],
+        ),
+    ],
+    rate_limit=60,  # 5000/hour with auth
+    docs_url="https://docs.github.com/en/rest",
+))
+
+
+# -----------------------------------------------------------------------------
+# Transportation & Travel
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="aviationstack",
+    name="AviationStack",
+    description="Flight tracking, airline data, and airport information",
+    base_url="https://api.aviationstack.com/v1",
+    auth_type="api_key",
+    auth_config={
+        "param_name": "access_key",
+        "env_var": "AVIATIONSTACK_API_KEY",
+        "location": "query",
+    },
+    signup_url="https://aviationstack.com/signup/free",
+    free_tier=True,
+    data_types=[
+        "flights", "airlines", "airports", "aviation", "travel"
+    ],
+    keywords=[
+        "flight", "airline", "airport", "airplane", "travel", "aviation",
+        "departure", "arrival", "route", "tracking"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/flights",
+            description="Real-time flight data",
+            params=["flight_iata", "airline_name", "dep_iata", "arr_iata"],
+        ),
+    ],
+    rate_limit=100,
+    docs_url="https://aviationstack.com/documentation",
+))
+
+
+# -----------------------------------------------------------------------------
+# Business & Company Data
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="sec_edgar",
+    name="SEC EDGAR",
+    description="SEC filings, company financial reports, and regulatory data",
+    base_url="https://data.sec.gov",
+    auth_type="none",
+    signup_url=None,
+    free_tier=True,
+    data_types=[
+        "sec_filings", "10k", "10q", "financial_statements", "company_reports",
+        "regulatory", "insider_trading"
+    ],
+    keywords=[
+        "sec", "edgar", "filing", "10k", "10q", "annual report", "quarterly",
+        "financial statement", "regulatory", "insider", "company"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/submissions/CIK{cik}.json",
+            description="Company filings by CIK",
+            params=["cik"],
+            required_params=["cik"],
+        ),
+    ],
+    rate_limit=10,
+    docs_url="https://www.sec.gov/os/accessing-edgar-data",
+))
+
+
+_register(APIDefinition(
+    id="openai",
+    name="OpenAI API",
+    description="AI models for text generation, embeddings, and analysis",
+    base_url="https://api.openai.com/v1",
+    auth_type="api_key",
+    auth_config={
+        "header_name": "Authorization",
+        "env_var": "OPENAI_API_KEY",
+        "location": "header",
+        "format": "Bearer {key}",
+    },
+    signup_url="https://platform.openai.com/signup",
+    free_tier=False,
+    data_types=[
+        "ai", "llm", "text_generation", "embeddings", "chat"
+    ],
+    keywords=[
+        "openai", "gpt", "chatgpt", "ai", "llm", "language model",
+        "text generation", "embeddings"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/chat/completions",
+            description="Generate chat completions",
+            params=["model", "messages", "temperature"],
+            required_params=["model", "messages"],
+        ),
+        APIEndpoint(
+            path="/embeddings",
+            description="Generate text embeddings",
+            params=["model", "input"],
+            required_params=["model", "input"],
+        ),
+    ],
+    rate_limit=60,
+    docs_url="https://platform.openai.com/docs/api-reference",
+))
+
+
+# -----------------------------------------------------------------------------
+# Environment & Sustainability
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="openaq",
+    name="OpenAQ",
+    description="Global air quality measurements and pollution data",
+    base_url="https://api.openaq.org/v2",
+    auth_type="api_key",
+    auth_config={
+        "header_name": "X-API-Key",
+        "env_var": "OPENAQ_API_KEY",
+        "location": "header",
+    },
+    signup_url="https://openaq.org/#/api",
+    free_tier=True,
+    data_types=[
+        "air_quality", "pollution", "pm25", "pm10", "ozone", "no2", "co"
+    ],
+    keywords=[
+        "air quality", "pollution", "pm2.5", "pm10", "ozone", "smog",
+        "aqi", "environment", "emissions"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/measurements",
+            description="Air quality measurements",
+            params=["city", "country", "parameter", "date_from", "date_to"],
+        ),
+        APIEndpoint(
+            path="/locations",
+            description="Monitoring locations",
+            params=["city", "country", "limit"],
+        ),
+    ],
+    rate_limit=100,
+    docs_url="https://docs.openaq.org/reference",
+))
+
+
+# -----------------------------------------------------------------------------
+# Demographics & Public Data
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="data_usa",
+    name="Data USA",
+    description="US demographic, economic, and educational data visualizations",
+    base_url="https://datausa.io/api",
+    auth_type="none",
+    signup_url=None,
+    free_tier=True,
+    data_types=[
+        "demographics", "education", "employment", "wages", "health",
+        "diversity", "skills", "industries", "occupations"
+    ],
+    keywords=[
+        "usa", "demographic", "education", "employment", "wage",
+        "occupation", "industry", "diversity", "skill"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/data",
+            description="Query demographic data",
+            params=["drilldowns", "measures", "Geography", "Year"],
+            example="/data?drilldowns=State&measures=Population"
+        ),
+    ],
+    rate_limit=60,
+    docs_url="https://datausa.io/about/api/",
+))
+
+
+_register(APIDefinition(
+    id="eurostat",
+    name="Eurostat",
+    description="European Union statistics on economy, population, trade",
+    base_url="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0",
+    auth_type="none",
+    signup_url=None,
+    free_tier=True,
+    data_types=[
+        "eu_statistics", "european_union", "trade", "population",
+        "economy", "employment", "inflation", "gdp"
+    ],
+    keywords=[
+        "eurostat", "europe", "eu", "european union", "euro",
+        "european economy", "eu trade", "european population"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/data/{dataset}",
+            description="Get dataset",
+            params=["dataset", "geo", "time"],
+            required_params=["dataset"],
+        ),
+    ],
+    rate_limit=60,
+    docs_url="https://ec.europa.eu/eurostat/web/sdmx-infospace/welcome",
+))
+
+
+# -----------------------------------------------------------------------------
+# Food & Agriculture
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="usda_fdc",
+    name="USDA FoodData Central",
+    description="Detailed nutritional information for foods and ingredients",
+    base_url="https://api.nal.usda.gov/fdc/v1",
+    auth_type="api_key",
+    auth_config={
+        "param_name": "api_key",
+        "env_var": "USDA_API_KEY",
+        "location": "query",
+    },
+    signup_url="https://fdc.nal.usda.gov/api-key-signup.html",
+    free_tier=True,
+    data_types=[
+        "nutrition", "food", "calories", "protein", "vitamins",
+        "ingredients", "diet"
+    ],
+    keywords=[
+        "food", "nutrition", "calories", "protein", "vitamin",
+        "diet", "ingredient", "usda", "nutrient"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/foods/search",
+            description="Search foods",
+            params=["query", "pageSize", "pageNumber"],
+            required_params=["query"],
+        ),
+        APIEndpoint(
+            path="/food/{fdcId}",
+            description="Get food details",
+            params=["fdcId"],
+            required_params=["fdcId"],
+        ),
+    ],
+    rate_limit=1000,
+    docs_url="https://fdc.nal.usda.gov/api-guide.html",
+))
+
+
+# -----------------------------------------------------------------------------
+# Movies & Entertainment
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="omdb",
+    name="OMDb API",
+    description="Movie and TV show information, ratings, and metadata",
+    base_url="https://www.omdbapi.com",
+    auth_type="api_key",
+    auth_config={
+        "param_name": "apikey",
+        "env_var": "OMDB_API_KEY",
+        "location": "query",
+    },
+    signup_url="https://www.omdbapi.com/apikey.aspx",
+    free_tier=True,
+    data_types=[
+        "movies", "tv_shows", "ratings", "imdb", "actors", "directors"
+    ],
+    keywords=[
+        "movie", "film", "tv", "television", "imdb", "rating",
+        "actor", "director", "cinema", "show"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/",
+            description="Search movies and shows",
+            params=["t", "s", "i", "y", "type", "plot"],
+            example="/?t=Inception"
+        ),
+    ],
+    rate_limit=1000,
+    docs_url="https://www.omdbapi.com/",
+))
+
+
+_register(APIDefinition(
+    id="tmdb",
+    name="The Movie Database (TMDb)",
+    description="Extensive movie and TV database with images and metadata",
+    base_url="https://api.themoviedb.org/3",
+    auth_type="api_key",
+    auth_config={
+        "param_name": "api_key",
+        "env_var": "TMDB_API_KEY",
+        "location": "query",
+    },
+    signup_url="https://www.themoviedb.org/signup",
+    free_tier=True,
+    data_types=[
+        "movies", "tv_shows", "actors", "images", "trailers", "reviews"
+    ],
+    keywords=[
+        "tmdb", "movie database", "film", "tv", "cast", "crew",
+        "poster", "trailer", "review"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/search/movie",
+            description="Search movies",
+            params=["query", "year", "language"],
+            required_params=["query"],
+        ),
+        APIEndpoint(
+            path="/movie/{movie_id}",
+            description="Get movie details",
+            params=["movie_id"],
+            required_params=["movie_id"],
+        ),
+    ],
+    rate_limit=40,
+    docs_url="https://developers.themoviedb.org/3",
+))
+
+
+# -----------------------------------------------------------------------------
+# Books & Literature
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="open_library",
+    name="Open Library",
+    description="Book metadata, covers, and lending library data",
+    base_url="https://openlibrary.org",
+    auth_type="none",
+    signup_url=None,
+    free_tier=True,
+    data_types=[
+        "books", "authors", "isbn", "library", "literature"
+    ],
+    keywords=[
+        "book", "author", "isbn", "library", "reading", "literature",
+        "novel", "publication"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/search.json",
+            description="Search books",
+            params=["q", "title", "author", "limit"],
+        ),
+        APIEndpoint(
+            path="/api/books",
+            description="Get book metadata by ISBN/OLID",
+            params=["bibkeys", "format", "jscmd"],
+            required_params=["bibkeys"],
+        ),
+    ],
+    rate_limit=100,
+    docs_url="https://openlibrary.org/developers/api",
+))
+
+
+# -----------------------------------------------------------------------------
+# Exchange Rates & Currency
+# -----------------------------------------------------------------------------
+
+_register(APIDefinition(
+    id="exchangerate",
+    name="ExchangeRate-API",
+    description="Currency exchange rates and conversion",
+    base_url="https://v6.exchangerate-api.com/v6",
+    auth_type="api_key",
+    auth_config={
+        "param_name": None,  # Key is in URL path
+        "env_var": "EXCHANGERATE_API_KEY",
+        "location": "path",
+    },
+    signup_url="https://www.exchangerate-api.com/",
+    free_tier=True,
+    data_types=[
+        "exchange_rates", "currency", "forex", "conversion"
+    ],
+    keywords=[
+        "exchange rate", "currency", "forex", "convert", "usd", "eur",
+        "gbp", "jpy", "money", "foreign exchange"
+    ],
+    endpoints=[
+        APIEndpoint(
+            path="/{api_key}/latest/{base}",
+            description="Latest exchange rates",
+            params=["base"],
+            required_params=["base"],
+            example="/{api_key}/latest/USD"
+        ),
+    ],
+    rate_limit=100,
+    docs_url="https://www.exchangerate-api.com/docs",
+))
+
+
 # =============================================================================
 # Registry Functions
 # =============================================================================

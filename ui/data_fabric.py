@@ -369,6 +369,57 @@ def render_auto_discovery_section():
             else:
                 st.info(f"Ready to fetch data from **{pending.get('api_id')}**. Use the Enrichment Options below to configure and fetch.")
                 ctx.pending_fetch = None
+    
+    # Custom API section - for APIs not in the registry
+    with st.expander("🔧 Custom API Connector", expanded=False):
+        st.markdown("""
+        **Don't see your API?** Generate a connector automatically from documentation.
+        
+        Provide a URL to API documentation (OpenAPI/Swagger spec or docs page) and we'll 
+        create a connector for you.
+        """)
+        
+        custom_docs_url = st.text_input(
+            "API Documentation URL",
+            placeholder="https://api.example.com/docs/swagger.json",
+            key="custom_api_docs_url"
+        )
+        
+        custom_api_key = st.text_input(
+            "API Key (optional, for testing)",
+            type="password",
+            key="custom_api_key"
+        )
+        
+        if st.button("🚀 Generate Connector", type="primary", disabled=not custom_docs_url):
+            with st.spinner("Parsing documentation and generating connector..."):
+                try:
+                    from mcp_server.dynamic_connector import get_connector_manager
+                    
+                    manager = get_connector_manager()
+                    result = manager.generate_connector(
+                        custom_docs_url, 
+                        api_key=custom_api_key if custom_api_key else None
+                    )
+                    
+                    if result.validated:
+                        st.success(f"✅ Generated connector for **{result.api_name}**")
+                        st.markdown(f"""
+                        **Base URL:** `{result.base_url}`  
+                        **Auth Type:** {result.auth_type}  
+                        **Endpoints Found:** {len(result.endpoints)}
+                        """)
+                        
+                        with st.expander("View Generated Code"):
+                            st.code(result.code, language="python")
+                        
+                        st.info("The connector is ready to use! You can now fetch data from this API.")
+                    else:
+                        st.error(f"❌ Generation failed: {result.error}")
+                        st.info("💡 **Tip:** Try providing a direct link to an OpenAPI/Swagger specification (usually ends in .json or .yaml)")
+                        
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 
 def render_enrichment_options(df: pd.DataFrame):

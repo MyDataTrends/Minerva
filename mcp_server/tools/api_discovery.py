@@ -511,6 +511,99 @@ class RouteQueryToAPITool(BaseTool):
             return {"type": "unknown", "api_key": api_key}
 
 
+class GenerateDynamicConnectorTool(BaseTool):
+    """
+    Generate a connector for an API not in the registry.
+    
+    This tool enables autonomous discovery of new APIs by:
+    1. Fetching and parsing API documentation
+    2. Generating Python connector code
+    3. Validating the generated code
+    """
+    
+    name = "generate_dynamic_connector"
+    description = """Generate a Python connector for a new API from its documentation URL.
+    
+    Use this when:
+    - No existing API in the registry matches the user's data needs
+    - User provides a URL to API documentation
+    - User wants to connect to a custom or private API
+    
+    The tool will:
+    1. Parse the API documentation (OpenAPI specs, HTML docs, or Swagger)
+    2. Generate a Python connector with fetch_data method
+    3. Validate the connector works correctly
+    
+    Returns the generated connector code and status."""
+    
+    parameters = [
+        ToolParameter(
+            name="docs_url",
+            description="URL to the API documentation (OpenAPI spec, Swagger, or docs page)",
+            param_type="string",
+            required=True,
+        ),
+        ToolParameter(
+            name="api_key",
+            description="Optional API key to test the generated connector",
+            param_type="string",
+            required=False,
+        ),
+        ToolParameter(
+            name="api_name",
+            description="Optional name for the API (auto-detected if not provided)",
+            param_type="string",
+            required=False,
+        ),
+    ]
+    
+    async def execute(self, arguments: Dict[str, Any], session=None) -> Dict[str, Any]:
+        docs_url = arguments.get("docs_url", "").strip()
+        api_key = arguments.get("api_key")
+        api_name = arguments.get("api_name")
+        
+        if not docs_url:
+            return error_response("docs_url is required")
+        
+        # Validate URL format
+        if not docs_url.startswith(("http://", "https://")):
+            return error_response("docs_url must be a valid HTTP/HTTPS URL")
+        
+        try:
+            from mcp_server.dynamic_connector import (
+                get_connector_manager,
+                GeneratedConnector,
+            )
+            
+            manager = get_connector_manager()
+            result = manager.generate_connector(docs_url, api_key)
+            
+            if result.validated:
+                return success_response({
+                    "success": True,
+                    "api_name": result.api_name,
+                    "base_url": result.base_url,
+                    "auth_type": result.auth_type,
+                    "endpoints_found": len(result.endpoints),
+                    "endpoints": result.endpoints[:5],  # First 5
+                    "code_preview": result.code[:500] + "..." if len(result.code) > 500 else result.code,
+                    "message": f"Successfully generated connector for {result.api_name}",
+                    "usage": f"Use the generated connector with: connector = {result.api_name.replace(' ', '')}Connector(api_key='...')",
+                })
+            else:
+                return success_response({
+                    "success": False,
+                    "api_name": result.api_name or "Unknown",
+                    "error": result.error,
+                    "partial_code": result.code[:300] if result.code else None,
+                    "suggestion": "Try providing a direct link to an OpenAPI/Swagger specification for better results.",
+                })
+                
+        except Exception as e:
+            logger.error(f"Dynamic connector generation failed: {e}")
+            return error_response(f"Generation failed: {str(e)}")
+
+
 # =============================================================================
 # Tool Registration
 # =============================================================================
@@ -524,4 +617,6 @@ def get_api_discovery_tools() -> List[BaseTool]:
         StoreAPICredentialTool(),
         CheckAPICredentialsTool(),
         RouteQueryToAPITool(),
+        GenerateDynamicConnectorTool(),
     ]
+
