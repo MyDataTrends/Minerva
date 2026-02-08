@@ -209,6 +209,272 @@ def render_llm_settings():
                         st.write(f"- {m.name}")
                 else:
                     st.warning("Ollama not running or no models installed")
+        
+        # Kaggle (for API discovery weighting)
+        with st.expander("📊 Kaggle (Data Discovery)", expanded=False):
+            st.write("Kaggle credentials enable smart API discovery based on popular datasets")
+            
+            # Help section - updated for current Kaggle UI
+            with st.popover("ℹ️ How to get your Kaggle API key"):
+                st.markdown("""
+                ### Step-by-Step Setup
+                
+                1. **Go to** [kaggle.com/settings](https://www.kaggle.com/settings)
+                2. **Scroll to** the "API" section
+                3. **Click** "Create New Token" (or view existing)
+                4. **Copy** your username and API key from the page
+                5. **Paste** them into the fields below
+                6. **Create** a master password to encrypt your credentials
+                
+                ---
+                
+                **What's the master password?**  
+                A password you create to encrypt your credentials on this computer.
+                You'll enter it once per session to unlock access to Kaggle features.
+                """)
+            
+            # Check current status
+            try:
+                from mcp_server.credential_manager import (
+                    get_kaggle_credential_status,
+                    store_kaggle_credentials,
+                    get_kaggle_credentials,
+                    has_kaggle_credentials
+                )
+                
+                status = get_kaggle_credential_status()
+                
+                # Check if already unlocked this session
+                session_unlocked = st.session_state.get("kaggle_unlocked", False)
+                
+                if status.get("available"):
+                    source = status.get("source", "unknown")
+                    username = status.get("username", "unknown")
+                    
+                    source_labels = {
+                        "environment": "Environment variables",
+                        "kaggle_json": "~/.kaggle/kaggle.json",
+                        "encrypted_storage": "Minerva encrypted storage"
+                    }
+                    
+                    # If from encrypted storage, may need unlock
+                    if source == "encrypted_storage":
+                        # Verify the session password actually works before showing "unlocked"
+                        session_password = st.session_state.get("kaggle_master_password")
+                        
+                        # Check if we have a verified working password
+                        password_verified = False
+                        if session_password:
+                            try:
+                                test_creds = get_kaggle_credentials(session_password)
+                                if test_creds and test_creds.get("username"):
+                                    password_verified = True
+                            except:
+                                pass
+                        
+                        if password_verified:
+                            st.success(f"🔓 Unlocked for this session")
+                            st.caption(f"Username: {username}")
+                            
+                            # Option to clear credentials
+                            if st.button("🗑️ Clear stored credentials", key="clear_kaggle"):
+                                from mcp_server.credential_manager import CredentialManager, KAGGLE_API_ID
+                                cred_mgr = CredentialManager()
+                                cred_mgr.delete_credential(KAGGLE_API_ID)
+                                st.session_state.pop("kaggle_unlocked", None)
+                                st.session_state.pop("kaggle_master_password", None)
+                                st.success("Cleared! Re-enter credentials below.")
+                                st.rerun()
+                        else:
+                            st.warning(f"🔒 Credentials stored (encrypted)")
+                            st.caption(f"Username: {username}")
+                            
+                            # Unlock form
+                            unlock_pw = st.text_input(
+                                "Enter Master Password to unlock",
+                                type="password",
+                                key="kaggle_unlock_pw"
+                            )
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                if st.button("🔓 Unlock", disabled=not unlock_pw):
+                                    test_creds = get_kaggle_credentials(unlock_pw)
+                                    if test_creds and test_creds.get("username"):
+                                        st.session_state["kaggle_unlocked"] = True
+                                        st.session_state["kaggle_master_password"] = unlock_pw
+                                        st.success("✅ Credentials unlocked!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Wrong password - decryption failed")
+                            
+                            with col2:
+                                if st.button("🗑️ Clear & re-enter"):
+                                    from mcp_server.credential_manager import CredentialManager, KAGGLE_API_ID
+                                    cred_mgr = CredentialManager()
+                                    cred_mgr.delete_credential(KAGGLE_API_ID)
+                                    st.session_state.pop("kaggle_unlocked", None)
+                                    st.session_state.pop("kaggle_master_password", None)
+                                    st.rerun()
+                    else:
+                        # Env vars or kaggle.json - no unlock needed
+                        st.success(f"✅ Configured ({source_labels.get(source, source)})")
+                        st.caption(f"Username: {username}")
+                        st.session_state["kaggle_unlocked"] = True
+                    
+                else:
+                    st.info("Kaggle credentials not configured")
+                    
+                    # Input form for new credentials
+                    kaggle_user = st.text_input(
+                        "Kaggle Username",
+                        key="kaggle_username_input",
+                        help="Your Kaggle username"
+                    )
+                    kaggle_key = st.text_input(
+                        "Kaggle API Key", 
+                        type="password",
+                        key="kaggle_key_input",
+                        help="Your Kaggle API key (from Settings → API)"
+                    )
+                    master_pw = st.text_input(
+                        "Create Master Password",
+                        type="password",
+                        key="kaggle_master_pw",
+                        help="This password encrypts your credentials on your computer"
+                    )
+                    
+                    if st.button("💾 Save Credentials", disabled=not (kaggle_user and kaggle_key and master_pw)):
+                        try:
+                            store_kaggle_credentials(
+                                username=kaggle_user,
+                                api_key=kaggle_key,
+                                master_password=master_pw
+                            )
+                            st.session_state["kaggle_unlocked"] = True
+                            st.session_state["kaggle_master_password"] = master_pw
+                            st.success(f"✅ Saved and unlocked for {kaggle_user}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Failed to save: {e}")
+                            
+            except ImportError as e:
+                st.warning(f"Credential manager not available: {e}")
+
+        # ===== CUSTOM API KEYS SECTION =====
+        with st.expander("🔑 Custom API Keys (Data Sources)", expanded=False):
+            st.write("Store API keys for data services discovered by Minerva.")
+            
+            with st.popover("ℹ️ How this works"):
+                st.markdown("""
+                ### Secure API Key Storage
+                
+                When Minerva discovers an API that requires authentication 
+                (like ESPN, Football-Data.org, or Alpha Vantage), you can 
+                store your API key here.
+                
+                **Your keys are:**
+                - 🔐 Encrypted with your master password
+                - 📁 Stored locally in `~/.minerva/credentials.json`
+                - 🔓 Unlocked per session (same as Kaggle)
+                
+                **To get an API key:**
+                1. Visit the API's website and create an account
+                2. Look for "API Keys" or "Developer" section
+                3. Generate or copy your API key
+                4. Paste it below with a descriptive API ID
+                """)
+            
+            try:
+                from mcp_server.credential_manager import CredentialManager
+                
+                cred_mgr = CredentialManager()
+                stored_creds = cred_mgr.list_credentials()
+                
+                # Filter out Kaggle (handled separately)
+                custom_creds = [c for c in stored_creds if c.get("api_id") != "kaggle"]
+                
+                # Show stored keys
+                if custom_creds:
+                    st.write(f"**Stored API Keys:** {len(custom_creds)}")
+                    
+                    for cred in custom_creds:
+                        api_id = cred.get("api_id", "unknown")
+                        created = cred.get("created_at", "")[:10]  # Just date
+                        metadata = cred.get("metadata", {})
+                        
+                        col1, col2 = st.columns([4, 1])
+                        with col1:
+                            st.write(f"🔐 **{api_id}**")
+                            if metadata:
+                                st.caption(f"Added: {created}")
+                        with col2:
+                            if st.button("🗑️", key=f"del_{api_id}", help=f"Delete {api_id}"):
+                                cred_mgr.delete_credential(api_id)
+                                st.success(f"Deleted {api_id}")
+                                st.rerun()
+                    
+                    st.divider()
+                
+                # Add new API key
+                st.write("**Add New API Key**")
+                
+                # Common APIs for suggestions
+                common_apis = {
+                    "espn": "ESPN API",
+                    "football_data": "Football-Data.org", 
+                    "alpha_vantage": "Alpha Vantage (Stocks)",
+                    "openweathermap": "OpenWeatherMap",
+                    "newsapi": "NewsAPI",
+                    "tmdb": "TMDb (Movies)",
+                    "custom": "Custom (enter below)"
+                }
+                
+                selected_api = st.selectbox(
+                    "Select API",
+                    options=list(common_apis.keys()),
+                    format_func=lambda x: common_apis[x],
+                    key="settings_api_select",
+                    help="Choose a common API or select 'Custom'"
+                )
+                
+                if selected_api == "custom":
+                    api_id = st.text_input(
+                        "Custom API ID", 
+                        key="settings_custom_api_id",
+                        help="A short identifier like 'my_service'"
+                    )
+                else:
+                    api_id = selected_api
+                    
+                api_key = st.text_input(
+                    "API Key",
+                    type="password",
+                    key="settings_custom_api_key",
+                    help="Your API key from the service"
+                )
+                
+                master_pw = st.text_input(
+                    "Master Password",
+                    type="password", 
+                    key="settings_custom_master_pw",
+                    help="Same password you use for Kaggle credentials"
+                )
+                
+                if st.button("💾 Save API Key", disabled=not (api_id and api_key and master_pw)):
+                    try:
+                        cred_mgr.store_credential(
+                            api_id=api_id,
+                            api_key=api_key,
+                            master_password=master_pw
+                        )
+                        st.success(f"✅ Saved {api_id} API key (encrypted)")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed to save: {e}")
+                        
+            except ImportError as e:
+                st.warning(f"Credential manager not available: {e}")
     
     # === DOWNLOAD TAB ===
     with download_tab:

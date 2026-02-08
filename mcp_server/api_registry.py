@@ -55,6 +55,7 @@ class APIDefinition:
     
     # Documentation
     docs_url: Optional[str] = None
+    openapi_url: Optional[str] = None  # OpenAPI/Swagger spec URL for auto-generation
     
     # Status
     enabled: bool = True

@@ -246,14 +246,160 @@ def render_auto_discovery_section():
         label_visibility="collapsed"
     )
     
-    col_search, col_clear = st.columns([1, 4])
+    # Action buttons - now with Auto-Fetch option
+    col_search, col_autofetch, col_clear = st.columns([1, 1, 2])
     with col_search:
-        search_clicked = st.button("🔍 Find Data Sources", type="primary")
+        search_clicked = st.button("🔍 Find Sources", help="Find matching APIs without fetching")
+    with col_autofetch:
+        auto_fetch_clicked = st.button(
+            "⚡ Auto-Fetch", 
+            type="primary",
+            help="Automatically find, connect, and fetch data",
+            disabled=not query
+        )
     with col_clear:
         if st.button("Clear"):
             ctx.discoveries = []
             ctx.pending_fetch = None
+            if "auto_fetch_result" in st.session_state:
+                del st.session_state["auto_fetch_result"]
             st.rerun()
+    
+    # AUTO-FETCH: One-click autonomous flow
+    if auto_fetch_clicked and query:
+        with st.spinner("🔮 Discovering APIs, generating connector, and fetching data..."):
+            try:
+                from mcp_server.discovery_agent import get_discovery_agent
+                import pandas as pd
+                import logging
+                
+                # Pass session master password for Kaggle access
+                master_pw = st.session_state.get("kaggle_master_password")
+                
+                # Check if we have an API key for retry
+                retry_api_key = st.session_state.get("pending_api_key")
+                if retry_api_key:
+                    del st.session_state["pending_api_key"]
+                
+                agent = get_discovery_agent(master_password=master_pw)
+                result = agent.one_click_fetch_rich(query, api_key=retry_api_key)
+                
+                # Store structured result for UI
+                st.session_state["auto_fetch_result"] = {
+                    "success": result.success,
+                    "data": result.data,
+                    "status": result.status,
+                    "query": query,
+                    # Auth info for guided UI
+                    "needs_auth": result.needs_auth,
+                    "api_name": result.api_name,
+                    "api_id": result.api_id,
+                    "auth_type": result.auth_type,
+                    "signup_url": result.signup_url,
+                    "auth_instructions": result.auth_instructions
+                }
+                
+            except Exception as e:
+                st.error(f"Auto-fetch failed: {e}")
+    
+    # Display auto-fetch results
+    if "auto_fetch_result" in st.session_state:
+        result = st.session_state["auto_fetch_result"]
+        
+        # Check if API needs authentication
+        if result.get("needs_auth"):
+            st.warning(f"🔐 **{result.get('api_name', 'This API')}** requires authentication")
+            
+            # Auth info container
+            with st.container():
+                col1, col2 = st.columns([3, 1])
+                
+                with col1:
+                    st.markdown(f"**Authentication Type:** `{result.get('auth_type', 'api_key')}`")
+                    
+                    if result.get("auth_instructions"):
+                        st.caption(result["auth_instructions"])
+                    
+                    # Signup URL
+                    if result.get("signup_url"):
+                        st.markdown(f"**Get your API key:** [{result['signup_url']}]({result['signup_url']})")
+                    
+                    # API Key input
+                    api_key_input = st.text_input(
+                        "Enter API Key",
+                        type="password",
+                        key=f"auth_key_{result.get('api_id', 'api')}",
+                        help="Paste your API key here"
+                    )
+                    
+                    # Option to save for future
+                    save_key = st.checkbox(
+                        "Save this key for future use",
+                        value=True,
+                        key="save_api_key_checkbox",
+                        help="Stores encrypted in ~/.minerva/credentials.json"
+                    )
+                
+                # Action buttons
+                col_retry, col_skip, col_cancel = st.columns(3)
+                
+                with col_retry:
+                    if st.button("🔑 Connect with Key", disabled=not api_key_input, type="primary"):
+                        # Save key if requested
+                        if save_key and api_key_input:
+                            try:
+                                from mcp_server.credential_manager import CredentialManager
+                                master_pw = st.session_state.get("kaggle_master_password")
+                                if master_pw:
+                                    cred_mgr = CredentialManager()
+                                    cred_mgr.store_credential(
+                                        api_id=result.get("api_id", result.get("api_name", "unknown").lower()),
+                                        api_key=api_key_input,
+                                        master_password=master_pw
+                                    )
+                                    st.success("Saved API key!")
+                            except Exception as e:
+                                st.warning(f"Could not save key: {e}")
+                        
+                        # Retry with API key
+                        st.session_state["pending_api_key"] = api_key_input
+                        del st.session_state["auto_fetch_result"]
+                        st.rerun()
+                
+                with col_skip:
+                    if st.button("⏭️ Try Next Source"):
+                        # Clear and try again (would need to skip this source)
+                        del st.session_state["auto_fetch_result"]
+                        st.info("Skipped - try a different query or configure auth in Settings")
+                        st.rerun()
+                
+                with col_cancel:
+                    if st.button("❌ Cancel"):
+                        del st.session_state["auto_fetch_result"]
+                        st.rerun()
+        
+        elif result.get("data"):
+            # Success - show data
+            st.success(f"**Result:** {result['status']}")
+            
+            import pandas as pd
+            if isinstance(result["data"], dict):
+                df = pd.DataFrame(result["data"])
+            else:
+                df = result["data"]
+            st.dataframe(df, use_container_width=True)
+            
+            # Option to add to datasets
+            if st.button("➕ Add to My Datasets"):
+                dataset_name = f"auto_fetched_{result.get('query', 'data')[:20].replace(' ', '_')}"
+                ctx.add_dataset(dataset_name, df, set_as_primary=True)
+                st.success(f"Added as '{dataset_name}'")
+                del st.session_state["auto_fetch_result"]
+                st.rerun()
+        
+        else:
+            # Failed - show status
+            st.info(f"**Result:** {result['status']}")
     
     # Search for APIs
     if search_clicked and query:
@@ -313,41 +459,64 @@ def render_auto_discovery_section():
                     """)
                 
                 with col_action:
-                    # Check credential status
-                    try:
-                        from mcp_server.api_registry import get_api
-                        api_def = get_api(api.api_id)
-                        needs_auth = api_def and api_def.auth_type != "none"
-                        
-                        if needs_auth:
-                            import os
-                            env_var = api_def.auth_config.get("env_var", "")
-                            has_key = bool(os.environ.get(env_var))
-                            
-                            if not has_key:
-                                if st.button(f"🔑 Setup", key=f"setup_{api.api_id}"):
-                                    ctx.pending_fetch = {
-                                        "api_id": api.api_id,
-                                        "needs_setup": True,
-                                        "signup_url": api_def.signup_url,
-                                        "env_var": env_var
-                                    }
-                            else:
-                                if st.button(f"📥 Fetch", key=f"fetch_{api.api_id}", type="primary"):
-                                    ctx.pending_fetch = {
-                                        "api_id": api.api_id,
-                                        "needs_setup": False
-                                    }
-                        else:
-                            if st.button(f"📥 Fetch", key=f"fetch_{api.api_id}", type="primary"):
-                                    ctx.pending_fetch = {
-                                    "api_id": api.api_id,
-                                    "needs_setup": False
-                                }
-                    except Exception:
-                        st.button(f"❌ Error", key=f"error_{api.api_id}", disabled=True)
+                    # Auto-Connect button - generates connector automatically
+                    if st.button(f"⚡ Connect", key=f"autoconnect_{api.api_id}", type="primary"):
+                        st.session_state["auto_connect_target"] = api.api_id
+                        st.rerun()
                 
                 st.markdown("---")
+        
+        # Handle auto-connect request
+        if "auto_connect_target" in st.session_state:
+            target_api_id = st.session_state["auto_connect_target"]
+            
+            with st.spinner(f"🔧 Generating connector for {target_api_id}..."):
+                try:
+                    from mcp_server.api_registry import get_api
+                    from mcp_server.discovery_agent import get_discovery_agent, DiscoveredAPI
+                    
+                    api_def = get_api(target_api_id)
+                    if api_def:
+                        # Create DiscoveredAPI from registry entry
+                        discovered = DiscoveredAPI(
+                            name=api_def.name,
+                            description=api_def.description,
+                            base_url=api_def.base_url,
+                            docs_url=api_def.docs_url,
+                            openapi_url=getattr(api_def, 'openapi_url', None),
+                            auth_type=api_def.auth_type,
+                            signup_url=api_def.signup_url,
+                            source="registry"
+                        )
+                        
+                        agent = get_discovery_agent()
+                        result = agent.auto_connect(discovered)
+                        
+                        if result.success:
+                            st.success(f"✅ Connector generated for **{result.api_name}**")
+                            
+                            if result.needs_auth:
+                                st.warning(f"""
+                                **🔑 API Key Required**  
+                                {result.auth_instructions}  
+                                [Sign up here]({result.signup_url})
+                                """)
+                            
+                            with st.expander("View Connector Code"):
+                                st.code(result.connector_code, language="python")
+                            
+                            if result.sample_data:
+                                st.markdown("**Sample Data:**")
+                                import pandas as pd
+                                st.dataframe(pd.DataFrame(result.sample_data))
+                        else:
+                            st.error(f"❌ {result.error}")
+                            st.info("💡 Try clicking 'Setup' to configure API credentials first")
+                    
+                except Exception as e:
+                    st.error(f"Auto-connect failed: {e}")
+                
+                del st.session_state["auto_connect_target"]
         
         # Handle pending fetch or setup
         pending = ctx.pending_fetch

@@ -286,3 +286,161 @@ def get_or_prompt_credential(
         "env_var": env_var,
         "instructions": f"Get a free API key from {signup_url}",
     }
+
+
+# =============================================================================
+# Kaggle Credential Helpers
+# =============================================================================
+
+KAGGLE_API_ID = "kaggle"
+KAGGLE_SIGNUP_URL = "https://www.kaggle.com/account"
+
+
+def store_kaggle_credentials(
+    username: str, 
+    api_key: str, 
+    master_password: str
+) -> bool:
+    """
+    Store Kaggle credentials securely.
+    
+    Kaggle requires both username and API key, so we store them
+    as a JSON-encoded compound credential.
+    
+    Args:
+        username: Kaggle username
+        api_key: Kaggle API key from account settings
+        master_password: Master password for encryption
+        
+    Returns:
+        True if stored successfully
+    """
+    cred_mgr = CredentialManager()
+    
+    # Store as compound credential
+    compound = json.dumps({"username": username, "key": api_key})
+    
+    cred_mgr.store_credential(
+        api_id=KAGGLE_API_ID,
+        api_key=compound,
+        master_password=master_password,
+        metadata={"username": username}
+    )
+    
+    logger.info(f"Stored Kaggle credentials for user: {username}")
+    return True
+
+
+def get_kaggle_credentials(master_password: str) -> Optional[Dict[str, str]]:
+    """
+    Retrieve Kaggle credentials.
+    
+    Args:
+        master_password: Master password for decryption
+        
+    Returns:
+        Dict with {"username": "...", "key": "..."} or None
+    """
+    cred_mgr = CredentialManager()
+    
+    # Check environment variables first (standard Kaggle approach)
+    env_username = os.environ.get("KAGGLE_USERNAME")
+    env_key = os.environ.get("KAGGLE_KEY")
+    if env_username and env_key:
+        return {"username": env_username, "key": env_key, "source": "environment"}
+    
+    # Check ~/.kaggle/kaggle.json (standard Kaggle file)
+    kaggle_json = Path.home() / ".kaggle" / "kaggle.json"
+    if kaggle_json.exists():
+        try:
+            with open(kaggle_json, "r") as f:
+                data = json.load(f)
+                if "username" in data and "key" in data:
+                    return {"username": data["username"], "key": data["key"], "source": "kaggle_json"}
+        except Exception:
+            pass
+    
+    # Check encrypted storage
+    if cred_mgr.has_credential(KAGGLE_API_ID):
+        compound = cred_mgr.get_credential(KAGGLE_API_ID, master_password)
+        if compound:
+            try:
+                data = json.loads(compound)
+                data["source"] = "encrypted_storage"
+                return data
+            except json.JSONDecodeError:
+                pass
+    
+    return None
+
+
+def has_kaggle_credentials() -> bool:
+    """Check if Kaggle credentials are available (any source)."""
+    # Check env vars
+    if os.environ.get("KAGGLE_USERNAME") and os.environ.get("KAGGLE_KEY"):
+        return True
+    
+    # Check ~/.kaggle/kaggle.json
+    kaggle_json = Path.home() / ".kaggle" / "kaggle.json"
+    if kaggle_json.exists():
+        try:
+            with open(kaggle_json, "r") as f:
+                data = json.load(f)
+                if "username" in data and "key" in data:
+                    return True
+        except Exception:
+            pass
+    
+    # Check encrypted storage
+    cred_mgr = CredentialManager()
+    return cred_mgr.has_credential(KAGGLE_API_ID)
+
+
+def get_kaggle_credential_status() -> Dict[str, Any]:
+    """
+    Get status of Kaggle credentials for UI display.
+    
+    Returns:
+        Dict with credential status info
+    """
+    # Check env vars
+    if os.environ.get("KAGGLE_USERNAME") and os.environ.get("KAGGLE_KEY"):
+        return {
+            "available": True,
+            "source": "environment",
+            "username": os.environ.get("KAGGLE_USERNAME"),
+        }
+    
+    # Check ~/.kaggle/kaggle.json
+    kaggle_json = Path.home() / ".kaggle" / "kaggle.json"
+    if kaggle_json.exists():
+        try:
+            with open(kaggle_json, "r") as f:
+                data = json.load(f)
+                if "username" in data and "key" in data:
+                    return {
+                        "available": True,
+                        "source": "kaggle_json",
+                        "username": data.get("username"),
+                    }
+        except Exception:
+            pass
+    
+    # Check encrypted storage
+    cred_mgr = CredentialManager()
+    if cred_mgr.has_credential(KAGGLE_API_ID):
+        creds = cred_mgr.list_credentials()
+        kaggle_cred = next((c for c in creds if c["api_id"] == KAGGLE_API_ID), None)
+        return {
+            "available": True,
+            "source": "encrypted_storage",
+            "username": kaggle_cred.get("metadata", {}).get("username") if kaggle_cred else None,
+            "needs_password": True,  # Need to decrypt
+        }
+    
+    return {
+        "available": False,
+        "signup_url": KAGGLE_SIGNUP_URL,
+        "instructions": "Get your API token from kaggle.com/account → Create New API Token",
+    }
+
