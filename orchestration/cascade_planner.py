@@ -64,6 +64,7 @@ class PlanStep:
     result: Optional[Any] = None
     error: Optional[str] = None
     execution_time_ms: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
@@ -186,6 +187,29 @@ def classify_intent(query: str) -> tuple[Intent, float]:
                     best_intent = intent
     
     logger.debug(f"Classified intent: {best_intent.value} (confidence: {best_score:.2f})")
+    
+    # LLM Fallback for classification
+    if best_intent == Intent.UNKNOWN or best_score < 0.5:
+        try:
+            from llm_manager.llm_interface import get_llm_completion
+            
+            # Simple classification prompt
+            intents = [i.value for i in Intent if i != Intent.UNKNOWN]
+            prompt = f"""Classify this query into one of these intents: {", ".join(intents)}.
+Query: "{query}"
+Return ONLY the intent name (or 'unknown')."""
+
+            response = get_llm_completion(prompt, max_tokens=10, temperature=0.0)
+            if response:
+                cleaned = response.strip().lower().replace('"', '').replace("'", "")
+                # Match against enum
+                for i in Intent:
+                    if i.value == cleaned:
+                        logger.info(f"LLM classified intent as: {i.value}")
+                        return i, 0.6 # Moderate confidence for LLM
+        except Exception as e:
+            logger.debug(f"LLM classification failed: {e}")
+
     return best_intent, best_score
 
 
@@ -411,11 +435,24 @@ class CascadePlanner:
         last_output = None
         steps_completed = 0
         
+        # Index steps for dependency checking
+        step_map = {s.step_id: s for s in plan.steps}
+
         for step in plan.steps:
+            # 1. Dependency Check
+            if step.depends_on:
+                failed_deps = [d for d in step.depends_on if step_map.get(d) and step_map[d].status != PlanStatus.SUCCESS]
+                if failed_deps:
+                    step.status = PlanStatus.FAILED
+                    step.error = f"Dependencies failed: {failed_deps}"
+                    logger.warning(f"Skipping step {step.step_id} due to failed dependencies: {failed_deps}")
+                    continue
+
             step.status = PlanStatus.RUNNING
             
             # Resolve inputs
-            resolved_inputs = self._resolve_inputs(step.inputs, context, step_outputs)
+            step_outputs_dict = {k: v for k, v in step_outputs.items()} # Copy safe dict
+            resolved_inputs = self._resolve_inputs(step.inputs, context, step_outputs_dict)
             
             # Check for unresolved placeholders
             unresolved = [k for k, v in resolved_inputs.items() if isinstance(v, str) and v.startswith("__")]
@@ -425,6 +462,9 @@ class CascadePlanner:
             
             resolved_inputs_map[step.step_id] = resolved_inputs
             
+            # Semantic Validation (Auto-fix columns)
+            self._validate_semantic_inputs(step.tool, resolved_inputs, context)
+
             # Execute with retry
             result = invoke_tool(
                 step.tool,
@@ -432,6 +472,23 @@ class CascadePlanner:
                 max_retries=self.MAX_RETRIES,
             )
             
+            # 2. Step-Level Fallback
+            if not result.success and step.fallback_tool:
+                logger.info(f"Step {step.step_id} failed ({result.error}), trying fallback: {step.fallback_tool}")
+                # Retry with fallback tool
+                fallback_result = invoke_tool(
+                    step.fallback_tool,
+                    resolved_inputs,
+                    max_retries=1, # One try for fallback
+                )
+                
+                if fallback_result.success:
+                    logger.info(f"Fallback {step.fallback_tool} succeeded")
+                    result = fallback_result
+                    step.metadata["fallback_used"] = step.fallback_tool
+                    # Note: we don't update step.tool to preserve original intent in log, 
+                    # but maybe we should? For now keeping metadata.
+
             step.execution_time_ms = result.execution_time_ms
             
             if result.success:
@@ -444,11 +501,8 @@ class CascadePlanner:
                 step.status = PlanStatus.FAILED
                 step.error = result.error
                 logger.warning(f"Step {step.step_id} failed: {result.error}")
-                
-                # Try to continue if not critical
-                if step.fallback_tool:
-                    logger.info(f"Fallback handled by tool registry")
-                break
+                # Do not break; allow dependency check to skip dependent steps
+                # while independent steps can proceed.
         
         # Determine overall status
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)
@@ -676,6 +730,49 @@ JSON RESPONSE:"""
         
         return resolved
     
+    def _validate_semantic_inputs(self, tool_name: str, inputs: Dict[str, Any], context: Dict[str, Any]) -> str:
+        """Validate inputs against context and auto-correct typos."""
+        error = ""
+        df = inputs.get("df")
+        
+        # Check for DataFrame columns
+        if hasattr(df, "columns"):
+            columns = set(df.columns)
+            potential_cols = []
+            
+            # Identify arguments that should be columns
+            if "x" in inputs: potential_cols.append(("x", inputs["x"]))
+            if "y" in inputs: potential_cols.append(("y", inputs["y"]))
+            if "column" in inputs: potential_cols.append(("column", inputs["column"]))
+            if "by" in inputs: # sort/group
+                 val = inputs["by"]
+                 if isinstance(val, list):
+                     for c in val: potential_cols.append(("by", c))
+                 elif isinstance(val, str):
+                     potential_cols.append(("by", val))
+
+            for arg_name, col_name in potential_cols:
+                # If col_name matches a real column, good.
+                if col_name in columns:
+                    continue
+                    
+                # If string and not found -> try fuzzy match
+                if isinstance(col_name, str):
+                    import difflib
+                    matches = difflib.get_close_matches(col_name, list(columns), n=1, cutoff=0.8)
+                    if matches:
+                        logger.info(f"Auto-correcting column '{col_name}' to '{matches[0]}'")
+                        # Fix in inputs
+                        if arg_name == "by" and isinstance(inputs["by"], list):
+                             # tricky to update list in place without index
+                             idx = inputs["by"].index(col_name)
+                             inputs["by"][idx] = matches[0]
+                        else:
+                             inputs[arg_name] = matches[0]
+                    else:
+                        logger.warning(f"Column '{col_name}' not found for tool '{tool_name}' argument '{arg_name}'")
+        return error
+
     def _create_plan_from_pattern(self, pattern: Any, context: Dict[str, Any]) -> List[PlanStep]:
         """Create steps from a learned pattern."""
         steps = []
