@@ -140,6 +140,9 @@ class SessionContext:
     @property
     def chat_history(self) -> List[Dict[str, Any]]:
         """Get the shared chat history (as list of dicts for compatibility)."""
+        # Ensure initialized before access
+        if KEYS["chat_history"] not in st.session_state:
+            st.session_state[KEYS["chat_history"]] = []
         return st.session_state[KEYS["chat_history"]]
     
     def add_message(
@@ -352,6 +355,99 @@ class SessionContext:
             summaries.append(f"- {name}{is_primary}: {len(df)} rows, columns: {', '.join(df.columns[:5])}")
         
         return "Loaded datasets:\n" + "\n".join(summaries)
+
+    # =========================================================================
+    # Session Lifecycle Management
+    # =========================================================================
+    
+    def reset(self) -> None:
+        """
+        Reset session to fresh state.
+        
+        Clears all session data including:
+        - Chat history
+        - Loaded datasets
+        - Action log
+        - Discoveries
+        
+        Use this for a hard reset or at session end.
+        """
+        logger.info("Resetting session context")
+        st.session_state[KEYS["chat_history"]] = []
+        st.session_state[KEYS["datasets"]] = {}
+        st.session_state[KEYS["primary_dataset"]] = None
+        st.session_state[KEYS["action_log"]] = []
+        st.session_state[KEYS["discoveries"]] = []
+        st.session_state[KEYS["pending_fetch"]] = None
+        # Note: preferences are preserved across reset
+        
+        # Clear caches
+        self.clear_caches()
+    
+    def dispose(self) -> None:
+        """
+        Dispose of transient resources at session end.
+        
+        Unlike reset(), this:
+        - Summarizes the session to InteractionLogger (if available)
+        - Clears memory caches
+        - Keeps preferences
+        
+        Call this when user navigates away or at session boundary.
+        """
+        logger.info("Disposing session resources")
+        
+        # Attempt to summarize before clearing
+        try:
+            from llm_learning.interaction_logger import get_interaction_logger
+            logger_instance = get_interaction_logger()
+            # Use a hash of first action timestamp as session ID
+            if self.action_log:
+                session_id = self.action_log[0].get("timestamp", "unknown")[:10]
+                logger_instance.summarize_session(session_id)
+        except Exception as e:
+            logger.debug(f"Could not summarize session: {e}")
+        
+        # Clear caches but keep state for potential re-use
+        self.clear_caches()
+    
+    def clear_caches(self) -> None:
+        """Clear all memory caches (embeddings, etc)."""
+        try:
+            from learning.cache_utils import get_embedding_cache
+            cache = get_embedding_cache()
+            cache.clear()
+            logger.debug("Cleared embedding cache")
+        except Exception as e:
+            logger.debug(f"Could not clear caches: {e}")
+    
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """Get memory usage statistics for this session."""
+        stats = {
+            "chat_messages": len(self.chat_history),
+            "datasets_loaded": len(self.datasets),
+            "action_log_entries": len(self.action_log),
+            "discoveries": len(self.discoveries),
+        }
+        
+        # Add dataset memory estimates
+        total_rows = 0
+        total_cols = 0
+        for name, df in self.datasets.items():
+            total_rows += len(df)
+            total_cols += len(df.columns)
+        stats["total_dataset_rows"] = total_rows
+        stats["total_dataset_columns"] = total_cols
+        
+        # Add cache stats if available
+        try:
+            from learning.cache_utils import get_embedding_cache
+            cache = get_embedding_cache()
+            stats["embedding_cache"] = cache.get_stats()
+        except Exception:
+            pass
+        
+        return stats
 
 
 # =============================================================================

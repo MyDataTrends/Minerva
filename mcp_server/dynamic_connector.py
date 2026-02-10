@@ -368,9 +368,37 @@ class SandboxExecutor:
         Returns:
             Tuple of (success, connector_class or None, error_message or None)
         """
+        # Pre-import allowed modules
+        import requests
+        import pandas as pd
+        from typing import Dict, Any, Optional, List
+        
+        # Create a safe import function that only allows specific modules
+        def safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+            """Safe import that only allows whitelisted modules."""
+            if name in self.ALLOWED_MODULES:
+                return __import__(name, globals, locals, fromlist, level)
+            # Handle sub-imports like 'typing.Dict'
+            base_module = name.split('.')[0]
+            if base_module in self.ALLOWED_MODULES:
+                return __import__(name, globals, locals, fromlist, level)
+            raise ImportError(f"Module '{name}' is not allowed in generated connectors")
+        
         # Create restricted execution environment
         restricted_globals = {
             '__builtins__': {
+                # Core for class definitions and imports
+                '__import__': safe_import,
+                '__build_class__': __builtins__['__build_class__'] if isinstance(__builtins__, dict) else __builtins__.__build_class__,
+                '__name__': '__main__',
+                '__doc__': None,
+                
+                # Constants
+                'None': None,
+                'True': True,
+                'False': False,
+                
+                # Functions
                 'print': print,
                 'len': len,
                 'str': str,
@@ -384,24 +412,44 @@ class SandboxExecutor:
                 'range': range,
                 'enumerate': enumerate,
                 'zip': zip,
+                'map': map,
+                'filter': filter,
+                'sorted': sorted,
+                'min': min,
+                'max': max,
+                'sum': sum,
+                'abs': abs,
+                'round': round,
                 'isinstance': isinstance,
+                'issubclass': issubclass,
+                'callable': callable,
                 'hasattr': hasattr,
                 'getattr': getattr,
                 'setattr': setattr,
+                'delattr': delattr,
+                'property': property,
+                'staticmethod': staticmethod,
+                'classmethod': classmethod,
+                'super': super,
+                'type': type,
+                'object': object,
+                
+                # Exceptions
                 'Exception': Exception,
                 'ValueError': ValueError,
                 'TypeError': TypeError,
+                'KeyError': KeyError,
+                'IndexError': IndexError,
+                'AttributeError': AttributeError,
                 'ConnectionError': ConnectionError,
+                'ImportError': ImportError,
             }
         }
         
-        # Add allowed imports
-        import requests
-        import pandas as pd
-        from typing import Dict, Any, Optional, List
-        
+        # Pre-add allowed modules to globals so imports work
         restricted_globals['requests'] = requests
         restricted_globals['pd'] = pd
+        restricted_globals['pandas'] = pd
         restricted_globals['Dict'] = Dict
         restricted_globals['Any'] = Any
         restricted_globals['Optional'] = Optional

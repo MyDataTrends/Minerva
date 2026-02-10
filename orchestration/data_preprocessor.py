@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-import pickle
 from typing import Any, Optional
 
 import pandas as pd
@@ -285,6 +284,8 @@ class DataPreprocessor:
             if stored and stored.get("model_path"):
                 from modeling.model_training import load_model
                 from modeling.model_selector import evaluate_model
+                from utils.safe_pickle import safe_load
+                
                 if target_column is None:
                     try:
                         target_column = self.guess_target_column(data)
@@ -293,8 +294,12 @@ class DataPreprocessor:
                 mp = Path(stored["model_path"]) if isinstance(stored["model_path"], str) else None
                 model = None
                 if mp and mp.exists():
-                    with open(mp, "rb") as f:
-                        model = pickle.load(f)
+                    # Use safe_load with checksum verification
+                    try:
+                        model = safe_load(mp, verify=True, allow_missing_checksum=True)
+                    except Exception as e:
+                        logging.warning(f"Safe load failed, using fallback: {e}")
+                        model = load_model(mp.name, run_id)
                 else:
                     # Fallback to standard loader using filename and run_id
                     try:

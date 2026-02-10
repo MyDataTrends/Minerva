@@ -55,6 +55,130 @@ def is_llm_ready() -> bool:
 
 
 # ============================================================================
+# Cascade Planner Integration (2026 Execution Hardening)
+# ============================================================================
+
+def cascade_detect_intent(query: str) -> tuple:
+    """
+    Detect intent using the cascade planner's deterministic rules.
+    
+    Returns:
+        Tuple of (intent_name, confidence, cascade_intent_enum)
+    """
+    try:
+        from orchestration import classify_intent, Intent
+        
+        intent, confidence = classify_intent(query)
+        
+        # Map cascade intents to legacy chat_logic intents
+        intent_mapping = {
+            Intent.DESCRIBE_DATA: "informational",
+            Intent.VISUALIZE: "visualization",
+            Intent.TRANSFORM: "analysis",
+            Intent.FILTER: "analysis",
+            Intent.AGGREGATE: "analysis",
+            Intent.MODEL_TRAIN: "analysis",
+            Intent.MODEL_PREDICT: "analysis",
+            Intent.ENRICH_DATA: "analysis",
+            Intent.EXPORT: "analysis",
+            Intent.COMPARE: "analysis",
+            Intent.UNKNOWN: "analysis",
+        }
+        
+        legacy_intent = intent_mapping.get(intent, "analysis")
+        return legacy_intent, confidence, intent
+        
+    except ImportError:
+        return "analysis", 0.5, None
+    except Exception as e:
+        print(f"Cascade intent detection failed: {e}")
+        return "analysis", 0.5, None
+
+
+def cascade_execute(df, query: str, context: dict = None) -> dict:
+    """
+    Execute a query using the cascade planner.
+    
+    This is the structured alternative to raw code generation + exec().
+    Uses registered tools with retry logic and fallbacks.
+    
+    Returns:
+        Dict with keys: success, output, error, intent, steps_completed
+    """
+    try:
+        from orchestration import get_planner, get_artifact_store
+        
+        context = context or {}
+        context["df"] = df
+        
+        planner = get_planner()
+        store = get_artifact_store()
+        
+        # Generate and execute plan
+        plan = planner.plan(query, context=context)
+        result = planner.execute(plan, context=context)
+        
+        # Save artifact for replay
+        try:
+            store.save(plan, result, context)
+        except Exception as e:
+            print(f"Artifact save failed: {e}")
+        
+        return {
+            "success": result.success,
+            "output": result.output,
+            "error": result.error,
+            "intent": plan.intent.value,
+            "plan_id": plan.plan_id,
+            "steps_completed": result.steps_completed,
+            "total_steps": result.total_steps,
+        }
+        
+    except ImportError as e:
+        print(f"Orchestration not available: {e}")
+        return {"success": False, "error": "Orchestration not available", "output": None}
+    except Exception as e:
+        print(f"Cascade execution failed: {e}")
+        return {"success": False, "error": str(e), "output": None}
+
+
+def should_use_cascade(query: str) -> bool:
+    """
+    Determine if query should use cascade planner vs legacy code generation.
+    
+    Cascade is preferred for:
+    - Data profiling/description
+    - Simple visualizations
+    - Standard transformations (filter, group, aggregate)
+    
+    Legacy code generation is preferred for:
+    - Complex custom analysis
+    - Unusual visualizations
+    - Multi-step custom workflows
+    """
+    try:
+        from orchestration import classify_intent, Intent
+        
+        intent, confidence = classify_intent(query)
+        
+        # High-confidence known intents use cascade
+        cascade_intents = {
+            Intent.DESCRIBE_DATA,
+            Intent.VISUALIZE,
+            Intent.FILTER,
+            Intent.AGGREGATE,
+        }
+        
+        if intent in cascade_intents and confidence >= 0.8:
+            return True
+        
+        return False
+        
+    except ImportError:
+        return False
+
+
+# ============================================================================
 # Learning System Integration
 # ============================================================================
 
@@ -64,11 +188,11 @@ def init_learning_system():
     try:
         from learning.vector_store import VectorStore
         from learning.embeddings import EmbeddingModel
-        from learning.interaction_logger import InteractionLogger
+        from llm_learning.interaction_logger import get_interaction_logger
         
         vs = VectorStore()
         emb = EmbeddingModel()
-        logger = InteractionLogger()
+        logger = get_interaction_logger()
         return vs, emb, logger
     except Exception as e:
         print(f"Learning system init failed: {e}")
@@ -357,12 +481,26 @@ def extract_json_from_response(response: str) -> Optional[Dict]:
 
 def detect_intent(query: str, context: str = "") -> str:
     """
-    Detect intent using LLM for "Smart Routing". 
-    Falls back to keywords if LLM fails.
+    Detect intent using Smart Routing.
+    
+    Priority:
+    1. Cascade planner's deterministic rules (fast, no LLM)
+    2. Fast keyword checks
+    3. LLM Smart Routing
+    4. Keyword fallback
     """
-    # 1. Fast Keyword Check (Optimization for obvious cases)
     query_lower = query.lower()
     
+    # 0. Try Cascade Planner's deterministic detection first (fast, no LLM call)
+    try:
+        legacy_intent, confidence, cascade_intent = cascade_detect_intent(query)
+        if confidence >= 0.8:
+            print(f"[Cascade] Intent: {cascade_intent.value if cascade_intent else legacy_intent} (conf: {confidence:.2f})")
+            return legacy_intent
+    except Exception as e:
+        print(f"Cascade detection skipped: {e}")
+    
+    # 1. Fast Keyword Check (Optimization for obvious cases)
     # "Show me..." is almost always a chart
     if query_lower.startswith("show me") or "plot" in query_lower:
         return "visualization"

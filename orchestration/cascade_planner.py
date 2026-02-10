@@ -1,0 +1,590 @@
+"""
+Cascade Decision Planner for Minerva.
+
+Implements structured intent → plan → tool cascade:
+- Deterministic rules for common cases
+- LLM fallback for novel cases  
+- Execution feedback loop (Generate-Check-Reflect)
+- Learning from both successful paths
+
+Usage:
+    from orchestration.cascade_planner import CascadePlanner
+    
+    planner = CascadePlanner()
+    plan = planner.plan(query, context={"df": df})
+    result = planner.execute(plan)
+"""
+import logging
+import hashlib
+import json
+import re
+from dataclasses import dataclass, field, asdict
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Callable
+from enum import Enum
+
+logger = logging.getLogger(__name__)
+
+
+class Intent(Enum):
+    """Recognized user intents."""
+    DESCRIBE_DATA = "describe_data"
+    VISUALIZE = "visualize"
+    TRANSFORM = "transform"
+    FILTER = "filter"
+    AGGREGATE = "aggregate"
+    MODEL_TRAIN = "model_train"
+    MODEL_PREDICT = "model_predict"
+    ENRICH_DATA = "enrich_data"
+    EXPORT = "export"
+    COMPARE = "compare"
+    UNKNOWN = "unknown"
+
+
+class PlanStatus(Enum):
+    """Execution plan status."""
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    FAILED = "failed"
+    PARTIAL = "partial"
+
+
+@dataclass
+class PlanStep:
+    """A single step in an execution plan."""
+    step_id: str
+    action: str
+    tool: str
+    inputs: Dict[str, Any]
+    expected_output: str
+    fallback_tool: Optional[str] = None
+    depends_on: List[str] = field(default_factory=list)
+    status: PlanStatus = PlanStatus.PENDING
+    result: Optional[Any] = None
+    error: Optional[str] = None
+    execution_time_ms: int = 0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        d["status"] = self.status.value
+        return d
+
+
+@dataclass
+class ExecutionPlan:
+    """A complete execution plan."""
+    plan_id: str
+    intent: Intent
+    query: str
+    steps: List[PlanStep]
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    status: PlanStatus = PlanStatus.PENDING
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "plan_id": self.plan_id,
+            "intent": self.intent.value,
+            "query": self.query,
+            "steps": [s.to_dict() for s in self.steps],
+            "created_at": self.created_at,
+            "status": self.status.value,
+            "metadata": self.metadata,
+        }
+
+
+@dataclass
+class ExecutionResult:
+    """Result of executing a plan."""
+    plan_id: str
+    success: bool
+    output: Any = None
+    error: Optional[str] = None
+    steps_completed: int = 0
+    total_steps: int = 0
+    execution_time_ms: int = 0
+    learned: bool = False  # Whether this execution was logged for learning
+
+
+# =============================================================================
+# Intent Classification - Deterministic Rules
+# =============================================================================
+
+# Pattern-based intent classification (deterministic first)
+INTENT_PATTERNS = {
+    Intent.DESCRIBE_DATA: [
+        r"\b(describe|profile|overview|summary|summarize|info|about|tell me about|show me|what is)\b.*\b(data|dataset|table|columns?|rows?)\b",
+        r"\b(data|dataset)\b.*\b(look like|structure|shape|size)\b",
+        r"\bhow many\b.*\b(rows?|columns?|records?)\b",
+        r"\b(column|field)s?\b.*\b(types?|names?)\b",
+    ],
+    Intent.VISUALIZE: [
+        r"\b(chart|graph|plot|visuali[sz]e|show|display|draw)\b",
+        r"\b(bar|line|scatter|histogram|pie|heatmap|box)\b.*\b(chart|graph|plot)?\b",
+        r"\b(trend|distribution|correlation)\b",
+    ],
+    Intent.FILTER: [
+        r"\b(filter|where|only|exclude|remove|keep)\b.*\b(rows?|records?|data)\b",
+        r"\b(greater|less|equal|between|contains?|starts?|ends?)\b",
+        r"\brows? where\b",
+    ],
+    Intent.AGGREGATE: [
+        r"\b(group|aggregate|sum|count|average|avg|mean|total|by)\b",
+        r"\b(per|for each|breakdown)\b",
+    ],
+    Intent.TRANSFORM: [
+        r"\b(transform|clean|preprocess|prepare|modify|change|convert|rename|add|create)\b.*\b(column|data|field)\b",
+        r"\b(fill|handle|impute)\b.*\b(missing|null|na|nan)\b",
+        r"\b(normalize|scale|encode|one.?hot)\b",
+    ],
+    Intent.MODEL_TRAIN: [
+        r"\b(train|build|create|fit)\b.*\b(model|classifier|regressor|predictor)\b",
+        r"\b(predict|forecast|classify)\b.*\b(using|with)\b.*\b(model)?\b",
+        r"\b(machine learning|ml|regression|classification)\b",
+    ],
+    Intent.MODEL_PREDICT: [
+        r"\b(predict|forecast|estimate|project)\b",
+        r"\b(what will|what would|future|next)\b",
+    ],
+    Intent.ENRICH_DATA: [
+        r"\b(enrich|augment|add|fetch|get|pull)\b.*\b(data|external|api)\b",
+        r"\b(join|merge|combine)\b.*\b(with|from)\b.*\b(external|api|source)\b",
+    ],
+    Intent.EXPORT: [
+        r"\b(export|save|download|generate)\b.*\b(csv|excel|pdf|report)\b",
+        r"\b(create|make)\b.*\b(report|document)\b",
+    ],
+    Intent.COMPARE: [
+        r"\b(compare|difference|vs|versus|between)\b",
+        r"\b(which|what)\b.*\b(better|worse|higher|lower)\b",
+    ],
+}
+
+
+def classify_intent(query: str) -> tuple[Intent, float]:
+    """
+    Classify user intent using deterministic rules.
+    
+    Returns:
+        Tuple of (intent, confidence)
+    """
+    query_lower = query.lower().strip()
+    
+    best_intent = Intent.UNKNOWN
+    best_score = 0.0
+    
+    for intent, patterns in INTENT_PATTERNS.items():
+        for pattern in patterns:
+            if re.search(pattern, query_lower, re.IGNORECASE):
+                # Score based on pattern specificity
+                specificity = len(pattern) / 100  # Longer patterns = more specific
+                score = 0.7 + min(specificity, 0.25)  # Base 0.7, max 0.95
+                
+                if score > best_score:
+                    best_score = score
+                    best_intent = intent
+    
+    logger.debug(f"Classified intent: {best_intent.value} (confidence: {best_score:.2f})")
+    return best_intent, best_score
+
+
+# =============================================================================
+# Intent → Plan Templates (Deterministic)
+# =============================================================================
+
+def _build_describe_plan(query: str, context: Dict[str, Any]) -> List[PlanStep]:
+    """Build plan for data description."""
+    return [
+        PlanStep(
+            step_id="step_1",
+            action="profile_data",
+            tool="data_profiler",
+            inputs={"df": "__context.df__"},
+            expected_output="Data profile dictionary",
+            fallback_tool="basic_stats",
+        ),
+    ]
+
+
+def _build_visualize_plan(query: str, context: Dict[str, Any]) -> List[PlanStep]:
+    """Build plan for visualization."""
+    # Extract chart type and columns from query
+    chart_type = "bar"  # Default
+    if re.search(r"\bline\b", query, re.I):
+        chart_type = "line"
+    elif re.search(r"\bscatter\b", query, re.I):
+        chart_type = "scatter"
+    elif re.search(r"\bhistogram\b", query, re.I):
+        chart_type = "histogram"
+    elif re.search(r"\bpie\b", query, re.I):
+        chart_type = "pie"
+    elif re.search(r"\bheatmap|correlation\b", query, re.I):
+        chart_type = "heatmap"
+    
+    return [
+        PlanStep(
+            step_id="step_1",
+            action="generate_chart",
+            tool="chart_generator",
+            inputs={
+                "df": "__context.df__",
+                "chart_type": chart_type,
+                "x": "__infer_x__",
+                "y": "__infer_y__",
+            },
+            expected_output="Plotly figure",
+            fallback_tool="table_display",
+        ),
+    ]
+
+
+def _build_filter_plan(query: str, context: Dict[str, Any]) -> List[PlanStep]:
+    """Build plan for filtering."""
+    return [
+        PlanStep(
+            step_id="step_1",
+            action="filter_data",
+            tool="filter_rows",
+            inputs={
+                "df": "__context.df__",
+                "column": "__infer_column__",
+                "operator": "__infer_operator__",
+                "value": "__infer_value__",
+            },
+            expected_output="Filtered DataFrame",
+        ),
+    ]
+
+
+def _build_aggregate_plan(query: str, context: Dict[str, Any]) -> List[PlanStep]:
+    """Build plan for aggregation."""
+    return [
+        PlanStep(
+            step_id="step_1",
+            action="aggregate_data",
+            tool="group_by",
+            inputs={
+                "df": "__context.df__",
+                "group_cols": "__infer_group_cols__",
+                "agg_dict": "__infer_agg_dict__",
+            },
+            expected_output="Aggregated DataFrame",
+        ),
+    ]
+
+
+def _build_transform_plan(query: str, context: Dict[str, Any]) -> List[PlanStep]:
+    """Build plan for transformation."""
+    steps = []
+    
+    # Check for missing value handling
+    if re.search(r"\bmissing|null|na|nan\b", query, re.I):
+        steps.append(PlanStep(
+            step_id="step_1",
+            action="fill_missing",
+            tool="fill_missing",
+            inputs={
+                "df": "__context.df__",
+                "strategy": "mean",
+            },
+            expected_output="DataFrame with filled values",
+        ))
+    else:
+        # Generic transform via LLM
+        steps.append(PlanStep(
+            step_id="step_1",
+            action="transform_data",
+            tool="pandas_transform",
+            inputs={
+                "df": "__context.df__",
+                "operations": "__llm_generate__",
+            },
+            expected_output="Transformed DataFrame",
+        ))
+    
+    return steps
+
+
+PLAN_BUILDERS = {
+    Intent.DESCRIBE_DATA: _build_describe_plan,
+    Intent.VISUALIZE: _build_visualize_plan,
+    Intent.FILTER: _build_filter_plan,
+    Intent.AGGREGATE: _build_aggregate_plan,
+    Intent.TRANSFORM: _build_transform_plan,
+}
+
+
+# =============================================================================
+# Cascade Planner
+# =============================================================================
+
+class CascadePlanner:
+    """
+    Structured cascade planner implementing:
+    - Deterministic rules for common intents
+    - LLM fallback for novel cases
+    - Execution with retry and feedback
+    - Learning from executions
+    """
+    
+    MAX_RETRIES = 3
+    
+    def __init__(self):
+        self._execution_history: List[ExecutionResult] = []
+    
+    def plan(self, query: str, context: Optional[Dict[str, Any]] = None) -> ExecutionPlan:
+        """
+        Generate an execution plan for the query.
+        
+        Args:
+            query: User's natural language query
+            context: Execution context (df, target_col, etc.)
+            
+        Returns:
+            ExecutionPlan ready for execution
+        """
+        context = context or {}
+        
+        # Step 1: Classify intent (deterministic first)
+        intent, confidence = classify_intent(query)
+        
+        # Step 2: Build plan from templates
+        if intent in PLAN_BUILDERS and confidence >= 0.6:
+            steps = PLAN_BUILDERS[intent](query, context)
+            logger.info(f"Built deterministic plan for intent: {intent.value}")
+        else:
+            # Fallback: use LLM to generate plan
+            steps = self._llm_generate_plan(query, context)
+            logger.info(f"Used LLM to generate plan for intent: {intent.value}")
+        
+        # Generate plan ID
+        plan_id = hashlib.md5(f"{query}{datetime.now().isoformat()}".encode()).hexdigest()[:12]
+        
+        plan = ExecutionPlan(
+            plan_id=plan_id,
+            intent=intent,
+            query=query,
+            steps=steps,
+            metadata={
+                "confidence": confidence,
+                "context_keys": list(context.keys()),
+            },
+        )
+        
+        logger.debug(f"Created plan {plan_id} with {len(steps)} steps")
+        return plan
+    
+    def execute(self, plan: ExecutionPlan, context: Optional[Dict[str, Any]] = None) -> ExecutionResult:
+        """
+        Execute a plan with retry logic and feedback.
+        
+        Args:
+            plan: The execution plan
+            context: Runtime context (df, etc.)
+            
+        Returns:
+            ExecutionResult with output or error
+        """
+        from orchestration.tool_registry import invoke_tool
+        
+        context = context or {}
+        plan.status = PlanStatus.RUNNING
+        start_time = datetime.now()
+        
+        step_outputs = {}  # Store outputs for dependent steps
+        last_output = None
+        steps_completed = 0
+        
+        for step in plan.steps:
+            step.status = PlanStatus.RUNNING
+            
+            # Resolve inputs
+            resolved_inputs = self._resolve_inputs(step.inputs, context, step_outputs)
+            
+            # Check for unresolved placeholders
+            unresolved = [k for k, v in resolved_inputs.items() if isinstance(v, str) and v.startswith("__")]
+            if unresolved:
+                # Need LLM to resolve
+                resolved_inputs = self._llm_resolve_inputs(step, resolved_inputs, context)
+            
+            # Execute with retry
+            result = invoke_tool(
+                step.tool,
+                resolved_inputs,
+                max_retries=self.MAX_RETRIES,
+            )
+            
+            step.execution_time_ms = result.execution_time_ms
+            
+            if result.success:
+                step.status = PlanStatus.SUCCESS
+                step.result = result.output
+                step_outputs[step.step_id] = result.output
+                last_output = result.output
+                steps_completed += 1
+            else:
+                step.status = PlanStatus.FAILED
+                step.error = result.error
+                logger.warning(f"Step {step.step_id} failed: {result.error}")
+                
+                # Try to continue if not critical
+                if step.fallback_tool:
+                    logger.info(f"Fallback handled by tool registry")
+                break
+        
+        # Determine overall status
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)
+        
+        if steps_completed == len(plan.steps):
+            plan.status = PlanStatus.SUCCESS
+            success = True
+        elif steps_completed > 0:
+            plan.status = PlanStatus.PARTIAL
+            success = True  # Partial success
+        else:
+            plan.status = PlanStatus.FAILED
+            success = False
+        
+        exec_result = ExecutionResult(
+            plan_id=plan.plan_id,
+            success=success,
+            output=last_output,
+            error=plan.steps[-1].error if plan.status == PlanStatus.FAILED else None,
+            steps_completed=steps_completed,
+            total_steps=len(plan.steps),
+            execution_time_ms=total_time,
+        )
+        
+        # Log for learning (passive + active)
+        self._log_execution(plan, exec_result, context)
+        
+        self._execution_history.append(exec_result)
+        return exec_result
+    
+    def _resolve_inputs(
+        self,
+        inputs: Dict[str, Any],
+        context: Dict[str, Any],
+        step_outputs: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Resolve input placeholders."""
+        resolved = {}
+        
+        for key, value in inputs.items():
+            if isinstance(value, str):
+                if value == "__context.df__":
+                    resolved[key] = context.get("df")
+                elif value == "__context.target__":
+                    resolved[key] = context.get("target_col")
+                elif value.startswith("__step."):
+                    # Reference to previous step output
+                    ref_step = value.replace("__step.", "").replace("__", "")
+                    resolved[key] = step_outputs.get(ref_step)
+                else:
+                    resolved[key] = value
+            else:
+                resolved[key] = value
+        
+        return resolved
+    
+    def _llm_generate_plan(self, query: str, context: Dict[str, Any]) -> List[PlanStep]:
+        """Use LLM to generate a plan for unknown intents."""
+        # Fallback to basic describe if LLM not available
+        logger.info("LLM plan generation not implemented, using fallback")
+        return [
+            PlanStep(
+                step_id="step_1",
+                action="describe_data",
+                tool="data_profiler",
+                inputs={"df": "__context.df__"},
+                expected_output="Data profile",
+            ),
+        ]
+    
+    def _llm_resolve_inputs(
+        self,
+        step: PlanStep,
+        inputs: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Use LLM to resolve placeholder inputs."""
+        resolved = dict(inputs)
+        df = context.get("df")
+        
+        if df is not None:
+            import pandas as pd
+            if isinstance(df, pd.DataFrame):
+                columns = list(df.columns)
+                numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+                
+                # Simple heuristics for now (LLM can be added later)
+                if "__infer_x__" in str(resolved.get("x", "")):
+                    resolved["x"] = columns[0] if columns else None
+                    
+                if "__infer_y__" in str(resolved.get("y", "")):
+                    resolved["y"] = numeric_cols[0] if numeric_cols else None
+                
+                if "__infer_column__" in str(resolved.get("column", "")):
+                    resolved["column"] = columns[0] if columns else None
+                
+                if "__infer_group_cols__" in str(resolved.get("group_cols", "")):
+                    cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+                    resolved["group_cols"] = cat_cols[:1] if cat_cols else columns[:1]
+                
+                if "__infer_agg_dict__" in str(resolved.get("agg_dict", "")):
+                    if numeric_cols:
+                        resolved["agg_dict"] = {numeric_cols[0]: "sum"}
+        
+        return resolved
+    
+    def _log_execution(self, plan: ExecutionPlan, result: ExecutionResult, context: Optional[Dict[str, Any]] = None):
+        """Log execution for learning system (passive + active)."""
+        context = context or {}
+        
+        # 1. Passive logging to interaction logger
+        try:
+            from llm_learning.interaction_logger import get_interaction_logger, InteractionType
+            
+            il = get_interaction_logger()
+            il.log(
+                prompt=plan.query,
+                response=json.dumps(result.output)[:1000] if result.output else "",
+                interaction_type=InteractionType.ACTION,
+                code_generated="",
+                execution_success=result.success,
+                response_time_ms=result.execution_time_ms,
+            )
+            logger.debug(f"Logged execution to InteractionLogger for plan {plan.plan_id}")
+        except Exception as e:
+            logger.debug(f"Could not log to InteractionLogger: {e}")
+        
+        # 2. Active learning: update patterns and tool weights
+        try:
+            from orchestration.plan_learner import get_learner
+            
+            learner = get_learner()
+            learner.learn_from_execution(plan, result, context)
+            result.learned = True
+            logger.debug(f"Active learning applied for plan {plan.plan_id}")
+        except Exception as e:
+            logger.debug(f"Could not apply active learning: {e}")
+    
+    def get_history(self, limit: int = 10) -> List[ExecutionResult]:
+        """Get recent execution history."""
+        return self._execution_history[-limit:]
+
+
+# =============================================================================
+# Global Access
+# =============================================================================
+
+_planner: Optional[CascadePlanner] = None
+
+
+def get_planner() -> CascadePlanner:
+    """Get the global cascade planner instance."""
+    global _planner
+    if _planner is None:
+        _planner = CascadePlanner()
+    return _planner

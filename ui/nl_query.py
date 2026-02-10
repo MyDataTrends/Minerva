@@ -37,11 +37,11 @@ def init_learning_system():
     try:
         from learning.vector_store import VectorStore
         from learning.embeddings import EmbeddingModel
-        from learning.interaction_logger import InteractionLogger
+        from llm_learning.interaction_logger import get_interaction_logger
         
         vs = VectorStore()
         emb = EmbeddingModel()
-        logger = InteractionLogger()
+        logger = get_interaction_logger()
         return vs, emb, logger
     except Exception as e:
         # Silent failure for dashboard components

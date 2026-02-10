@@ -18,8 +18,8 @@ from pathlib import Path
 
 # Debug profiling
 t0 = time.time()
-# Force absolute path to avoid CWD confusion
-PROFILE_LOG = Path(r"C:\Projects\Minerva\Minerva\startup_profile.log")
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROFILE_LOG = _PROJECT_ROOT / "startup_profile.log"
 
 # Open with buffering=1 (line buffered) or flush immediately
 with open(PROFILE_LOG, "w", encoding="utf-8") as f:
@@ -33,21 +33,13 @@ def log_profile(msg):
     except Exception as e:
         print(f"LOG ERROR: {e}")
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 # === Debug & crash logging (optional) ===
-import logging, faulthandler
+import faulthandler
 faulthandler.enable()
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(),              # Streamlit console
-        logging.FileHandler("app_debug.log")  # Persistent log
-    ]
-)
+# Note: logging.basicConfig already called at top of file
 
 # Tell Streamlit to emit DEBUG logs
 import os
@@ -273,6 +265,10 @@ try:
         st.sidebar.warning("🤖 No LLM selected")
 except Exception:
     st.sidebar.info("🤖 LLM: Setup needed")
+
+# Dev Mode Toggle
+from ui.dev_settings import render_dev_toggle
+render_dev_toggle()
 
 st.sidebar.divider()
 

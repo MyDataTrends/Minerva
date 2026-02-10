@@ -252,9 +252,12 @@ class APIDiscoveryAgent:
                          "aapl", "msft", "googl", "tsla", "amzn", "shares", "equity", "bull", "bear"]
         },
         "economics": {
-            "primary": ["gdp", "unemployment", "inflation", "federal reserve", "fed", "interest rate"],
+            "primary": ["gdp", "unemployment", "inflation", "federal reserve", "fed", "interest rate",
+                       "social mobility", "income inequality", "wealth inequality", "gini"],
             "secondary": ["economic", "macro", "recession", "monetary", "fiscal", "trade deficit",
-                         "consumer spending", "labor market", "jobs report", "cpi", "ppi"]
+                         "consumer spending", "labor market", "jobs report", "cpi", "ppi",
+                         "poverty", "wealth quintile", "income quintile", "minimum wage",
+                         "economic mobility", "generational wealth", "median income", "wage gap"]
         },
         "weather": {
             "primary": ["weather", "temperature", "forecast", "hurricane", "storm"],
@@ -272,9 +275,11 @@ class APIDiscoveryAgent:
                          "healthcare", "medical", "therapy", "treatment", "clinical"]
         },
         "demographics": {
-            "primary": ["population", "census", "demographic"],
+            "primary": ["population", "census", "demographic", "social mobility"],
             "secondary": ["age distribution", "gender", "income", "household", "birth rate",
-                         "death rate", "migration", "ethnicity", "education level"]
+                         "death rate", "migration", "ethnicity", "education level",
+                         "socioeconomic", "quintile", "decile", "upward mobility", 
+                         "intergenerational", "class", "middle class", "poverty rate"]
         },
         "sports": {
             "primary": ["nfl", "nba", "mlb", "nhl", "fifa", "espn", "sports"],
@@ -305,8 +310,8 @@ class APIDiscoveryAgent:
                          "netflix", "streaming", "oscar", "screenplay", "genre", "sequel"]
         },
         "social": {
-            "primary": ["reddit", "twitter", "trending", "viral"],
-            "secondary": ["social media", "posts", "likes", "followers", "hashtag", "meme",
+            "primary": ["reddit", "twitter", "trending", "viral", "social media"],
+            "secondary": ["posts", "likes", "followers", "hashtag", "meme",
                          "influencer", "engagement", "sentiment", "news", "opinion"]
         },
     }
@@ -500,14 +505,26 @@ class APIDiscoveryAgent:
             logger.info(f"Detected vertical: {vertical}")
         
         # 1. Search registry first
+        # 1. Search registry using Semantic Router (Embeddings + LLM Fallback)
         try:
-            from mcp_server.api_registry import search_apis_by_query, get_api
+            from mcp_server.semantic_router import get_router
+            from mcp_server.api_registry import get_api
             
-            registry_matches = search_apis_by_query(user_query)
+            router = get_router()
+            # Search with LLM fallback enabled for low confidence matches
+            matches = router.search(user_query, top_k=5, llm_fallback=True)
             
-            for match in registry_matches[:5]:
-                api_def = get_api(match["api_id"])
+            for match in matches:
+                api_def = get_api(match.api_id)
                 if api_def:
+                    # Normalize confidence score
+                    # Semantic router returns 0-1 score, we want it to reflect in our confidence
+                    confidence = match.score
+                    
+                    # Boost confidence if matched via LLM (router gives 0.9, but we can trust it significantly)
+                    if match.matched_via == "llm":
+                        logger.info(f"LLM matched query '{user_query}' to API '{match.name}'")
+                    
                     results.append(DiscoveredAPI(
                         name=api_def.name,
                         description=api_def.description,
@@ -517,10 +534,33 @@ class APIDiscoveryAgent:
                         auth_type=api_def.auth_type,
                         signup_url=api_def.signup_url,
                         source="registry",
-                        confidence=min(1.0, match["score"] / 20),
+                        confidence=confidence,
                     ))
+                    
         except Exception as e:
-            logger.error(f"Registry search failed: {e}")
+            logger.error(f"Semantic registry search failed: {e}")
+            # Fallback to simple keyword search if semantic router fails
+            try:
+                from mcp_server.api_registry import search_apis_by_query, get_api
+                logger.info("Falling back to keyword search")
+                registry_matches = search_apis_by_query(user_query)
+                
+                for match in registry_matches[:5]:
+                    api_def = get_api(match["api_id"])
+                    if api_def:
+                        results.append(DiscoveredAPI(
+                            name=api_def.name,
+                            description=api_def.description,
+                            base_url=api_def.base_url,
+                            docs_url=api_def.docs_url,
+                            openapi_url=api_def.openapi_url if hasattr(api_def, 'openapi_url') else None,
+                            auth_type=api_def.auth_type,
+                            signup_url=api_def.signup_url,
+                            source="registry",
+                            confidence=min(1.0, match["score"] / 20),
+                        ))
+            except Exception as e2:
+                logger.error(f"Keyword fallback failed: {e2}")
         
         # 2. If no good matches, search web
         if not results or results[0].confidence < 0.5:

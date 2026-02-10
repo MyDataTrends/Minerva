@@ -41,19 +41,57 @@ class EmbeddingModel:
                     "or 'sentence-transformers'."
                 )
 
-    def embed(self, text: Union[str, List[str]]) -> Union[np.ndarray, List[np.ndarray]]:
+    def embed(self, text: Union[str, List[str]], use_cache: bool = True) -> Union[np.ndarray, List[np.ndarray]]:
         """
         Generate embeddings for text.
         
         Args:
             text: Single string or list of strings
+            use_cache: Whether to use the TTL cache for embeddings
             
         Returns:
             Numpy array of embeddings
         """
         if isinstance(text, str):
             text = [text]
+        
+        # Use cache for repeated embeddings
+        if use_cache:
+            from learning.cache_utils import get_embedding_cache
+            cache = get_embedding_cache()
+            
+            # Check cache for all texts
+            results = []
+            texts_to_embed = []
+            cache_indices = []
+            
+            for i, t in enumerate(text):
+                cached = cache.get(t)
+                if cached is not None:
+                    results.append((i, cached))
+                else:
+                    texts_to_embed.append(t)
+                    cache_indices.append(i)
+            
+            # Compute embeddings for cache misses
+            if texts_to_embed:
+                if self._provider == "fastembed":
+                    new_embeddings = np.array(list(self._client.embed(texts_to_embed)))
+                elif self._provider == "sentence_transformers":
+                    new_embeddings = self._client.encode(texts_to_embed, convert_to_numpy=True)
+                else:
+                    new_embeddings = np.array([])
+                
+                # Cache new embeddings
+                for j, t in enumerate(texts_to_embed):
+                    cache.set(t, new_embeddings[j])
+                    results.append((cache_indices[j], new_embeddings[j]))
+            
+            # Sort by original index and return
+            results.sort(key=lambda x: x[0])
+            return np.array([r[1] for r in results])
 
+        # Non-cached path (original logic)
         if self._provider == "fastembed":
             # FastEmbed returns a generator of numpy arrays
             embeddings = list(self._client.embed(text))

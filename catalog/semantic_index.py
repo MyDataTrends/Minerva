@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import logging
 from pathlib import Path
 from typing import Iterable, List
 
@@ -8,6 +9,8 @@ import pandas as pd
 from preprocessing.metadata_parser import infer_column_meta
 from config import USE_CLOUD, BUCKET_NAME, SEMANTIC_INDEX_KEY
 import boto3
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "semantic_index.db"
 
@@ -29,7 +32,8 @@ def _load_dataframe(path: str) -> pd.DataFrame | None:
             return pd.read_json(path)
         if path.endswith(('.xls', '.xlsx')):
             return pd.read_excel(path)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to load dataframe from {path}: {e}")
         return None
     return None
 
@@ -52,7 +56,8 @@ def build_index(datasets_dir: str = "datasets", db_path: str | os.PathLike = DEF
             continue
         try:
             meta = infer_column_meta(df)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to infer column metadata for {fname}: {e}")
             continue
         for m in meta:
             if len(df) == 0:

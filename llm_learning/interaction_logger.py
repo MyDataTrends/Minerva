@@ -114,6 +114,23 @@ class InteractionLogger:
                 )
             """)
             
+            # Session summaries for two-tier retention (memory management)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS session_summaries (
+                    session_id TEXT PRIMARY KEY,
+                    interaction_count INTEGER,
+                    success_count INTEGER,
+                    failure_count INTEGER,
+                    avg_response_time_ms REAL,
+                    interaction_types TEXT,  -- JSON list
+                    datasets_used TEXT,      -- JSON list
+                    outcome_distribution TEXT,  -- JSON dict
+                    created_at TEXT,
+                    summarized_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    is_pinned INTEGER DEFAULT 0  -- Keep raw logs for failures/novel cases
+                )
+            """)
+            
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_interactions_session 
                 ON interactions(session_id)
@@ -296,6 +313,134 @@ class InteractionLogger:
             return {
                 row[0]: round((row[2] / row[1]) * 100, 1) if row[1] > 0 else 0
                 for row in rows
+            }
+
+    def summarize_session(self, session_id: str, pin: bool = False) -> Dict[str, Any]:
+        """
+        Summarize a session's interactions into a compact summary.
+        
+        Args:
+            session_id: The session to summarize
+            pin: If True, keep raw logs even after purge (for failures/novel cases)
+            
+        Returns:
+            The summary dict
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM interactions WHERE session_id = ?", (session_id,)
+            ).fetchall()
+            
+            if not rows:
+                return {}
+            
+            interactions = [dict(r) for r in rows]
+            
+            # Build summary statistics
+            summary = {
+                "session_id": session_id,
+                "interaction_count": len(interactions),
+                "success_count": sum(1 for i in interactions if i.get("execution_success")),
+                "failure_count": sum(1 for i in interactions if i.get("execution_success") == 0),
+                "avg_response_time_ms": sum(i.get("response_time_ms", 0) or 0 for i in interactions) / len(interactions) if interactions else 0,
+                "interaction_types": list(set(i.get("interaction_type", "") for i in interactions)),
+                "datasets_used": list(set(i.get("dataset_name", "") for i in interactions if i.get("dataset_name"))),
+                "outcome_distribution": {},
+                "created_at": min(i.get("created_at", "") for i in interactions),
+                "is_pinned": 1 if pin else 0,
+            }
+            
+            # Count outcomes
+            for i in interactions:
+                outcome = i.get("outcome", "pending")
+                summary["outcome_distribution"][outcome] = summary["outcome_distribution"].get(outcome, 0) + 1
+            
+            # Store summary
+            conn.execute("""
+                INSERT OR REPLACE INTO session_summaries 
+                (session_id, interaction_count, success_count, failure_count, avg_response_time_ms,
+                 interaction_types, datasets_used, outcome_distribution, created_at, is_pinned)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                summary["session_id"],
+                summary["interaction_count"],
+                summary["success_count"],
+                summary["failure_count"],
+                summary["avg_response_time_ms"],
+                json.dumps(summary["interaction_types"]),
+                json.dumps(summary["datasets_used"]),
+                json.dumps(summary["outcome_distribution"]),
+                summary["created_at"],
+                summary["is_pinned"],
+            ))
+            conn.commit()
+            
+            logger.info(f"Summarized session {session_id}: {summary['interaction_count']} interactions")
+            return summary
+    
+    def purge_old_interactions(self, keep_days: int = 7, keep_pinned: bool = True) -> int:
+        """
+        Two-tier retention: purge raw interactions older than keep_days,
+        but preserve summaries and optionally pinned sessions.
+        
+        Args:
+            keep_days: Keep raw interactions from the last N days
+            keep_pinned: If True, don't purge interactions from pinned sessions
+            
+        Returns:
+            Number of interactions deleted
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            # First, ensure all old sessions have summaries
+            old_sessions = conn.execute("""
+                SELECT DISTINCT session_id FROM interactions
+                WHERE created_at < datetime('now', ?)
+                AND session_id IS NOT NULL AND session_id != ''
+            """, (f"-{keep_days} days",)).fetchall()
+            
+            for (session_id,) in old_sessions:
+                # Check if summary exists
+                exists = conn.execute(
+                    "SELECT 1 FROM session_summaries WHERE session_id = ?", (session_id,)
+                ).fetchone()
+                if not exists:
+                    self.summarize_session(session_id)
+            
+            # Now delete old interactions, respecting pinned flag
+            if keep_pinned:
+                cursor = conn.execute("""
+                    DELETE FROM interactions 
+                    WHERE created_at < datetime('now', ?)
+                    AND (session_id IS NULL OR session_id NOT IN (
+                        SELECT session_id FROM session_summaries WHERE is_pinned = 1
+                    ))
+                """, (f"-{keep_days} days",))
+            else:
+                cursor = conn.execute("""
+                    DELETE FROM interactions 
+                    WHERE created_at < datetime('now', ?)
+                """, (f"-{keep_days} days",))
+            
+            deleted = cursor.rowcount
+            conn.commit()
+            
+            if deleted > 0:
+                logger.info(f"Purged {deleted} old interactions (kept summaries)")
+            return deleted
+    
+    def get_db_stats(self) -> Dict[str, Any]:
+        """Get database statistics for monitoring memory growth."""
+        with sqlite3.connect(self.db_path) as conn:
+            interactions_count = conn.execute("SELECT COUNT(*) FROM interactions").fetchone()[0]
+            summaries_count = conn.execute("SELECT COUNT(*) FROM session_summaries").fetchone()[0]
+            db_size = self.db_path.stat().st_size if self.db_path.exists() else 0
+            
+            return {
+                "interactions_count": interactions_count,
+                "summaries_count": summaries_count,
+                "db_size_bytes": db_size,
+                "db_size_mb": round(db_size / (1024 * 1024), 2),
             }
 
 

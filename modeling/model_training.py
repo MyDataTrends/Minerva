@@ -1,5 +1,3 @@
-import pickle
-
 from config.feature_flags import ENABLE_HEAVY_EXPLANATIONS, ENABLE_SHAP_EXPLANATIONS
 from preprocessing.llm_preprocessor import preprocess_data_with_llm
 from preprocessing.llm_analyzer import analyze_dataset, score_dataset_similarity
@@ -237,21 +235,36 @@ from pathlib import Path
 from utils.security import secure_join
 
 
-def save_model(model, filename: str = "model.pkl", run_id: str | None = None) -> None:
+def save_model(model, filename: str = "model.pkl", run_id: str | None = None) -> Path:
+    """Save model with checksum for integrity verification."""
+    from utils.safe_pickle import safe_dump
+    
     base = Path.cwd() / "models"
     if run_id is not None:
         base = base / run_id
     base.mkdir(parents=True, exist_ok=True)
     path = secure_join(base, filename)
-    with open(path, "wb") as f:
-        pickle.dump(model, f)
+    
+    return safe_dump(
+        model,
+        path,
+        add_checksum=True,
+        metadata={"run_id": run_id, "filename": filename},
+    )
 
 
-def load_model(filename: str = "model.pkl", run_id: str | None = None):
+def load_model(filename: str = "model.pkl", run_id: str | None = None, verify: bool = True):
+    """Load model with optional checksum verification."""
+    from utils.safe_pickle import safe_load
+    
     base = Path.cwd() / "models"
     if run_id is not None:
         base = base / run_id
     path = secure_join(base, filename)
-    with open(path, "rb") as f:
-        return pickle.load(f)
+    
+    return safe_load(
+        path,
+        verify=verify,
+        allow_missing_checksum=True,  # For backwards compatibility
+    )
 
