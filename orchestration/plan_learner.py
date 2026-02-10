@@ -198,6 +198,7 @@ class PlanLearner:
         plan: "ExecutionPlan",
         result: "ExecutionResult",
         context: Optional[Dict[str, Any]] = None,
+        resolved_inputs_map: Optional[Dict[str, Dict[str, Any]]] = None,
     ):
         """
         Learn from a completed execution.
@@ -209,6 +210,7 @@ class PlanLearner:
         """
         self._load_cache()
         context = context or {}
+        resolved_inputs_map = resolved_inputs_map or {}
         
         # 1. Update tool weights
         for step in plan.steps:
@@ -221,7 +223,7 @@ class PlanLearner:
         
         # 2. Learn pattern from successful execution
         if result.success:
-            self._learn_pattern(plan, context)
+            self._learn_pattern(plan, context, resolved_inputs_map)
         
         # 3. Learn new intent pattern from query
         self._learn_intent_pattern(plan.query, plan.intent.value)
@@ -276,21 +278,34 @@ class PlanLearner:
         except Exception as e:
             logger.warning(f"Failed to update tool weight: {e}")
     
-    def _learn_pattern(self, plan: "ExecutionPlan", context: Dict[str, Any]):
+    def _learn_pattern(
+        self, 
+        plan: "ExecutionPlan", 
+        context: Dict[str, Any],
+        resolved_inputs_map: Dict[str, Dict[str, Any]]
+    ):
         """Extract and store a learned pattern from successful execution."""
         # Generate pattern from query
         query_pattern = self._query_to_pattern(plan.query)
         pattern_id = hashlib.md5(f"{plan.intent.value}:{query_pattern}".encode()).hexdigest()[:12]
         
-        # Extract input mappings from context
+        # Extract inputs from resolved_inputs_map
         input_mappings = {}
-        df = context.get("df")
-        if df is not None:
-            import pandas as pd
-            if isinstance(df, pd.DataFrame):
-                input_mappings["columns"] = list(df.columns)
-                input_mappings["numeric_cols"] = df.select_dtypes(include=["number"]).columns.tolist()
-                input_mappings["categorical_cols"] = df.select_dtypes(include=["object", "category"]).columns.tolist()
+        for step_id, inputs in resolved_inputs_map.items():
+            for key, val in inputs.items():
+                # Skip context/large objects and internal references
+                if key in ["df", "context", "operations"]:
+                    continue
+                
+                if isinstance(val, (str, int, float, bool)):
+                    # Skip internal placeholders if they weren't resolved
+                    if isinstance(val, str) and val.startswith("__"):
+                        continue
+                    # Skip serialized data
+                    if isinstance(val, str) and len(val) > 100:
+                        continue
+                        
+                    input_mappings[key] = val
         
         # Tool sequence
         tool_sequence = [step.tool for step in plan.steps]
@@ -439,9 +454,32 @@ class PlanLearner:
         
         return best_tool
     
-    def get_suggested_inputs(self, intent: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def get_suggested_plan(self, intent: str, query: str) -> Optional[LearnedPattern]:
+        """
+        Get a learned plan pattern if the query matches a known pattern.
+        """
+        self._load_cache()
+        query_pattern = self._query_to_pattern(query)
+        pattern = self._find_pattern(intent, query_pattern)
+        
+        # Only suggest if we have high confidence
+        if pattern and pattern.confidence >= 0.7:
+            return pattern
+            
+        return None
+
+    def get_suggested_inputs(self, intent: str, context: Dict[str, Any], query: Optional[str] = None) -> Dict[str, Any]:
         """Get suggested input values based on learned patterns."""
         self._load_cache()
+        
+        # If query provided, try to find specific pattern match first
+        if query:
+            query_pattern = self._query_to_pattern(query)
+            pattern = self._find_pattern(intent, query_pattern)
+            if pattern:
+                return pattern.input_mappings
+        
+        # Fallback to general intent patterns (sorted by confidence)
         patterns = self.get_learned_patterns(intent)
         
         if not patterns:

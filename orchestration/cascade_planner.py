@@ -350,13 +350,27 @@ class CascadePlanner:
         intent, confidence = classify_intent(query)
         
         # Step 2: Build plan from templates
-        if intent in PLAN_BUILDERS and confidence >= 0.6:
-            steps = PLAN_BUILDERS[intent](query, context)
-            logger.info(f"Built deterministic plan for intent: {intent.value}")
-        else:
-            # Fallback: use LLM to generate plan
-            steps = self._llm_generate_plan(query, context)
-            logger.info(f"Used LLM to generate plan for intent: {intent.value}")
+        # Step 1.5: Check for learned plan (Closed Loop)
+        steps = []
+        try:
+            from orchestration.plan_learner import get_learner
+            learner = get_learner()
+            learned_pattern = learner.get_suggested_plan(intent.value, query)
+            if learned_pattern:
+                steps = self._create_plan_from_pattern(learned_pattern, context)
+                logger.info(f"Using learned plan for intent: {intent.value}")
+        except Exception as e:
+            logger.warning(f"Failed to retrieve learned plan: {e}")
+
+        if not steps:
+            # Step 2: Build plan from templates
+            if intent in PLAN_BUILDERS and confidence >= 0.6:
+                steps = PLAN_BUILDERS[intent](query, context)
+                logger.info(f"Built deterministic plan for intent: {intent.value}")
+            else:
+                # Fallback: use LLM to generate plan
+                steps = self._llm_generate_plan(query, context)
+                logger.info(f"Used LLM to generate plan for intent: {intent.value}")
         
         # Generate plan ID
         plan_id = hashlib.md5(f"{query}{datetime.now().isoformat()}".encode()).hexdigest()[:12]
@@ -393,6 +407,7 @@ class CascadePlanner:
         start_time = datetime.now()
         
         step_outputs = {}  # Store outputs for dependent steps
+        resolved_inputs_map = {} 
         last_output = None
         steps_completed = 0
         
@@ -406,7 +421,9 @@ class CascadePlanner:
             unresolved = [k for k, v in resolved_inputs.items() if isinstance(v, str) and v.startswith("__")]
             if unresolved:
                 # Need LLM to resolve
-                resolved_inputs = self._llm_resolve_inputs(step, resolved_inputs, context)
+                resolved_inputs = self._llm_resolve_inputs(step, resolved_inputs, context, plan.intent.value, query=plan.query)
+            
+            resolved_inputs_map[step.step_id] = resolved_inputs
             
             # Execute with retry
             result = invoke_tool(
@@ -457,7 +474,7 @@ class CascadePlanner:
         )
         
         # Log for learning (passive + active)
-        self._log_execution(plan, exec_result, context)
+        self._log_execution(plan, exec_result, context, resolved_inputs_map)
         
         self._execution_history.append(exec_result)
         return exec_result
@@ -490,8 +507,106 @@ class CascadePlanner:
     
     def _llm_generate_plan(self, query: str, context: Dict[str, Any]) -> List[PlanStep]:
         """Use LLM to generate a plan for unknown intents."""
-        # Fallback to basic describe if LLM not available
-        logger.info("LLM plan generation not implemented, using fallback")
+        try:
+            from llm_manager.llm_interface import get_llm_completion
+            from orchestration.tool_registry import TOOL_REGISTRY
+            import json
+            import re
+            
+            # 1. Build context
+            df = context.get("df")
+            data_context = "No data available."
+            if df is not None:
+                import pandas as pd
+                if isinstance(df, pd.DataFrame):
+                    cols = list(df.columns)
+                    dtypes = {k: str(v) for k, v in df.dtypes.items()}
+                    data_context = f"Columns: {cols}\nData Types: {dtypes}\nShape: {df.shape}"
+            
+            # 2. Build tool descriptions
+            tools_desc = []
+            for name, tool in TOOL_REGISTRY.items():
+                if tool.granularity.value == "coarse": # Prefer coarse tools for LLM
+                     # simplified schema for prompt
+                    schema = {k: v.get("type", "any") for k, v in tool.input_schema.items() if k != "df"}
+                    tools_desc.append(f"- {name}: {tool.description}. Inputs: {schema}")
+            
+            tools_str = "\n".join(tools_desc)
+            
+            # 3. Construct prompt
+            prompt = f"""You are an intelligent data analysis planner. Create a execution plan for the user's query.
+
+AVAILABLE TOOLS:
+{tools_str}
+
+DATA CONTEXT:
+{data_context}
+
+USER QUERY: "{query}"
+
+INSTRUCTIONS:
+1. Select appropriate tools.
+2. Use "__context.df__" for dataframe inputs.
+3. Return a valid JSON list of steps.
+
+JSON FORMAT:
+[
+  {{
+    "tool": "tool_name",
+    "inputs": {{ "arg": "val", "df": "__context.df__" }},
+    "reasoning": "step explanation"
+  }}
+]
+
+JSON RESPONSE:"""
+
+            # 4. Call LLM
+            response = get_llm_completion(prompt, max_tokens=1000, temperature=0.1)
+            
+            if not response:
+                logger.warning("Empty LLM response for plan generation")
+                return self._fallback_plan()
+
+            # 5. Parse JSON
+            try:
+                # Extract JSON if wrapped in markdown
+                json_str = response
+                if "```json" in response:
+                    json_str = response.split("```json")[1].split("```")[0]
+                elif "```" in response:
+                    json_str = response.split("```")[1].split("```")[0]
+                
+                plan_data = json.loads(json_str.strip())
+                
+                steps = []
+                for i, step_data in enumerate(plan_data):
+                    tool_name = step_data.get("tool")
+                    if tool_name not in TOOL_REGISTRY:
+                        continue
+                        
+                    steps.append(PlanStep(
+                        step_id=f"step_{i+1}",
+                        action=tool_name,
+                        tool=tool_name,
+                        inputs=step_data.get("inputs", {}),
+                        expected_output=step_data.get("reasoning", "LLM generated step")
+                    ))
+                
+                if steps:
+                    return steps
+                    
+            except Exception as e:
+                logger.warning(f"Failed to parse LLM plan: {e}. Response: {response[:100]}")
+                
+        except Exception as e:
+            logger.error(f"Error in LLM plan generation: {e}")
+            
+        # Fallback if anything fails
+        logger.info("Falling back to default describe plan")
+        return self._fallback_plan()
+
+    def _fallback_plan(self) -> List[PlanStep]:
+        """Return a safe fallback plan."""
         return [
             PlanStep(
                 step_id="step_1",
@@ -507,8 +622,12 @@ class CascadePlanner:
         step: PlanStep,
         inputs: Dict[str, Any],
         context: Dict[str, Any],
+        intent: Optional[str] = None,
+        query: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Use LLM to resolve placeholder inputs."""
+        """
+        Use learned patterns (and eventually LLM) to resolve placeholder inputs.
+        """
         resolved = dict(inputs)
         df = context.get("df")
         
@@ -518,7 +637,26 @@ class CascadePlanner:
                 columns = list(df.columns)
                 numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
                 
-                # Simple heuristics for now (LLM can be added later)
+                # 1. Try learned inputs first
+                if intent and query:
+                    try:
+                        from orchestration.plan_learner import get_learner
+                        learner = get_learner()
+                        # Pass query to find specific pattern match
+                        suggested = learner.get_suggested_inputs(intent, context, query=query)
+                        
+                        for key, val in suggested.items():
+                            # Only apply if we have a placeholder for this key
+                            current_val = resolved.get(key)
+                            if isinstance(current_val, str) and current_val.startswith("__"):
+                                # Verify the suggested column actually exists in this DF
+                                if val in columns:
+                                    resolved[key] = val
+                                    logger.debug(f"Resolved '{key}' to '{val}' using learned pattern")
+                    except Exception as e:
+                        logger.warning(f"Failed to apply learned inputs: {e}")
+
+                # 2. Fallback to heuristics
                 if "__infer_x__" in str(resolved.get("x", "")):
                     resolved["x"] = columns[0] if columns else None
                     
@@ -538,9 +676,37 @@ class CascadePlanner:
         
         return resolved
     
-    def _log_execution(self, plan: ExecutionPlan, result: ExecutionResult, context: Optional[Dict[str, Any]] = None):
+    def _create_plan_from_pattern(self, pattern: Any, context: Dict[str, Any]) -> List[PlanStep]:
+        """Create steps from a learned pattern."""
+        steps = []
+        # Eagerly apply all learned inputs to all steps (tools ignore extra kwargs)
+        learned_inputs = pattern.input_mappings.copy()
+        
+        for i, tool_name in enumerate(pattern.tool_sequence):
+            step_id = f"step_{i+1}"
+            step_inputs = learned_inputs.copy()
+            step_inputs["df"] = "__context.df__" # Always provide df reference
+            
+            steps.append(PlanStep(
+                step_id=step_id,
+                action=tool_name,
+                tool=tool_name,
+                inputs=step_inputs,
+                expected_output=f"Auto-generated step for {tool_name}"
+            ))
+            
+        return steps
+
+    def _log_execution(
+        self, 
+        plan: ExecutionPlan, 
+        result: ExecutionResult, 
+        context: Optional[Dict[str, Any]] = None,
+        resolved_inputs_map: Optional[Dict[str, Dict[str, Any]]] = None
+    ):
         """Log execution for learning system (passive + active)."""
         context = context or {}
+        resolved_inputs_map = resolved_inputs_map or {}
         
         # 1. Passive logging to interaction logger
         try:
@@ -564,7 +730,7 @@ class CascadePlanner:
             from orchestration.plan_learner import get_learner
             
             learner = get_learner()
-            learner.learn_from_execution(plan, result, context)
+            learner.learn_from_execution(plan, result, context, resolved_inputs_map)
             result.learned = True
             logger.debug(f"Active learning applied for plan {plan.plan_id}")
         except Exception as e:
