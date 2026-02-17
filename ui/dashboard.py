@@ -778,16 +778,24 @@ with chat_tab:
                     st.markdown(response)
                     ctx.add_message("assistant", response)
                 else:
-                    with st.spinner("Thinking..."):
+                else:
+                    # Glass Box UX: Show the user what's happening
+                    with st.status("Processing Request...", expanded=True) as status:
+                        status.write("🧠 Identifying intent...")
                         intent = detect_intent(prompt, context=chat_context)
                         
                         if intent == "visualization":
+                            status.write("📊 Generating visualization code...")
                             code = generate_visualization_code(data, prompt, context=chat_context, datasets=st.session_state.get("datasets"))
                             fig = None
                             if code:
+                                status.write("🎨 Rendering chart...")
                                 success, fig, error = safe_execute_viz(code, data, datasets=st.session_state.get("datasets"))
                             if not fig:
+                                status.write("⚠️ Standard rendering failed, trying fallback...")
                                 fig = fallback_visualization(data, prompt)
+                            
+                            status.update(label="Visualization Ready!", state="complete", expanded=False)
                             
                             if fig:
                                 st.markdown("Here's your visualization:")
@@ -815,11 +823,14 @@ with chat_tab:
                                         interaction_type=InteractionType.VISUALIZATION,
                                         code_generated=code or "",
                                         execution_success=False,
-                                    dataset_name=st.session_state.get("primary_dataset_id", "")
+                                        dataset_name=st.session_state.get("primary_dataset_id", "")
                                     )
                         
                         elif intent == "informational":
+                            status.write("📚 Consulting knowledge base...")
                             response = generate_informational_response(prompt, context=chat_context)
+                            status.update(label="Response Ready!", state="complete", expanded=False)
+                            
                             if not response:
                                 response = "⚠️ I'm unable to generate a response right now. Please check if the LLM is running correctly."
                             st.markdown(response)
@@ -835,8 +846,11 @@ with chat_tab:
                                 )
                             
                         else:
+                            status.write("🧮 Generating analysis code...")
                             success, result, code, error = execute_analysis_with_retry(data, prompt, context=chat_context, datasets=st.session_state.get("datasets"))
+                            
                             if success:
+                                status.update(label="Analysis Complete!", state="complete", expanded=False)
                                 natural = generate_natural_answer(prompt, result)
                                 response = natural or "Here's what I found:"
                                 st.markdown(response)
@@ -867,6 +881,7 @@ with chat_tab:
                                         mime="text/x-python"
                                     )
                             else:
+                                status.update(label="Analysis Failed", state="error", expanded=True)
                                 response = f"Error: {error}"
                                 st.markdown(response)
                                 ctx.add_message("assistant", response)

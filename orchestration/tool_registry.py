@@ -132,6 +132,20 @@ def _handle_basic_stats(df: pd.DataFrame, **kwargs) -> Dict[str, Any]:
 
 def _handle_filter_rows(df: pd.DataFrame, column: str, operator: str, value: Any, **kwargs) -> pd.DataFrame:
     """Filter rows based on condition."""
+    # Robustness: Try to convert column to numeric if value is numeric
+    if isinstance(value, (int, float)):
+        # Check if column is object/string but should be numeric
+        if df[column].dtype == 'object' or str(df[column].dtype) == 'string':
+            try:
+                # Attempt coercion
+                temp_col = pd.to_numeric(df[column], errors='coerce')
+                # If we successfully converted some values (not all NaNs), use it
+                if not temp_col.isna().all():
+                     df = df.copy()
+                     df[column] = temp_col
+            except (ValueError, TypeError):
+                pass 
+
     if operator == "==":
         return df[df[column] == value]
     elif operator == "!=":

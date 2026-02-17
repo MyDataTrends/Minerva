@@ -65,3 +65,9 @@ secrets.json
 # Models
 *.gguf
 models/*.gguf
+
+# === New Agent Outputs ===
+reports/verify_upgrade_*.md
+tests/*.log
+tests/upgrade_log.txt
+agents/digests/*.md

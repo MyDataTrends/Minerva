@@ -99,10 +99,8 @@ class SchedulerAgent:
         logger.info(f"Executing job: {job['name']}")
         try:
             import pandas as pd
-            # Fix imports for headless execution
-            # We need to import inside the function to avoid circular deps if possible
-            # But since this runs in thread, we can try importing from ui.chat_logic
-            from ui.chat_logic import generate_analysis_code, safe_execute, generate_natural_answer
+            from orchestration.cascade_planner import CascadePlanner
+            from ui.chat_logic import generate_natural_answer
             
             # 1. Load Data
             path = Path(job["dataset_path"])
@@ -118,25 +116,25 @@ class SchedulerAgent:
                 logger.error("Unsupported file format")
                 return
 
-            # 2. Generate Analysis
-            context = f"Scheduled Report: {job['name']}."
-            # Note: We pass empty datasets dict for now as scheduler only supports single file per job currently
-            code = generate_analysis_code(df, job["prompt"], context=context)
+            # 2. Plan & Execute (Robust Cascade)
+            context = {"df": df, "job_name": job['name']}
+            planner = CascadePlanner()
             
-            if not code:
-                logger.error("Failed to generate code")
-                return
-
-            # 3. Execute
-            success, result, error = safe_execute(code, df)
+            logger.info(f"Generating plan for: {job['prompt']}")
+            plan = planner.plan(job["prompt"], context=context)
             
-            if not success:
-                logger.error(f"Execution failed: {error}")
-                result_str = f"Error executing analysis: {error}"
+            logger.info(f"Executing plan {plan.plan_id} ({len(plan.steps)} steps)")
+            exec_result = planner.execute(plan, context=context)
+            
+            if not exec_result.success:
+                logger.error(f"Execution failed: {exec_result.error}")
+                result_str = f"Error executing analysis: {exec_result.error}"
+                result = None
             else:
+                result = exec_result.output
                 result_str = str(result)
                 
-            # 4. Narrative
+            # 3. Narrative
             narrative = generate_natural_answer(job["prompt"], result)
             
             # 5. Save Report

@@ -727,8 +727,126 @@ JSON RESPONSE:"""
                 if "__infer_agg_dict__" in str(resolved.get("agg_dict", "")):
                     if numeric_cols:
                         resolved["agg_dict"] = {numeric_cols[0]: "sum"}
-        
+                
+                # 3. Filter Resolution
+                if "__infer_operator__" in str(resolved.get("operator", "")) or "__infer_value__" in str(resolved.get("value", "")):
+                    try:
+                        filter_params = self._infer_filter_from_query(query, df)
+                        
+                        # Trust the inferred column if we found one
+                        # This fixes cases where LLM guesses the wrong column (e.g. Date)
+                        if filter_params.get("column"):
+                            resolved["column"] = filter_params.get("column")
+                            
+                        resolved["operator"] = filter_params.get("operator")
+                        resolved["value"] = filter_params.get("value")
+                    except Exception as e:
+                        logger.warning(f"Filter inference failed: {e}")
+
+                # 4. Transform Resolution
+                if "__llm_generate__" in str(resolved.get("operations", "")):
+                    resolved["operations"] = self._generate_transform_ops(query, df)
+
         return resolved
+
+    def _infer_filter_from_query(self, query: str, df: Any) -> Dict[str, Any]:
+        """Infer filter column, operator, and value from query."""
+        import re
+        q = query.lower()
+        columns = list(df.columns) if hasattr(df, "columns") else []
+        
+        # 1. Identify Column
+        # Sort columns by length descent to match longest first
+        sorted_cols = sorted(columns, key=len, reverse=True)
+        target_col = None
+        for col in sorted_cols:
+            if col.lower() in q:
+                target_col = col
+                break
+        
+        # Do NOT default to first column blindly. 
+        # If no column found, return None for column so we fallback to LLM's guess (or fail gracefully)
+        
+        # 2. Identify Operator & Value
+        operator = "=="
+        value = 0
+        
+        # Map phrases to operators
+        op_map = {
+            r"greater than|above|over|exceeds?": ">",
+            r"less than|below|under": "<",
+            r"at least|min(imum)?": ">=",
+            r"at most|max(imum)?": "<=",
+            r"equals?|is": "==",
+            r"not equals?|is not|different": "!=",
+            r"contains?|includes?|has": "contains"
+        }
+        
+        # Regex for values (int/float)
+        val_pattern = r"[-+]?\d*\.?\d+"
+        
+        # Search for "operator value" pattern
+        found_op = False
+        for pattern, op_sym in op_map.items():
+            # Look for "operator ... value"
+            full_pattern = f"({pattern}).*?({val_pattern})"
+            match = re.search(full_pattern, q)
+            if match:
+                operator = op_sym
+                val_str = match.group(2)
+                value = float(val_str) if "." in val_str else int(val_str)
+                found_op = True
+                break
+        
+        # Fallback: check for symbolic operators
+        if not found_op:
+            sym_match = re.search(f"(>=|<=|!=|==|>|<).*?({val_pattern})", q)
+            if sym_match:
+                operator = sym_match.group(1)
+                val_str = sym_match.group(2)
+                value = float(val_str) if "." in val_str else int(val_str)
+        
+        return {"column": target_col, "operator": operator, "value": value}
+
+    def _generate_transform_ops(self, query: str, df: Any) -> List[Dict[str, Any]]:
+        """Generate transform operations list using LLM."""
+        try:
+            from llm_manager.llm_interface import get_llm_completion
+            import json
+            
+            cols_info = list(df.columns) if hasattr(df, "columns") else "unknown"
+            
+            prompt = f"""Generate a list of pandas data transformation operations for this query.
+Query: "{query}"
+Columns: {cols_info}
+
+Supported operations:
+- fill_missing (params: strategy="mean"|"median"|"mode"|"custom", value=?)
+- drop_columns (params: columns=[list])
+- rename_columns (params: mapping={{old: new}})
+- filter_rows (params: condition="query string")
+- sort_values (params: by=col, ascending=True/False)
+
+Return ONLY a valid JSON list of operations.
+Example: [{{"operation": "fill_missing", "params": {{"strategy": "mean"}}}}]
+"""
+            response = get_llm_completion(prompt, max_tokens=500)
+            if not response: 
+                return []
+                
+            # Extract JSON
+            json_str = response
+            if "```json" in response:
+                json_str = response.split("```json")[1].split("```")[0]
+            elif "```" in response:
+                json_str = response.split("```")[1].split("```")[0]
+            
+            ops = json.loads(json_str.strip())
+            return ops if isinstance(ops, list) else []
+            
+        except Exception as e:
+            logger.error(f"Failed to generate transform ops: {e}")
+            return []
     
     def _validate_semantic_inputs(self, tool_name: str, inputs: Dict[str, Any], context: Dict[str, Any]) -> str:
         """Validate inputs against context and auto-correct typos."""

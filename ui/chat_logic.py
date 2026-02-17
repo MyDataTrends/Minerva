@@ -364,9 +364,11 @@ def safe_execute(code: str, df: pd.DataFrame, datasets: Optional[Dict[str, pd.Da
                  "eval(", "__import__", "shutil", "requests."]
     for pattern in dangerous:
         if pattern in code:
+            logger.warning(f"Security: Blocked code containing '{pattern}'")
             return False, None, f"Blocked unsafe pattern: {pattern}"
     
     # Execute
+    logger.info("Security: Executing generated code (Blocklist Sandbox)")
     namespace = {"df": df, "pd": pd, "np": np, "result": None}
     if datasets:
         namespace["datasets"] = datasets # Inject all datasets
