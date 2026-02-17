@@ -1,0 +1,54 @@
+matplotlib
+tokenizers>=0.19.0
+torch>=2.9.0
+spacy>=3.5.4
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+openpyxl==3.0.10
+pytest>=6.2.5
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+transformers>=4.26.1
+fuzzywuzzy==0.18.0
+boto3
+# Optional: llama-cpp-python for non-Windows
+llama-cpp-python==0.3.9 ; sys_platform != 'win32'
+setuptools>=65.5.1
+wheel>=0.37.1
+python-dotenv
+# pycaret replaced with compatible modeling stack
+xgboost>=2.0.0
+lightgbm>=4.6.0
+catboost>=1.2
+scipy>=1.13.0
+jupyterlab
+ipywidgets
+notebook
+fastapi
+prometheus_client
+cryptography
+structlog
+httpx
+streamlit
+uvicorn
+pyyaml
+requests
+responses
+moto
+pillow
+selenium
+fastembed>=0.2.0
+kaggle
+anthropic
+qdrant-client
+pypdf
+fpdf
+plotly
+schedule
+
+# Security pins for transitive dependencies (Snyk CVE fixes)
+urllib3>=2.6.3
+tornado>=6.5.3
+werkzeug>=3.1.5
+filelock>=3.20.3
+fonttools>=4.61.0

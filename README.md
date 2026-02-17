@@ -1,116 +1,133 @@
-# Minerva: The Local, Trainable AI Analyst
+# Minerva 🦉
 
-Minerva is a privacy-first data analysis platform that runs **entirely on your local machine**.
-It combines the power of **Large Language Models (LLMs)** with **Deterministic Python Code Execution** to give you an AI analyst that you can actually trust.
+**Upload. Analyze. Done.**
 
-![Dashboard](https://via.placeholder.com/800x400?text=Minerva+Dashboard+Screenshot)
+Minerva is an **AI-powered data analyst** that runs locally on your machine. It turns raw CSVs into insights, charts, and reports without you writing a single line of code.
 
-## 🚀 Why Minerva?
+## Why Minerva?
 
-### 1. 🔒 Privacy First (Local)
+Traditional analytics tools (Excel, Tableau, Power BI) require you to manually clean data, build charts, and configure dashboards.
+Chat-based AI tools (ChatGPT, Julius) require you to upload your sensitive data to the cloud.
 
-Unlike web-based tools (ChatGPT, Julius AI), Minerva runs on your hardware.
+Minerva is different:
 
-- **No data leaves your machine.**
-- Great for sensitive financial, healthcare, or proprietary data.
-- Supports **GPU Acceleration** (CUDA) for real-time performance.
+- **Zero Configuration**: Just upload a file. The system auto-detects types, cleans data, selects models, and generates insights.
+- **Local & Private**: Your data never leaves your machine. Processing happens locally or via your personal API keys.
+- **Self-Improving**: It remembers your domain. If you teach it that "Fiscal Year starts in Feb", it remembers that for every future analysis.
+- **Transparent**: Unlike black-box AI, Minerva generates actual Python code that you can inspect, audit, and reuse.
 
-### 2. 🧠 Trainable Memory (The "Teach" Button)
+## Features
 
-Minerva doesn't just chat; it learns.
+- **Autonomous Analysis**: Upload a dataset and get a full analysis report in seconds.
+- **Smart Charts**: Auto-selects the best visualization for your data (e.g., time-series lines, categorical bars).
+- **Natural Language Query**: Ask "Show me sales by region" and get a chart + answer.
+- **Data Fabric**: Visualizes how your datasets connect and where they came from.
+- **Agentic Infrastructure**: Built as an MCP Server, so other agents (like Claude Desktop) can use Minerva as a tool.
+- **Active Learning**: Learns from your feedback to improve future analyses.
 
-- Use **Teaching Mode** to save specific business logic (e.g., "This is how we calculate Churn").
-- These skills are stored in a local **Vector Database** (`.vector_store`).
-- Next time you ask, it retrieves *your* specific formula, not a generic one.
+## Quick Start (Win/Mac/Linux)
 
-### 3. 🔌 Auto-Enrichment
+### 1. Install
 
-Stop downloading CSVs manually. Minerva automatically connects your data to public sources:
+Minerva requires **Python 3.10+**.
 
-- **World Bank** (GDP, Population)
-- **FRED** (Interest Rates, Inflation)
-- **Census Bureau** (Demographics)
-- **Alpha Vantage** (Stock Prices)
+**Windows Users**:
+Download the repository and double-click `scripts/install.bat`.
 
-It uses **Semantic Matching** to find the right join keys (Zip/FIPS/ISO) automatically.
+**Manual Install**:
 
----
+```bash
+git clone https://github.com/rme0722/minerva.git
+cd minerva
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-## 🛠️ Installation
+**Docker Users**:
+Minerva is available as a Docker container for zero-dependency installation.
 
-### Prerequisites
+```bash
+docker-compose up --build
+```
 
-- **OS**: Windows, Linux, or Mac
-- **Python**: 3.10+
-- **GPU (Recommended)**: NVIDIA GPU with CUDA 12+ (for fast inference)
+Access the dashboard at `http://localhost:8501`.
 
-### Quick Start
+### 2. Configure (Optional)
 
-1. **Clone & Install**
+Copy `.env.example` to `.env` and add your API keys:
 
-    ```powershell
-    git clone https://github.com/your-repo/minerva.git
-    cd minerva
-    python -m venv .venv
-    .venv\Scripts\Activate.ps1
-    pip install -r config/requirements.txt
-    ```
+- `ANTHROPIC_API_KEY`: For faster, smarter analysis (highly recommended).
+- `FRED_API_KEY`: To fetch economic data from the Federal Reserve.
 
-2. **Enable GPU (Optional but Recommended)**
-    If you have an NVIDIA GPU, install the CUDA-enabled engine:
+### 3. Run
 
-    ```powershell
-    $env:CMAKE_ARGS="-DGGML_CUDA=on"
-    pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-    ```
+**Windows Users**:
+Double-click `scripts/run_dashboard.bat`.
 
-3. **Run the Dashboard**
+**Manual Run**:
 
-    ```powershell
-    python -m streamlit run ui/dashboard.py
-    ```
+```bash
+streamlit run ui/dashboard.py
+```
 
----
+### 4. First Analysis
 
-## 🏗️ Architecture
+1. Upon launch, you'll see the **Welcome Wizard**.
+2. Click **"Load Sample Data"** to analyze the included sales dataset.
+3. Watch as Minerva:
+   - Cleans the data
+   - Profiles column types
+   - Selects a forecasting model
+   - Generates a sales trend chart
 
-Minerva follows a modular "Model Context Protocol" (MCP) design:
+## Advanced Usage
 
-- **`ui/`**: User Interfaces (Streamlit)
-  - `dashboard.py`: Main entry point.
-  - `chat_logic.py`: "Smart Routing" intent classifier (Code vs. Text).
-  - `teach_logic.py`: Interface for saving new skills to memory.
-- **`llm_manager/`**: The Brain.
-  - `subprocess_manager.py`: Runs Llama-3 in a detached process (prevents UI freezing).
-  - `providers/local.py`: Wraps `llama_cpp` execution.
-- **`learning/`**: Long-Term Memory.
-  - `vector_store.py`: SQLite + FastEmbed for storing user-taught skills.
-  - `interaction_logger.py`: Implicitly learns from your usage.
-- **`public_data/`**: External Connectors.
-  - `connectors/`: Clients for World Bank, FRED, etc.
-- **`orchestration/`**: The "Do-er".
-  - `analysis_router.py`: Decides which statistical model to run.
-  - `llm_dynamic_analyzer.py`: Generates safe Pandas code on the fly.
+### Running the Agent Stack
 
----
+Minerva isn't just a dashboard — it's a system of autonomous agents that can run your data operations.
 
-## 💡 Key Features
+To run the **Conductor** (which orchestrates the entire system):
 
-| Feature | Description | Status |
-| :--- | :--- | :--- |
-| **Smart Routing** | Detects if you want a Chart (`viz`), a Calculation (`analysis`), or Text (`info`). | ✅ Active |
-| **Code Sandboxing** | All LLM-generated code is scanned for dangerous imports (`os`, `sys`) before running. | ✅ Active |
-| **Context Window** | Automatically injects dataframe schema + sample rows so the LLM knows your data. | ✅ Active |
-| **Project Memory** | "Teach" specific SQL queries or formulas once, use forever. | ✅ Active |
+```bash
+python -m agents run conductor
+```
 
----
+To run the **Engineer** (which autonomously fixes code gaps):
 
-## ⚠️ Commercial Licensing
+```bash
+python -m agents run engineer
+```
 
-Minerva is **Open Core** software.
+### MCP Server (For Claude Desktop)
 
-- **Personal License**: Free for individuals and students.
-- **Commercial License**: Required for business use.
-- **Enterprise Edition**: Includes Team Skill Sync (share your vector store) and SSO.
+Minerva exposes its tools via the Model Context Protocol (MCP). To let Claude use Minerva:
 
-*Built with ❤️ (and Llama 3) by a Squad of One.*
+1. Add this to your Claude Desktop config:
+
+```json
+{
+  "mcpServers": {
+    "minerva": {
+      "command": "python",
+      "args": ["-m", "mcp_server", "run"]
+    }
+  }
+}
+```
+
+1. Restart Claude Desktop. You can now ask Claude: *"Analyze the data in my Minerva workspace"* or *"Find GDP data using Minerva"*.
+
+## Privacy & Security
+
+- **Local-First**: All data storage (SQLite + Parquet) is local to your machine.
+- **Sandboxed Execution**: AI-generated code runs in a restricted environment.
+- **Key Management**: API keys are stored in a local `.env` file or encrypted OS credential store.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up your dev environment and submit PRs.
+
+## License
+
+Apache 2.0 - See [LICENSE](LICENSE) for details.

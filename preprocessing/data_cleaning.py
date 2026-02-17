@@ -81,10 +81,30 @@ def standardize_dates(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
         if any(p in col.lower() for p in date_patterns):
             try:
-                if df[col].dtype == 'object' or 'int' in str(df[col].dtype):
-                    df[col] = pd.to_datetime(df[col], errors='coerce')
+                # Force conversion to datetime, coercing errors
+                # invalid dates become NaT
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+                
+                # Check if we have a valid datetime column now
+                if pd.api.types.is_datetime64_any_dtype(df[col]):
+                    # PyArrow sometimes struggles with mixed timezones
+                    try:
+                        df[col] = df[col].astype("datetime64[ns]")
+                    except Exception:
+                        # Fallback: Convert to string ISO format
+                        df[col] = df[col].astype(str)
+                else:
+                    # It is an object column. MIGHT contain mixed integers, strings, timestamps.
+                    # PyArrow WILL crash. We MUST cast to string.
+                    df[col] = df[col].astype(str)
             except Exception:
-                pass
+                # Catch-all: Convert to string
+                df[col] = df[col].astype(str)
+            
+            # Double check: if it is still object, ensure it is fully stringified
+            if df[col].dtype == 'object':
+                 df[col] = df[col].astype(str)
+                 
     return df
 
 

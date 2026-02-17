@@ -171,6 +171,13 @@ def should_use_cascade(query: str) -> bool:
         
         if intent in cascade_intents and confidence >= 0.8:
             return True
+            
+        # Fallback keyword detection for visualization if confidence is low
+        # This catches "plot", "chart", "graph" even if classifier is unsure
+        if "visual" in query.lower() or "chart" in query.lower() or "plot" in query.lower() or "graph" in query.lower():
+            if intent != Intent.VISUALIZE:
+                # Force visualization intent if keywords are strong
+                return True
         
         return False
         
@@ -250,7 +257,7 @@ def get_style_rules() -> str:
         
     return ""
 
-def generate_analysis_code(df: pd.DataFrame, query: str, context: str = "") -> str:
+def generate_analysis_code(df: pd.DataFrame, query: str, context: str = "", datasets: Optional[Dict[str, pd.DataFrame]] = None) -> str:
     """Generate pandas code to answer a natural language query."""
     columns = df.columns.tolist()
     dtypes = {col: str(df[col].dtype) for col in columns}
@@ -262,12 +269,21 @@ def generate_analysis_code(df: pd.DataFrame, query: str, context: str = "") -> s
     rag_context = get_rag_context(query)
     style_context = get_style_rules()
     
+    # Add datasets info if available
+    datasets_info = ""
+    if datasets:
+        datasets_info = "\nAVAILABLE DATASETS (access via 'datasets' dict):\n"
+        for name in datasets:
+            if name != "primary": # avoid confusion if primary is in there twice
+                datasets_info += f"- datasets['{name}']\n"
+
     prompt = f"""You are a data analyst. Generate Python pandas code to answer this question.
 {context_str}
 {rag_context}
 {style_context}
+{datasets_info}
 DATAFRAME INFO:
-- Variable name: df
+- Variable name: df (Primary Dataset)
 - Columns: {columns}
 - Types: {dtypes}
 - Sample data:
@@ -275,17 +291,20 @@ DATAFRAME INFO:
 
 QUESTION: {query}
 
-Generate ONLY the Python code (no markdown, no explanation). The code should:
-1. Use the 'df' variable
-2. Store the final result in a variable called 'result'
-3. Be safe (no file operations, no external imports)
+Generate ONLY the Python code (no markdown, no explanation). The code must be valid Python.
+1. Use the 'df' variable for the primary dataset.
+2. Use 'datasets[name]' for other datasets if needed.
+3. Store the final result in a variable called 'result'.
+4. Be safe (no file operations, no external imports).
+5. DO NOT use multi-line f-strings with single quotes. Use concatenation or triple quotes if needed.
+6. DO NOT generate plots or charts here.
 
 Code:"""
     
     return get_llm_response(prompt, max_tokens=500)
 
 
-def generate_visualization_code(df: pd.DataFrame, query: str, context: str = "") -> str:
+def generate_visualization_code(df: pd.DataFrame, query: str, context: str = "", datasets: Optional[Dict[str, pd.DataFrame]] = None) -> str:
     """Generate Plotly code for a visualization request."""
     columns = df.columns.tolist()
     dtypes = {col: str(df[col].dtype) for col in columns}
@@ -296,9 +315,16 @@ def generate_visualization_code(df: pd.DataFrame, query: str, context: str = "")
     # RAG Injection
     rag_context = get_rag_context(query)
     
+    # Add datasets info if available
+    datasets_info = ""
+    if datasets:
+        datasets_info = "\nAVAILABLE DATASETS (access via 'datasets' dict):\n"
+        for name in datasets:
+             datasets_info += f"- datasets['{name}']\n"
+
     prompt = f"""Generate Python code to create a Plotly visualization.
 {context_str}
-{rag_context}
+{datasets_info}
 DATAFRAME (df):
 - Columns: {columns}
 - Types: {dtypes}
@@ -307,18 +333,22 @@ DATAFRAME (df):
 
 REQUEST: {query}
 
-Generate ONLY Python code that:
-1. Uses 'df' variable
-2. Uses plotly.express as 'px'
-3. Stores the figure in 'fig'
-4. Uses template="plotly_dark"
+Generate ONLY Python code to create a Plotly visualization.
+1. The code must be valid Python.
+2. Use 'df' for the primary dataset (or df = datasets['name'] if referring to others).
+3. Use plotly.express as 'px'.
+4. Store the figure in a variable named 'fig'.
+5. Use template="plotly_dark".
+6. Title the chart appropriately based on the data.
+7. DO NOT use multi-line f-strings.
+8. Handle potential missing values if necessary.
 
 Code:"""
     
     return get_llm_response(prompt, max_tokens=600)
 
 
-def safe_execute(code: str, df: pd.DataFrame) -> tuple:
+def safe_execute(code: str, df: pd.DataFrame, datasets: Optional[Dict[str, pd.DataFrame]] = None) -> tuple:
     """
     Safely execute generated code.
     Returns (success, result, error)
@@ -338,6 +368,9 @@ def safe_execute(code: str, df: pd.DataFrame) -> tuple:
     
     # Execute
     namespace = {"df": df, "pd": pd, "np": np, "result": None}
+    if datasets:
+        namespace["datasets"] = datasets # Inject all datasets
+        
     try:
         exec(code, namespace)
         return True, namespace.get("result"), None
@@ -345,7 +378,7 @@ def safe_execute(code: str, df: pd.DataFrame) -> tuple:
         return False, None, str(e)
 
 
-def safe_execute_viz(code: str, df: pd.DataFrame) -> tuple:
+def safe_execute_viz(code: str, df: pd.DataFrame, datasets: Optional[Dict[str, pd.DataFrame]] = None) -> tuple:
     """Execute visualization code. Returns (success, fig, error)"""
     import plotly.express as px
     
@@ -355,6 +388,9 @@ def safe_execute_viz(code: str, df: pd.DataFrame) -> tuple:
         code = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
     
     namespace = {"df": df, "pd": pd, "np": np, "px": px, "fig": None}
+    if datasets:
+        namespace["datasets"] = datasets
+        
     try:
         exec(code, namespace)
         return True, namespace.get("fig"), None
@@ -413,13 +449,6 @@ def fallback_visualization(df: pd.DataFrame, query: str):
             fig = px.histogram(df, x=col, title=f"Distribution of {col}", template="plotly_dark")
             return fig
         
-        # "scatter" / "correlation" / "relationship" -> scatter
-        if any(kw in query_lower for kw in ["scatter", "correlation", "relationship", "vs"]):
-            if len(num_cols) >= 2:
-                fig = px.scatter(df.head(500), x=num_cols[0], y=num_cols[1],
-                               title=f"{num_cols[0]} vs {num_cols[1]}", template="plotly_dark")
-                return fig
-        
         # Default: bar chart of aggregated data or line of first numeric column
         if cat_cols and num_cols:
             grouped = df.groupby(cat_cols[0])[num_cols[0]].sum().nlargest(10).reset_index()
@@ -432,6 +461,54 @@ def fallback_visualization(df: pd.DataFrame, query: str):
             
     except Exception as e:
         return None
+
+
+def execute_analysis_with_retry(df: pd.DataFrame, query: str, context: str = "", datasets: Optional[Dict[str, pd.DataFrame]] = None, max_retries: int = 3) -> tuple:
+    """
+    Generate and execute analysis code with self-correction retry loop.
+    Returns (success, result, code, error_message)
+    """
+    import time
+    
+    # Initial generation
+    code = generate_analysis_code(df, query, context, datasets)
+    
+    for attempt in range(max_retries + 1):
+        if not code:
+            return False, None, "", "LLM failed to generate code."
+            
+        success, result, error = safe_execute(code, df, datasets)
+        
+        if success:
+            return True, result, code, None
+            
+        # If failed, try to correct
+        if attempt < max_retries:
+            print(f"Attempt {attempt+1} failed: {error}. Retrying...")
+            
+            # Short sleep to avoid rate limits
+            time.sleep(1)
+            
+            correction_prompt = f"""The previous Python code you generated failed with this error:
+{error}
+
+Original Question: {query}
+
+Generated Code:
+{code}
+
+Please correct the code to fix the error. Return ONLY the corrected Python code.
+CRITICAL FIX INSTRUCTIONS:
+1. Fix the specific error mentioned above.
+2. Check for unclosed parentheses ')' or brackets ']'.
+3. Check for unclosed string literals (match your quotes).
+4. Avoid multi-line f-strings (they are error-prone).
+5. Ensure all lines are properly indented.
+"""
+            
+            code = get_llm_response(correction_prompt, max_tokens=600)
+            
+    return False, None, code, error
 
 
 # ============================================================================
@@ -491,7 +568,16 @@ def detect_intent(query: str, context: str = "") -> str:
     """
     query_lower = query.lower()
     
-    # 0. Try Cascade Planner's deterministic detection first (fast, no LLM call)
+    # 0. Fast Keyword Check (Optimization for obvious cases)
+    # "Show me..." is almost always a chart
+    if query_lower.startswith("show me") or any(k in query_lower for k in ["plot", "chart", "graph", "visualization", "visualise", "scatter", "histogram"]):
+        return "visualization"
+        
+    # "Describe/Explain" is almost always text
+    if any(k in query_lower for k in ["describe", "explain", "summarize", "tell me about"]):
+        return "informational"
+
+    # 1. Try Cascade Planner's deterministic detection first (fast, no LLM call)
     try:
         legacy_intent, confidence, cascade_intent = cascade_detect_intent(query)
         if confidence >= 0.8:
@@ -499,15 +585,6 @@ def detect_intent(query: str, context: str = "") -> str:
             return legacy_intent
     except Exception as e:
         print(f"Cascade detection skipped: {e}")
-    
-    # 1. Fast Keyword Check (Optimization for obvious cases)
-    # "Show me..." is almost always a chart
-    if query_lower.startswith("show me") or "plot" in query_lower:
-        return "visualization"
-        
-    # "Describe/Explain" is almost always text
-    if any(k in query_lower for k in ["describe", "explain", "summarize", "tell me about"]):
-        return "informational"
         
     # 2. LLM Smart Routing
     try:
@@ -590,9 +667,9 @@ def render_message(role: str, content: str, data: Any = None):
         st.markdown(content)
         if data is not None:
             if isinstance(data, pd.DataFrame):
-                st.dataframe(data, use_container_width=True)
+                st.dataframe(data, width="stretch")
             elif hasattr(data, 'show'):  # Plotly figure
-                st.plotly_chart(data, use_container_width=True)
+                st.plotly_chart(data, width="stretch")
             elif isinstance(data, (dict, list)):
                 st.json(data)
             else:

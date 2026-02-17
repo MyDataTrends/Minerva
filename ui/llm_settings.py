@@ -138,7 +138,7 @@ def render_llm_settings():
         st.write("Use cloud-hosted models via API")
         
         # OpenAI
-        with st.expander("🟢 OpenAI (GPT-4, GPT-4o)", expanded=True):
+        with st.expander("🟢 OpenAI (GPT-5.3)", expanded=True):
             openai_key = os.getenv("OPENAI_API_KEY", "")
             new_key = st.text_input(
                 "OpenAI API Key",
@@ -152,22 +152,22 @@ def render_llm_settings():
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Use GPT-4o", disabled=not new_key):
+                if st.button("Use GPT-5.3", disabled=not new_key):
                     if new_key:
                         os.environ["OPENAI_API_KEY"] = new_key
-                    registry.set_active_model("gpt-4o")
-                    st.success("Now using GPT-4o")
+                    registry.set_active_model("gpt-5.3")
+                    st.success("Now using GPT-5.3")
                     st.rerun()
             with col2:
-                if st.button("Use GPT-4o Mini", disabled=not new_key):
+                if st.button("Use GPT-5.3 Codex", disabled=not new_key):
                     if new_key:
                         os.environ["OPENAI_API_KEY"] = new_key
-                    registry.set_active_model("gpt-4o-mini")
-                    st.success("Now using GPT-4o Mini")
+                    registry.set_active_model("gpt-5.3-codex")
+                    st.success("Now using GPT-5.3 Codex")
                     st.rerun()
         
         # Anthropic
-        with st.expander("🟣 Anthropic (Claude 3.5)"):
+        with st.expander("🟣 Anthropic (Claude 4.5/4.6)"):
             anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
             new_key = st.text_input(
                 "Anthropic API Key",
@@ -181,18 +181,18 @@ def render_llm_settings():
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Use Claude 3.5 Sonnet", disabled=not new_key):
+                if st.button("Use Claude 4.5 Sonnet", disabled=not new_key):
                     if new_key:
                         os.environ["ANTHROPIC_API_KEY"] = new_key
-                    registry.set_active_model("claude-3-5-sonnet")
-                    st.success("Now using Claude 3.5 Sonnet")
+                    registry.set_active_model("claude-4-5-sonnet")
+                    st.success("Now using Claude 4.5 Sonnet")
                     st.rerun()
             with col2:
-                if st.button("Use Claude 3 Haiku", disabled=not new_key):
+                if st.button("Use Claude 4.5 Haiku", disabled=not new_key):
                     if new_key:
                         os.environ["ANTHROPIC_API_KEY"] = new_key
-                    registry.set_active_model("claude-3-haiku")
-                    st.success("Now using Claude 3 Haiku")
+                    registry.set_active_model("claude-4-5-haiku")
+                    st.success("Now using Claude 4.5 Haiku")
                     st.rerun()
         
         # Ollama

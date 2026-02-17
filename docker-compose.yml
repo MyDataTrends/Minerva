@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  minerva:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+      - ./local_data:/app/local_data
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - FRED_API_KEY=${FRED_API_KEY}
+      - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
+    restart: unless-stopped

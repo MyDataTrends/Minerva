@@ -51,13 +51,8 @@ class AnthropicProvider(LLMProvider):
     
     def _get_model_name(self) -> str:
         """Get the Anthropic model name."""
-        model_map = {
-            "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
-            "claude-3-sonnet": "claude-3-sonnet-20240229",
-            "claude-3-haiku": "claude-3-haiku-20240307",
-            "claude-3-opus": "claude-3-opus-20240229",
-        }
-        return model_map.get(self.model_info.id, "claude-3-5-sonnet-20241022")
+        # Use explicit API model ID if available, otherwise fallback to internal ID
+        return self.model_info.api_model_id or self.model_info.id
     
     def complete(
         self,

@@ -224,11 +224,21 @@ _register(APIDefinition(
     ],
     endpoints=[
         APIEndpoint(
-            path="/2020/acs/acs5",
-            description="American Community Survey 5-year estimates",
-            params=["get", "for", "in"],
-            required_params=["get"],
-            example="/2020/acs/acs5?get=NAME,B01001_001E&for=state:*"
+            path="/{year}/acs/acs5",
+            description=(
+                "American Community Survey 5-year estimates. "
+                "Common 'get' variables: NAME, "
+                "B01003_001E (total population), B19013_001E (median household income), "
+                "B23025_004E (employed population), B23025_005E (unemployed population), "
+                "B25077_001E (median home value), B25064_001E (median gross rent), "
+                "B15003_022E (bachelor's degree), B15003_023E (master's degree). "
+                "Geography via 'for' param: for=state:* (all states), for=county:* (all counties, "
+                "requires in=state:*), for=zip code tabulation area:* (all zip codes). "
+                "Use 'in' param for county queries: in=state:* for all states."
+            ),
+            params=["get", "for", "in", "year"],
+            required_params=["get", "for"],
+            example="/{year}/acs/acs5?get=NAME,B01003_001E&for=state:*"
         ),
     ],
     rate_limit=500,

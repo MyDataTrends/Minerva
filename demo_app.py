@@ -227,7 +227,7 @@ with col1:
 
     if "chart_json" in st.session_state:
         fig = pio.from_json(st.session_state.chart_json)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 with col2:

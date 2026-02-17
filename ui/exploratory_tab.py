@@ -283,7 +283,7 @@ def render_exploratory_tab(df: pd.DataFrame, context: str = ""):
                                 fig = px.line(df, x=x, y=y if y in df.columns else None, title=sug.get('title', ''))
                             
                             fig.update_layout(template="plotly_dark")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width="stretch")
             else:
                 st.info("💡 LLM couldn't parse chart suggestions. This usually means the model needs to be loaded first.\n\n**Try:** Go to '🤖 LLM Settings' tab and click 'Load Model', then try again.")
         else:

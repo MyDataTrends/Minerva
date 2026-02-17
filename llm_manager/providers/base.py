@@ -36,6 +36,7 @@ class ModelInfo:
     capabilities: List[str] = field(default_factory=list)  # e.g., ["chat", "completion"]
     requires_api_key: bool = False       # Whether API key is needed
     api_key_env_var: str = ""            # Environment variable for API key
+    api_model_id: Optional[str] = None   # Specific API model ID (e.g. for versioning)
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -203,49 +204,66 @@ KNOWN_MODELS = {
     ),
     
     # Cloud APIs
-    "gpt-4o": ModelInfo(
-        id="gpt-4o",
-        name="GPT-4o",
+    # Cloud APIs
+    "gpt-5.3": ModelInfo(
+        id="gpt-5.3",
+        name="GPT-5.3",
         provider_type=ProviderType.OPENAI,
         path_or_endpoint="https://api.openai.com/v1",
-        description="OpenAI GPT-4o - Most capable model",
+        description="OpenAI GPT-5.3 - 'Garlic' Architecture (SOTA)",
         context_length=128000,
-        capabilities=["chat", "completion", "vision"],
+        capabilities=["chat", "completion", "vision", "reasoning"],
         requires_api_key=True,
         api_key_env_var="OPENAI_API_KEY",
+        api_model_id="gpt-5.3-preview-2026", # Explicit version
     ),
-    "gpt-4o-mini": ModelInfo(
-        id="gpt-4o-mini",
-        name="GPT-4o Mini",
+    "gpt-5.3-codex": ModelInfo(
+        id="gpt-5.3-codex",
+        name="GPT-5.3 Codex",
         provider_type=ProviderType.OPENAI,
         path_or_endpoint="https://api.openai.com/v1",
-        description="OpenAI GPT-4o Mini - Fast and affordable",
-        context_length=128000,
-        capabilities=["chat", "completion"],
+        description="OpenAI GPT-5.3 Codex - Agentic Coding Specialist",
+        context_length=400000,
+        capabilities=["chat", "completion", "code"],
         requires_api_key=True,
         api_key_env_var="OPENAI_API_KEY",
+        api_model_id="gpt-5.3-codex-2026-02",
     ),
-    "claude-3-5-sonnet": ModelInfo(
-        id="claude-3-5-sonnet",
-        name="Claude 3.5 Sonnet",
+    "claude-4-5-sonnet": ModelInfo(
+        id="claude-4-5-sonnet",
+        name="Claude 4.5 Sonnet",
         provider_type=ProviderType.ANTHROPIC,
         path_or_endpoint="https://api.anthropic.com/v1",
-        description="Anthropic Claude 3.5 Sonnet - Excellent reasoning",
+        description="Anthropic Claude 4.5 Sonnet - SOTA Intelligence",
         context_length=200000,
         capabilities=["chat", "completion"],
         requires_api_key=True,
         api_key_env_var="ANTHROPIC_API_KEY",
+        api_model_id="claude-sonnet-4-5-20250929",
     ),
-    "claude-3-haiku": ModelInfo(
-        id="claude-3-haiku",
-        name="Claude 3 Haiku",
+    "claude-4-6-opus": ModelInfo(
+        id="claude-4-6-opus",
+        name="Claude 4.6 Opus",
         provider_type=ProviderType.ANTHROPIC,
         path_or_endpoint="https://api.anthropic.com/v1",
-        description="Anthropic Claude 3 Haiku - Fast and efficient",
+        description="Anthropic Claude 4.6 Opus - Maximum Reasoning",
+        context_length=500000,
+        capabilities=["chat", "completion"],
+        requires_api_key=True,
+        api_key_env_var="ANTHROPIC_API_KEY",
+        api_model_id="claude-opus-4-6", # No date suffix reported for primary alias yet
+    ),
+    "claude-4-5-haiku": ModelInfo(
+        id="claude-4-5-haiku",
+        name="Claude 4.5 Haiku",
+        provider_type=ProviderType.ANTHROPIC,
+        path_or_endpoint="https://api.anthropic.com/v1",
+        description="Anthropic Claude 4.5 Haiku - Ultra Fast",
         context_length=200000,
         capabilities=["chat", "completion"],
         requires_api_key=True,
         api_key_env_var="ANTHROPIC_API_KEY",
+        api_model_id="claude-haiku-4-5-20251001",
     ),
 }
 

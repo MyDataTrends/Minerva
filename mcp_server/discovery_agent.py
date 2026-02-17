@@ -32,6 +32,7 @@ class DiscoveredAPI:
     signup_url: Optional[str] = None
     source: str = "registry"  # "registry", "web_search", "llm"
     confidence: float = 0.0
+    registry_id: Optional[str] = None  # Original ID from API registry (e.g. 'census')
 
 
 @dataclass
@@ -182,12 +183,12 @@ class APIDiscoveryAgent:
     
     Workflow:
     1. User describes data need
-    2. Agent searches registry
-    3. If no match, searches web for APIs
-    4. Fetches API documentation
-    5. Generates connector
-    6. Attempts to fetch data
-    7. Returns results
+    2. Agent searches registry for matching APIs
+    3. If registry match: uses LLM to map query → endpoint parameters,
+       constructs the API call directly, and fetches data
+    4. If no registry match: searches web for API docs
+    5. Falls back to dynamic connector generation (OpenAPI)
+    6. Returns results
     """
     
     # Default/fallback vertical weights (used if Kaggle API unavailable)
@@ -535,6 +536,7 @@ class APIDiscoveryAgent:
                         signup_url=api_def.signup_url,
                         source="registry",
                         confidence=confidence,
+                        registry_id=api_def.id,
                     ))
                     
         except Exception as e:
@@ -558,6 +560,7 @@ class APIDiscoveryAgent:
                             signup_url=api_def.signup_url,
                             source="registry",
                             confidence=min(1.0, match["score"] / 20),
+                            registry_id=api_def.id,
                         ))
             except Exception as e2:
                 logger.error(f"Keyword fallback failed: {e2}")
@@ -689,6 +692,255 @@ class APIDiscoveryAgent:
         best_api = apis[0]
         return None, f"Found {best_api.name} but couldn't fetch data automatically. You may need to configure authentication."
 
+    def _registry_fetch(
+        self,
+        api: 'DiscoveredAPI',
+        user_query: str,
+        api_key: Optional[str] = None
+    ) -> Optional['FetchResult']:
+        """
+        Autonomously fetch data from a registry API using LLM parameter mapping.
+        
+        Uses the API's registry definition (endpoints, params, examples) and
+        asks the LLM to map the user's query to the correct parameter values.
+        Falls back to the endpoint's example if no LLM is available.
+        
+        Args:
+            api: Discovered API (must have registry_id)
+            user_query: Natural language data request
+            api_key: Optional API key
+            
+        Returns:
+            FetchResult with data if successful, None if this path can't handle it
+        """
+        if not api.registry_id:
+            return None
+        
+        from mcp_server.api_registry import get_api
+        api_def = get_api(api.registry_id)
+        if not api_def or not api_def.endpoints:
+            return None
+        
+        api_id = api.registry_id
+        
+        # -- Pick the best endpoint -----------------------------------------------
+        endpoint = api_def.endpoints[0]  # Default to first
+        if len(api_def.endpoints) > 1:
+            # Ask LLM to choose the most relevant endpoint
+            ep_descriptions = "\n".join(
+                f"{i+1}. {ep.path} — {ep.description}"
+                for i, ep in enumerate(api_def.endpoints)
+            )
+            try:
+                from llm_manager.llm_interface import get_llm_completion
+                choice = get_llm_completion(
+                    f"Which API endpoint best answers this data request?\n"
+                    f"Request: {user_query}\n\n"
+                    f"Endpoints:\n{ep_descriptions}\n\n"
+                    f"Reply with ONLY the endpoint number (e.g. 1).",
+                    max_tokens=8, temperature=0.0
+                ).strip()
+                idx = int(choice) - 1
+                if 0 <= idx < len(api_def.endpoints):
+                    endpoint = api_def.endpoints[idx]
+            except Exception:
+                pass  # Keep default
+        
+        logger.info(f"Registry fetch {api_id}: endpoint={endpoint.path}")
+        
+        # -- Build request URL and parameters ------------------------------------
+        base_url = api_def.base_url.rstrip("/")
+        path = endpoint.path
+        params = {}
+        
+        # Try LLM-driven parameter mapping
+        llm_params = self._llm_map_params(api_def, endpoint, user_query)
+        
+        if llm_params:
+            # LLM produced parameter values — use them
+            # Some params might be path params (e.g. {year}, {api_key})
+            for key, value in llm_params.items():
+                placeholder = "{" + key + "}"
+                if placeholder in path:
+                    path = path.replace(placeholder, str(value))
+                else:
+                    params[key] = value
+        elif endpoint.example:
+            # No LLM available — parse the example URL as fallback
+            logger.info(f"No LLM params, falling back to endpoint example")
+            example = endpoint.example
+            if "?" in example:
+                example_path, query_string = example.split("?", 1)
+                path = example_path
+                for part in query_string.split("&"):
+                    if "=" in part:
+                        k, v = part.split("=", 1)
+                        params[k] = v
+            else:
+                path = example
+        
+        # Substitute {api_key} in path if present (e.g. ExchangeRate-API)
+        if "{api_key}" in path and api_key:
+            path = path.replace("{api_key}", api_key)
+        
+        # -- Add authentication ---------------------------------------------------
+        headers = {}
+        if api_key and api_def.auth_config:
+            location = api_def.auth_config.get("location", "query")
+            param_name = api_def.auth_config.get("param_name")
+            
+            if location == "query" and param_name:
+                params[param_name] = api_key
+            elif location == "header":
+                header_name = api_def.auth_config.get("header_name", "Authorization")
+                header_prefix = api_def.auth_config.get("prefix", "Bearer")
+                headers[header_name] = f"{header_prefix} {api_key}"
+            # "path" location already handled above via {api_key} substitution
+        elif not api_key and api_def.auth_type not in ("none", "unknown"):
+            # Try env var
+            import os
+            env_var = api_def.auth_config.get("env_var", "")
+            env_key = os.environ.get(env_var, "") if env_var else ""
+            if env_key:
+                api_key = env_key
+                location = api_def.auth_config.get("location", "query")
+                param_name = api_def.auth_config.get("param_name")
+                if location == "query" and param_name:
+                    params[param_name] = api_key
+                elif location == "header":
+                    header_name = api_def.auth_config.get("header_name", "Authorization")
+                    header_prefix = api_def.auth_config.get("prefix", "Bearer")
+                    headers[header_name] = f"{header_prefix} {api_key}"
+        
+        # -- Resolve any remaining path placeholders with defaults ----------------
+        import re
+        unresolved = re.findall(r'\{(\w+)\}', path)
+        if unresolved:
+            # Sensible defaults for common path parameters
+            defaults = {"year": "2022", "version": "v1", "format": "json"}
+            for placeholder in unresolved:
+                value = defaults.get(placeholder, "")
+                if value:
+                    path = path.replace("{" + placeholder + "}", value)
+                    logger.info(f"Resolved {{{placeholder}}} to default: {value}")
+                else:
+                    logger.warning(f"Unresolved path placeholder: {{{placeholder}}}")
+        
+        # -- Make the HTTP request ------------------------------------------------
+        url = f"{base_url}{path}"
+        logger.info(f"Registry fetch {api_id}: GET {url} params={list(params.keys())}")
+        
+        try:
+            import requests as req
+            response = req.get(url, params=params, headers=headers, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            
+            # -- Parse response into DataFrame ------------------------------------
+            import pandas as pd
+            from preprocessing.data_cleaning import find_table_data
+            
+            table_data = find_table_data(data)
+            
+            if table_data:
+                df = pd.DataFrame(table_data)
+                if not df.empty:
+                    return FetchResult(
+                        success=True,
+                        data=df.head(100).to_dict(orient="list"),
+                        status=f"Fetched {len(df)} rows from {api_def.name} ({endpoint.path})",
+                        api_name=api_def.name,
+                        api_id=api_id
+                    )
+            
+            # Census-style response: list-of-lists where first row = headers
+            if isinstance(data, list) and len(data) >= 2 and isinstance(data[0], list):
+                headers_row = data[0]
+                rows = data[1:]
+                df = pd.DataFrame(rows, columns=headers_row)
+                if not df.empty:
+                    return FetchResult(
+                        success=True,
+                        data=df.head(100).to_dict(orient="list"),
+                        status=f"Fetched {len(df)} rows from {api_def.name} ({endpoint.path})",
+                        api_name=api_def.name,
+                        api_id=api_id
+                    )
+            
+            logger.info(f"Registry fetch {api_id}: got response but could not parse into table")
+            return None  # Let caller fall through to dynamic connector
+            
+        except Exception as e:
+            logger.warning(f"Registry fetch {api_id} failed: {e}")
+            return None
+    
+    def _llm_map_params(
+        self,
+        api_def: 'APIDefinition',
+        endpoint: 'APIEndpoint',
+        user_query: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Use the LLM to map a user query to API endpoint parameters.
+        
+        Returns a dict of param_name → value, or None if LLM is unavailable.
+        """
+        try:
+            from llm_manager.llm_interface import get_llm_completion, is_llm_available
+            
+            if not is_llm_available():
+                return None
+            
+            # Build a focused prompt with all context the LLM needs
+            example_text = f"\nExample: {endpoint.example}" if endpoint.example else ""
+            required_text = f"\nRequired params: {', '.join(endpoint.required_params)}" if endpoint.required_params else ""
+            
+            prompt = (
+                f"You are an API parameter generator. Given a user's data request and an API endpoint, "
+                f"generate the EXACT parameter values needed for the HTTP request.\n\n"
+                f"API: {api_def.name}\n"
+                f"Base URL: {api_def.base_url}\n"
+                f"Endpoint: {endpoint.path}\n"
+                f"Description: {endpoint.description}\n"
+                f"Available params: {', '.join(endpoint.params)}{required_text}{example_text}\n\n"
+                f"User request: {user_query}\n\n"
+                f"Reply with ONLY a valid JSON object mapping parameter names to values. "
+                f"Include path parameters (like {{year}}) as keys too. "
+                f"Do NOT include any explanation, just the JSON object."
+            )
+            
+            response = get_llm_completion(prompt, max_tokens=256, temperature=0.1)
+            
+            if not response:
+                return None
+            
+            # Extract JSON from the response (handle markdown code fences)
+            import json
+            text = response.strip()
+            if text.startswith("```"):
+                # Strip code fences
+                lines = text.split("\n")
+                text = "\n".join(
+                    line for line in lines 
+                    if not line.strip().startswith("```")
+                )
+            
+            # Find the JSON object in the response
+            start = text.find("{")
+            end = text.rfind("}") + 1
+            if start >= 0 and end > start:
+                params = json.loads(text[start:end])
+                if isinstance(params, dict):
+                    logger.info(f"LLM mapped params for {api_def.id}: {params}")
+                    return params
+            
+            logger.warning(f"LLM response was not valid JSON: {text[:200]}")
+            return None
+            
+        except Exception as e:
+            logger.warning(f"LLM parameter mapping failed: {e}")
+            return None
+
     def one_click_fetch_rich(
         self,
         user_query: str,
@@ -709,10 +961,20 @@ class APIDiscoveryAgent:
                 status="No APIs found matching your query. Try being more specific."
             )
         
-        # 2. Try each API until one works
+        # 2. Try each discovered API
         for api in apis[:3]:
-            logger.info(f"Trying {api.name}...")
+            api_id = api.registry_id or api.name.lower().replace(' ', '_')
+            logger.info(f"Trying {api.name} (id={api_id})...")
             
+            # 2a. Registry-driven fetch: use endpoint definitions + LLM
+            if api.registry_id:
+                registry_result = self._registry_fetch(api, user_query, api_key)
+                if registry_result and registry_result.success and registry_result.data:
+                    return registry_result
+                elif registry_result:
+                    logger.info(f"Registry fetch partial: {registry_result.status}")
+            
+            # 2b. Dynamic connector fallback (OpenAPI generation)
             result = self.auto_connect(api, api_key)
             
             if result.success:
@@ -722,15 +984,14 @@ class APIDiscoveryAgent:
                         data=result.sample_data,
                         status=f"Successfully fetched data from {api.name}",
                         api_name=api.name,
-                        api_id=getattr(api, 'api_id', api.name.lower().replace(' ', '_'))
+                        api_id=api_id
                     )
                 elif result.needs_auth:
-                    # Return rich auth info for guided UI
                     return FetchResult(
                         success=False,
                         needs_auth=True,
                         api_name=api.name,
-                        api_id=getattr(api, 'api_id', api.name.lower().replace(' ', '_')),
+                        api_id=api_id,
                         auth_type=api.auth_type,
                         signup_url=result.signup_url or api.signup_url,
                         auth_instructions=result.auth_instructions,
@@ -749,7 +1010,7 @@ class APIDiscoveryAgent:
         return FetchResult(
             success=False,
             api_name=best_api.name,
-            api_id=getattr(best_api, 'api_id', best_api.name.lower().replace(' ', '_')),
+            api_id=best_api.registry_id or best_api.name.lower().replace(' ', '_'),
             auth_type=best_api.auth_type,
             signup_url=best_api.signup_url,
             needs_auth=best_api.auth_type not in ('none', 'unknown'),

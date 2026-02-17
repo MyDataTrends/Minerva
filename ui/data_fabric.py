@@ -387,7 +387,7 @@ def render_auto_discovery_section():
                 df = pd.DataFrame(result["data"])
             else:
                 df = result["data"]
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             # Option to add to datasets
             if st.button("➕ Add to My Datasets"):

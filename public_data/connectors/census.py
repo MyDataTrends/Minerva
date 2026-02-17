@@ -213,17 +213,24 @@ class CensusConnector(DataConnector):
         var_list = ",".join(["NAME"] + variables)
         
         # Build geography clause
+        # Note: Census API requires 'for' and 'in' as separate query params.
+        # Embedding &in= inside the 'for' value causes requests to URL-encode
+        # the '&', breaking the API call.
         if geography == "state":
             geo = f"state:{state_fips}"
         elif geography == "county":
-            geo = f"county:*&in=state:{state_fips}"
+            geo = "county:*"
         else:  # ZIP code tabulation area
-            geo = f"zip code tabulation area:*"
+            geo = "zip code tabulation area:*"
         
         request_params = {
             "get": var_list,
             "for": geo,
         }
+        
+        # Add 'in' clause for county-level queries
+        if geography == "county":
+            request_params["in"] = f"state:{state_fips}"
         
         if self.api_key:
             request_params["key"] = self.api_key

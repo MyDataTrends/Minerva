@@ -234,7 +234,7 @@ def render_enrichment_panel(df: pd.DataFrame, meta=None):
             col1, col2, col3 = st.columns([0.5, 3, 1.5])
             
             with col1:
-                selected = st.checkbox("", key=f"enrich_{item['id']}", value=False)
+                selected = st.checkbox("Select", key=f"enrich_{item['id']}", value=False, label_visibility="collapsed")
                 if selected:
                     selected_enrichments.append(item)
             

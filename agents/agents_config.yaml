@@ -1,0 +1,64 @@
+# =============================================================================
+# Minerva Agent Configuration
+# =============================================================================
+# Each agent can be enabled/disabled independently.
+# dry_run: true means the agent reports what it WOULD do without acting.
+# Set AGENT_DRY_RUN=1 in .env to force ALL agents into dry-run mode.
+
+agents:
+
+  conductor:
+    enabled: true
+    schedule: daily
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+
+  engineer:
+    enabled: true
+    schedule: weekly
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+    extra:
+      vision_doc: "minerva_vision_and_business_plan.md"
+
+  sentinel:
+    enabled: true
+    schedule: on_event     # Triggered when Engineer creates a PR
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+    extra:
+      min_confidence_score: 7
+      max_engineer_iterations: 3
+
+  advocate:
+    enabled: true
+    schedule: daily
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+    extra:
+      stale_days: 14
+
+  builder:
+    enabled: false         # Enable when CI/CD automation needed
+    schedule: on_event
+    dry_run: true
+
+  medic:
+    enabled: false         # Enable when Pro tier launches
+    schedule: on_event
+    dry_run: true
+
+  analyst:
+    enabled: false         # Enable when revenue tracking needed
+    schedule: daily
+    dry_run: true
+
+  scribe:
+    enabled: false         # Enable when content pipeline needed
+    schedule: weekly
+    dry_run: true
+
+  scout:
+    enabled: false         # Enable when market monitoring needed
+    schedule: weekly
+    dry_run: true

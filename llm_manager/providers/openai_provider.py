@@ -52,14 +52,8 @@ class OpenAIProvider(LLMProvider):
     
     def _get_model_name(self) -> str:
         """Get the OpenAI model name."""
-        model_map = {
-            "gpt-4o": "gpt-4o",
-            "gpt-4o-mini": "gpt-4o-mini",
-            "gpt-4": "gpt-4",
-            "gpt-4-turbo": "gpt-4-turbo",
-            "gpt-3.5-turbo": "gpt-3.5-turbo",
-        }
-        return model_map.get(self.model_info.id, "gpt-4o-mini")
+        # Use explicit API model ID if available, otherwise fallback to internal ID
+        return self.model_info.api_model_id or self.model_info.id
     
     def complete(
         self,

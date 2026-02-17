@@ -338,10 +338,27 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
                 name = f.name
                 if name not in st.session_state["datasets"]:
                     with st.spinner(f"Loading {name}..."):
+                        # Save to disk for Scheduler access
+                        upload_dir = Path("User_Data/uploaded")
+                        upload_dir.mkdir(parents=True, exist_ok=True)
+                        file_path = upload_dir / name
+                        with open(file_path, "wb") as buffer:
+                            f.seek(0)
+                            buffer.write(f.read())
+                        
+                        # Load into memory
                         from preprocessing.data_cleaning import standardize_dataframe
+                        f.seek(0) # Reset pointer
                         df = pd.read_csv(f)
                         df = standardize_dataframe(df)
+                        
                         st.session_state["datasets"][name] = df
+                        
+                        # Store path for Scheduler
+                        if "dataset_paths" not in st.session_state:
+                            st.session_state["dataset_paths"] = {}
+                        st.session_state["dataset_paths"][name] = str(file_path.absolute())
+                        
                         if not st.session_state["primary_dataset_id"]:
                             st.session_state["primary_dataset_id"] = name
             st.rerun()
@@ -368,7 +385,7 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
                                     st.session_state["primary_dataset_id"] = f"FRED_{s_id}"
                                     loaded_count += 1
                             except Exception as e:
-                                st.error(f"Failed to load {s_id}: {e}")
+                                st.error(f"⚠️ Could not load data for {s_id}. Please try again later. (Error: {e})")
                         
                         if loaded_count > 0:
                             st.success(f"Successfully loaded {loaded_count} datasets")
@@ -398,7 +415,7 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
                                      st.session_state["primary_dataset_id"] = name
                                      loaded_count += 1
                             except Exception as e:
-                                st.error(f"Failed to load {ind}: {e}")
+                                st.error(f"⚠️ Could not retrieve indicator {ind}. Check your connection. (Error: {e})")
                                 
                         if loaded_count > 0:
                              st.success(f"Loaded {loaded_count} datasets")
@@ -452,7 +469,7 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
                             st.rerun()
                             
                 except Exception as e:
-                    st.error(f"API Error: {e}")
+                    st.error(f"⚠️ API request failed. Please check the URL and parameters. (Error: {e})")
 
 
 
@@ -474,9 +491,42 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
                  st.rerun()
 
 if data is None and not st.session_state["datasets"]:
-    # First run fallback
-    st.session_state["datasets"]["Mock Sales"] = mock_data
-    st.session_state["primary_dataset_id"] = "Mock Sales"
+    # === First Run / Welcome Wizard ===
+    st.markdown("## 🚀 Welcome to Minerva")
+    st.markdown("""
+    **Your AI Data Analyst is ready.** 
+    
+    Minerva runs entirely on your machine. To get started, you need data.
+    """)
+    
+    c1, c2, c3 = st.columns([1, 1, 2])
+    
+    with c1:
+        if st.button("Load Sample Data", type="primary", width="stretch"):
+            try:
+                from preprocessing.data_cleaning import standardize_dataframe
+                # Load the bundled sample data
+                sample_path = Path("datasets/sample_sales_data.csv")
+                if sample_path.exists():
+                    df = pd.read_csv(sample_path)
+                    df = standardize_dataframe(df)
+                    st.session_state["datasets"]["Sample Sales"] = df
+                    st.session_state["primary_dataset_id"] = "Sample Sales"
+                    st.success("Loaded Sample Sales Data! analysing...")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error(f"Sample data not found at {sample_path}")
+            except Exception as e:
+                st.error(f"Failed to load sample: {e}")
+
+    with c2:
+        st.info("👈 Or use the sidebar to upload your own CSV!")
+
+    # Stop execution here so we don't render empty tabs
+    st.stop()
+    
+    # Fallback only if we didn't stop (shouldn't happen)
     data = mock_data
 
 # Retrieve any stored metadata
@@ -500,8 +550,8 @@ if descriptions:
     preview["Description"] = preview.index.map(lambda c: descriptions.get(c, ""))
 
 # Main content tabs
-main_tab, explore_tab, fabric_tab, action_tab, chat_tab, llm_tab = st.tabs([
-    "📊 Data Preview", "🔍 Explore", "🕸️ Data Fabric", "🎯 Actions", "💬 Chat", "🤖 LLM Settings"
+main_tab, explore_tab, fabric_tab, action_tab, chat_tab, scheduler_tab, llm_tab = st.tabs([
+    "📊 Data Preview", "🔍 Explore", "🕸️ Data Fabric", "⚡ Actions", "💬 Chat", "📅 Scheduler", "⚙️ LLM Settings"
 ])
 
 with main_tab:
@@ -526,7 +576,7 @@ with explore_tab:
         
         render_exploratory_tab(data, context=context_str)
     except Exception as e:
-        st.error(f"⚠️ Exploratory analysis encountered an issue: {str(e)}")
+        st.error(f"⚠️ We ran into a hiccup analyzing this dataset. Try reloading the page. (Technical details: {e})")
         st.info("Try refreshing the page or uploading a different dataset.")
 
 with fabric_tab:
@@ -538,14 +588,24 @@ with fabric_tab:
     except ImportError as e:
         st.warning(f"Data Fabric module not available: {e}")
     except Exception as e:
-        st.error(f"⚠️ Data Fabric encountered an issue: {str(e)}")
+        st.error(f"⚠️ Data Fabric is temporarily unavailable. (Technical details: {e})")
 
 with action_tab:
     try:
         render_action_center(data, meta)
     except Exception as e:
-        st.error(f"⚠️ Action Center encountered an issue: {str(e)}")
+        st.error(f"⚠️ Action Center is temporarily unavailable. (Technical details: {e})")
         st.info("Try refreshing the page or check your data format.")
+
+
+with scheduler_tab:
+    try:
+        from ui.scheduler_ui import render_scheduler_ui
+        render_scheduler_ui()
+    except ImportError:
+        st.warning("Scheduler module not found.")
+    except Exception as e:
+        st.error(f"Scheduler error: {e}")
 
 with llm_tab:
     render_llm_settings()
@@ -613,7 +673,7 @@ with chat_tab:
         from ui.chat_logic import (
             detect_intent, generate_visualization_code, generate_analysis_code, generate_informational_response,
             safe_execute, safe_execute_viz, generate_natural_answer, 
-            fallback_visualization, is_llm_ready
+            fallback_visualization, is_llm_ready, execute_analysis_with_retry
         )
         from llm_learning.interaction_logger import get_interaction_logger, InteractionType
         interaction_logger = get_interaction_logger()
@@ -649,14 +709,24 @@ with chat_tab:
             st.warning("⚠️ LLM unavailable — configure one in the LLM Settings tab")
         
         # Build rich context from all available sources
-        dataset_id = st.session_state.get("primary_dataset_id", "")
+        primary_id = st.session_state.get("primary_dataset_id", "")
         context_parts = []
-        if dataset_id:
-            context_parts.append(f"Active Dataset: {dataset_id}")
-            # Add dataframe schema if available
-            if dataset_id in st.session_state.get("datasets", {}):
-                df = st.session_state["datasets"][dataset_id]
-                schema_str = f"Columns: {', '.join(df.columns)}\nTypes: {df.dtypes.to_dict()}\nSample:\n{df.head(3).to_string()}"
+        
+        # Add info for ALL loaded datasets
+        datasets = st.session_state.get("datasets", {})
+        if datasets:
+            context_parts.append(f"Primary Dataset: {primary_id}")
+            context_parts.append("Available Datasets and Schemas:")
+            
+            for ds_name, df in datasets.items():
+                is_primary = "(Primary)" if ds_name == primary_id else ""
+                schema_str = (
+                    f"Dataset: {ds_name} {is_primary}\n"
+                    f"Columns: {', '.join(df.columns)}\n"
+                    f"Types: {df.dtypes.to_dict()}\n"
+                    f"Sample:\n{df.head(3).to_string()}\n"
+                    f"---"
+                )
                 context_parts.append(schema_str)
         
         # Include AI Summary if already generated
@@ -669,19 +739,31 @@ with chat_tab:
             sugs = [s.get("title", "") for s in chart_data["suggestions"][:3]]
             context_parts.append(f"Suggested visualizations: {', '.join(sugs)}")
         
+        # Add recent chat history (last 5 messages) for context
+        if ctx.chat_history:
+            history_str = "\nRECENT CONVERSATION:\n"
+            for msg in ctx.chat_history[-5:]:
+                role = msg["role"].upper()
+                content = msg["content"]
+                history_str += f"{role}: {content}\n"
+            context_parts.append(history_str)
+
         chat_context = ". ".join(context_parts)
         
         # Display chat history (shared across all tabs)
         for msg in ctx.chat_history:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
-                if "data" in msg and msg["data"] is not None:
-                    if hasattr(msg["data"], 'show'):  # Plotly figure
-                        st.plotly_chart(msg["data"], use_container_width=True)
-                    elif isinstance(msg["data"], pd.DataFrame):
-                        st.dataframe(msg["data"])
+                # Check for metadata content (visualizations/dataframes)
+                metadata = msg.get("metadata", {})
+                if "data" in metadata and metadata["data"] is not None:
+                    msg_data = metadata["data"]
+                    if hasattr(msg_data, 'show'):  # Plotly figure
+                        st.plotly_chart(msg_data, width="stretch")
+                    elif isinstance(msg_data, pd.DataFrame):
+                        st.dataframe(msg_data)
                     else:
-                        st.write(msg["data"])
+                        st.write(msg_data)
         
         # Chat input
         if prompt := st.chat_input("Ask about your data..."):
@@ -700,16 +782,16 @@ with chat_tab:
                         intent = detect_intent(prompt, context=chat_context)
                         
                         if intent == "visualization":
-                            code = generate_visualization_code(data, prompt, context=chat_context)
+                            code = generate_visualization_code(data, prompt, context=chat_context, datasets=st.session_state.get("datasets"))
                             fig = None
                             if code:
-                                success, fig, error = safe_execute_viz(code, data)
+                                success, fig, error = safe_execute_viz(code, data, datasets=st.session_state.get("datasets"))
                             if not fig:
                                 fig = fallback_visualization(data, prompt)
                             
                             if fig:
                                 st.markdown("Here's your visualization:")
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, width="stretch")
                                 ctx.add_message("assistant", "Here's your visualization:", metadata={"data": fig})
                                 # Log successful interaction
                                 if interaction_logger:
@@ -753,47 +835,51 @@ with chat_tab:
                                 )
                             
                         else:
-                            code = generate_analysis_code(data, prompt, context=chat_context)
-                            if code:
-                                success, result, error = safe_execute(code, data)
-                                if success:
-                                    natural = generate_natural_answer(prompt, result)
-                                    response = natural or "Here's what I found:"
-                                    st.markdown(response)
-                                    if result is not None:
-                                        if isinstance(result, pd.DataFrame):
-                                            st.dataframe(result)
-                                        else:
-                                            st.write(result)
-                                    ctx.add_message("assistant", response, metadata={"data": result})
-                                    # Log successful analysis
-                                    if interaction_logger:
-                                        interaction_logger.log(
-                                            prompt=prompt,
-                                            response=response,
-                                            interaction_type=InteractionType.ANALYSIS,
-                                            code_generated=code,
-                                            execution_success=True,
-                                            dataset_name=st.session_state.get("primary_dataset_id", "")
-                                        )
-                                else:
-                                    response = f"Error: {error}"
-                                    st.markdown(response)
-                                    ctx.add_message("assistant", response)
-                                    # Log failed analysis
-                                    if interaction_logger:
-                                        interaction_logger.log(
-                                            prompt=prompt,
-                                            response=response,
-                                            interaction_type=InteractionType.ANALYSIS,
-                                            code_generated=code,
-                                            execution_success=False,
-                                            dataset_name=st.session_state.get("primary_dataset_id", "")
-                                        )
+                            success, result, code, error = execute_analysis_with_retry(data, prompt, context=chat_context, datasets=st.session_state.get("datasets"))
+                            if success:
+                                natural = generate_natural_answer(prompt, result)
+                                response = natural or "Here's what I found:"
+                                st.markdown(response)
+                                if result is not None:
+                                    if isinstance(result, pd.DataFrame):
+                                        st.dataframe(result)
+                                    else:
+                                        st.write(result)
+                                ctx.add_message("assistant", response, metadata={"data": result})
+                                # Log successful analysis
+                                if interaction_logger:
+                                    interaction_logger.log(
+                                        prompt=prompt,
+                                        response=response,
+                                        interaction_type=InteractionType.ANALYSIS,
+                                        code_generated=code,
+                                        execution_success=True,
+                                        dataset_name=st.session_state.get("primary_dataset_id", "")
+                                    )
+                                
+                                # Show the code that generated this result (Reproducibility)
+                                with st.expander("🔍 View Analysis Logic"):
+                                    st.code(code, language="python")
+                                    st.download_button(
+                                        label="Download Script",
+                                        data=code,
+                                        file_name="analysis_script.py",
+                                        mime="text/x-python"
+                                    )
                             else:
-                                response = "I couldn't understand that. Try rephrasing your question."
+                                response = f"Error: {error}"
                                 st.markdown(response)
                                 ctx.add_message("assistant", response)
+                                # Log failed analysis
+                                if interaction_logger:
+                                    interaction_logger.log(
+                                        prompt=prompt,
+                                        response=response,
+                                        interaction_type=InteractionType.ANALYSIS,
+                                        code_generated=code,
+                                        execution_success=False,
+                                        dataset_name=st.session_state.get("primary_dataset_id", "")
+                                    )
                     st.rerun()
 
     # Export Report Section
@@ -810,7 +896,7 @@ with chat_tab:
             if st.button("Prepare Download"):
                 # Collect figures from chat history
                 figs = []
-                for msg in st.session_state.dashboard_chat_messages:
+                for msg in st.session_state.get("chat_history", []):
                     if "data" in msg and msg["data"] is not None:
                         # Check if it looks like a Plotly figure (has to_json or similar)
                         if hasattr(msg["data"], "to_json"):
@@ -822,7 +908,7 @@ with chat_tab:
                         df=data,
                         result=None,
                         figures=figs,
-                        chat_history=st.session_state.dashboard_chat_messages,
+                        chat_history=st.session_state.get("chat_history", []),
                         title=report_title
                     )
                     
