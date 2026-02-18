@@ -34,12 +34,14 @@ def _register_agents() -> None:
     from agents.engineer import EngineerAgent
     from agents.sentinel import SentinelAgent
     from agents.advocate import AdvocateAgent
+    from agents.productizer import ProductizerAgent
 
     _AGENT_CLASSES.update({
         "conductor": ConductorAgent,
         "engineer": EngineerAgent,
         "sentinel": SentinelAgent,
         "advocate": AdvocateAgent,
+        "productizer": ProductizerAgent,
     })
 
 
@@ -57,7 +59,7 @@ def _create_agent(name: str, dry_run_override: bool = False) -> BaseAgent:
     return _AGENT_CLASSES[name](config=config)
 
 
-def cmd_run(args: argparse.Namespace) -> None:
+def cmd_run(args: argparse.Namespace, **kwargs) -> None:
     """Execute one or all agents."""
     _register_agents()
 
@@ -77,7 +79,7 @@ def cmd_run(args: argparse.Namespace) -> None:
             print(f"  ▶  {name}: running ({mode_label})...")
 
             start = time.time()
-            result = agent.run()
+            result = agent.run(**kwargs)
             elapsed = time.time() - start
 
             status = "✅" if result.success else "❌"
@@ -136,12 +138,23 @@ def main() -> None:
     list_parser = subparsers.add_parser("list", help="Show agent status")
     list_parser.set_defaults(func=cmd_list)
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+    
+    # Parse unknown args into kwargs
+    kwargs = {}
+    for arg in unknown:
+        if "=" in arg:
+            k, v = arg.split("=", 1)
+            # Remove leading dashes if any
+            k = k.lstrip("-")
+            kwargs[k] = v
+            
     if not args.command:
         parser.print_help()
         sys.exit(1)
-
-    args.func(args)
+        
+    # Inject kwargs into func
+    args.func(args, **kwargs)
 
 
 if __name__ == "__main__":

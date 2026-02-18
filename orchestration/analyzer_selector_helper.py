@@ -11,7 +11,7 @@ from sklearn.metrics import mean_absolute_error
 
 from preprocessing.metadata_parser import infer_column_meta, merge_user_labels
 from preprocessing.save_meta import save_column_roles, _hash_df
-from Integration.semantic_integration import rank_and_merge
+from Integration.semantic_merge import rank_and_merge
 from orchestration.analysis_selector import select_analyzer
 from preprocessing.llm_preprocessor import recommend_models_with_llm
 from preprocessing.llm_analyzer import ask_follow_up_question

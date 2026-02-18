@@ -1,0 +1,96 @@
+# Agent Workforce Readiness Report (Phase 2)
+
+*Status: **Operational***
+*Date: February 2026*
+
+## Overview
+
+Minerva has evolved from an interactive data tool into an **autonomous data workforce**. Phase 2 introduces a multi-agent system designed to "run the business" of data analysis, code maintenance, and community management without constant human supervision.
+
+## 🤖 The Agent Roster
+
+### 1. Conductor Agent (The Orchestrator)
+
+* **Role**: Chief Executive Officer / Operations Manager.
+* **Status**: ✅ **Verified**.
+* **Function**: Runs daily (via cron or manual trigger). Scans the environment (GitHub, File System), delegates tasks to specialized agents, and compiles a prioritized **Daily Digest** (🔴 Urgent, 🟡 Review, 🟢 FYI).
+* **Key Capability**: The "Single Pane of Glass" for invisible operations.
+
+### 2. Scheduler Agent (The Automated Analyst)
+
+* **Role**: Data Analyst.
+* **Status**: ✅ **Verified & Upgraded**.
+* **Upgrade**: migrated from unsafe `exec()` to the robust **Cascade Planner**.
+* **Function**: Executes analysis jobs on defined schedules (e.g., "Every morning at 9am check Sales > 100").
+* **Key Capability**: Leverages full intent detection, smart filtering, and safe code execution to generate Markdown reports automatically.
+
+### 3. Engineer Agent (The Developer)
+
+* **Role**: Software Engineer.
+* **Status**: ✅ **Verified** (Phase 1: Analysis).
+* **Function**: Reads the *Vision Doc*, scans the codebase, and scores subsystem maturity (1-4). Identifies the highest-value improvement ("Gap Analysis").
+* **Key Capability**: Self-Correction Loop. If it generates invalid code/JSON, it retries with error context.
+
+### 4. Sentinel Agent (The QA Engineer)
+
+* **Role**: Quality Assurance.
+* **Status**: ✅ **Verified**.
+* **Function**: Validates Pull Requests. Runs `pytest` and `ruff`. Calculates a **Confidence Score (0-10)** based on pass rates and lint health.
+* **Key Capability**: Gates code quality. Rejects low-confidence PRs (<7/10) back to the Engineer; promotes high-confidence PRs to human review.
+
+### 5. Advocate Agent (The Community Manager)
+
+* **Role**: Developer Relations.
+* **Status**: ✅ **Verified**.
+* **Function**: Monitors GitHub issues. Uses LLM to classify them (Bug, Feature, Question). Auto-labels issues and drafts friendly responses to questions.
+* **Key Capability**: 24/7 first-response triage.
+
+---
+
+## 🏗️ Architecture Upgrades
+
+### "Glass Box" Transparency
+
+The UI now features a **Glass Box** design (`st.status`) that reveals the agent's thought process:
+
+1. 🧠 **Identifying Intent...**
+2. 🧮 **Generating Plan...**
+3. 🛡️ **Safety Check...**
+4. 🎨 **Rendering...**
+This builds trust by making the "magic" observable.
+
+### Cascade Planner Integration
+
+The **Scheduler Agent** now uses the `CascadePlanner` (Minerva's brain), verifying:
+* **Intent Detection**: Successfully identifies complex queries ("Filter Sales > 120 and average").
+* **Robustness**: Handles data type mismatches (e.g., coercing string "120" to int) via the `tool_registry`.
+* **Safety**: All code execution is sandboxed and monitored.
+
+---
+
+## 🚀 How to Operate
+
+### 1. Daily Business Loop
+
+Run the Conductor to trigger the workforce:
+
+```bash
+python -m agents run conductor
+```
+
+*Tip: Use `--dry-run` to test without making external API calls.*
+
+### 2. Scheduled Analysis
+
+Configure jobs in the **Scheduler Tab** of the Dashboard.
+
+* Frequency: Interval (mins) or Cron (Time).
+* Output: Reports saved to `reports/`.
+
+### 3. Verification
+
+Run the verification suite to ensure system health:
+
+```bash
+python -m pytest tests/verify_conductor.py tests/verify_scheduler_upgrade.py
+```
