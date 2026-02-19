@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "minerva": {
+      "command": "python",
+      "args": ["-m", "mcp_server", "run"],
+      "env": {
+        "ENABLE_LOCAL_LLM": "0"
+      }
+    }
+  }
+}
