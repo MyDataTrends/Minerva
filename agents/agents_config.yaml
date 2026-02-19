@@ -62,3 +62,26 @@ agents:
     enabled: false         # Enable when market monitoring needed
     schedule: weekly
     dry_run: true
+
+  marketing:
+    enabled: false         # Enable before public launch
+    schedule: weekly
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+    extra:
+      days: 7              # Look-back window for git log and productizer docs
+
+  support:
+    enabled: false         # Enable before public launch
+    schedule: on_event     # Triggered per incoming issue/question
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+
+  telemetry:
+    enabled: false         # Enable before public launch
+    schedule: weekly
+    dry_run: true
+    llm_model: claude-3-5-sonnet
+    extra:
+      days: 7              # Metrics window
+      error_rate_threshold: 0.30

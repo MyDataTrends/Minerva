@@ -35,6 +35,9 @@ def _register_agents() -> None:
     from agents.sentinel import SentinelAgent
     from agents.advocate import AdvocateAgent
     from agents.productizer import ProductizerAgent
+    from agents.marketing import MarketingAgent
+    from agents.support import SupportAgent
+    from agents.telemetry import TelemetryAgent
 
     _AGENT_CLASSES.update({
         "conductor": ConductorAgent,
@@ -42,6 +45,9 @@ def _register_agents() -> None:
         "sentinel": SentinelAgent,
         "advocate": AdvocateAgent,
         "productizer": ProductizerAgent,
+        "marketing": MarketingAgent,
+        "support": SupportAgent,
+        "telemetry": TelemetryAgent,
     })
 
 
