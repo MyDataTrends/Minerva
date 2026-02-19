@@ -1,5 +1,5 @@
 """
-Chat Mode - Pure conversation interface for Minerva.
+Chat Mode - Pure conversation interface for Assay.
 
 A Julius AI-style chat experience where users can:
 - Upload data via chat

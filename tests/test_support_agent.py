@@ -63,13 +63,13 @@ class TestSearchFaq:
 
     def test_exact_match_scores_high(self, agent):
         # Seed a known entry
-        agent._faq = [{"question": "How do I install Minerva?", "answer": "pip install ..."}]
-        entry, score = agent._search_faq("How do I install Minerva?")
+        agent._faq = [{"question": "How do I install Assay?", "answer": "pip install ..."}]
+        entry, score = agent._search_faq("How do I install Assay?")
         assert score > HIGH_CONFIDENCE
         assert entry["answer"] == "pip install ..."
 
     def test_fuzzy_match_returns_something(self, agent):
-        agent._faq = [{"question": "What file formats does Minerva support?", "answer": "CSV, Excel"}]
+        agent._faq = [{"question": "What file formats does Assay support?", "answer": "CSV, Excel"}]
         entry, score = agent._search_faq("which formats can I upload")
         assert entry is not None
         assert 0 <= score <= 1.0
@@ -128,7 +128,7 @@ class TestSimpleEmbedding:
 
     def test_different_texts_differ(self, agent):
         import numpy as np
-        v1 = agent._simple_embedding("install Minerva")
+        v1 = agent._simple_embedding("install Assay")
         v2 = agent._simple_embedding("purple elephant dancing")
         assert not np.allclose(v1, v2)
 
@@ -140,14 +140,14 @@ class TestGenerateResponse:
 
     def test_uses_llm_when_available(self, agent):
         with patch("llm_manager.llm_interface.get_llm_completion", return_value="Sure, here's how."):
-            resp = agent._generate_response("How do I install?", "pip install minerva")
+            resp = agent._generate_response("How do I install?", "pip install assay")
         assert "Sure, here's how." in resp
 
     def test_fallback_returns_faq_answer(self, agent):
         with patch("llm_manager.llm_interface.get_llm_completion", return_value=""):
-            resp = agent._generate_response("How do I install?", "pip install minerva")
-        assert "pip install minerva" in resp
-        assert "Minerva Support Bot" in resp
+            resp = agent._generate_response("How do I install?", "pip install assay")
+        assert "pip install assay" in resp
+        assert "Assay Support Bot" in resp
 
 
 # ── FAQ management ────────────────────────────────────────────────────
@@ -158,13 +158,13 @@ class TestFaqManagement:
     def test_add_entry_persists(self, agent, tmp_path):
         initial_count = len(agent._faq)
         result = agent.add_faq_entry(
-            "What is Minerva?",
-            "Minerva is a local-first AI data analyst.",
+            "What is Assay?",
+            "Assay is a local-first AI data analyst.",
             tags=["general"],
         )
         assert result is True
         assert len(agent._faq) == initial_count + 1
-        assert agent._faq[-1]["question"] == "What is Minerva?"
+        assert agent._faq[-1]["question"] == "What is Assay?"
 
     def test_add_entry_saved_to_file(self, agent, tmp_path):
         agent.add_faq_entry("Q?", "A.", tags=["test"])
@@ -202,14 +202,14 @@ class TestSupportAgentRun:
     def test_run_high_confidence_produces_fyi(self, agent):
         """A question closely matching a FAQ entry should produce a FYI escalation."""
         agent._faq = [{
-            "question": "How do I install Minerva?",
+            "question": "How do I install Assay?",
             "answer": "pip install -r requirements.txt",
         }]
         with (
             patch.object(agent, "_search_vector_store", return_value=("", 0.0)),
             patch("llm_manager.llm_interface.get_llm_completion", return_value="Here's how to install."),
         ):
-            result = agent.run(question="How do I install Minerva?")
+            result = agent.run(question="How do I install Assay?")
 
         assert result.success is True
         fyi_escs = [e for e in result.escalations if e.priority == Priority.FYI]

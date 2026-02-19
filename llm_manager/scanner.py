@@ -186,7 +186,7 @@ def scan_for_local_models(
         all_models.extend(models)
     
     # Also check environment variable for custom path
-    custom_path = os.getenv("MINERVA_MODELS_PATH")
+    custom_path = os.getenv("ASSAY_MODELS_PATH")
     if custom_path:
         custom_models = scan_directory(Path(custom_path))
         all_models.extend(custom_models)

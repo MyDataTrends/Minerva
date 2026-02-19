@@ -49,7 +49,7 @@ class TestAdvocateAgent:
     def test_classify_question(self, mock_llm, advocate):
         result = advocate._classify_issue(
             "How do I connect to PostgreSQL?",
-            "I want to use Minerva with my existing setup"
+            "I want to use Assay with my existing setup"
         )
         assert result == "question"
 

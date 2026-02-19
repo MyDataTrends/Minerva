@@ -10,7 +10,7 @@ from typing import List, Dict, Optional, Any
 from datetime import datetime
 
 class VectorStore:
-    def __init__(self, db_path: str = "minerva_memory.db"):
+    def __init__(self, db_path: str = "assay_memory.db"):
         """Initialize the vector store with a SQLite database."""
         # Ensure directory exists if path contains one
         if os.path.dirname(db_path):

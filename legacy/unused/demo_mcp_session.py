@@ -1,7 +1,7 @@
 """
-Minerva MCP Demo Script.
+Assay MCP Demo Script.
 
-This script demonstrates a self-orchestrated analysis session using the Minerva MCP server.
+This script demonstrates a self-orchestrated analysis session using the Assay MCP server.
 It simulates a user request to analyze a dataset, detects anomalies, and creates a visualization.
 """
 import asyncio
@@ -21,7 +21,7 @@ logger = logging.getLogger("demo")
 
 async def run_demo():
     print("\n" + "="*80)
-    print("🚀 MINERVA MCP SERVER DEMO")
+    print("🚀 ASSAY MCP SERVER DEMO")
     print("="*80 + "\n")
     
     from mcp_server.session import SessionManager

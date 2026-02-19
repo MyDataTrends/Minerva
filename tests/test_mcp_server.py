@@ -254,7 +254,7 @@ class TestMCPServer:
     def test_server_creation(self):
         from mcp_server.server import MCPServer
         server = MCPServer()
-        assert server.name == "minerva-mcp"
+        assert server.name == "assay-mcp"
         assert len(server._tools) > 0  # Should have built-in tools
 
     @pytest.mark.asyncio
@@ -267,7 +267,7 @@ class TestMCPServer:
         
         assert response["id"] == 1
         assert "result" in response
-        assert response["result"]["serverInfo"]["name"] == "minerva-mcp"
+        assert response["result"]["serverInfo"]["name"] == "assay-mcp"
 
     @pytest.mark.asyncio
     async def test_tools_list(self):

@@ -1,5 +1,5 @@
 """
-CLI entry point for the Minerva agent infrastructure.
+CLI entry point for the Assay agent infrastructure.
 
 Usage:
     python -m agents run conductor          # Run a specific agent
@@ -113,7 +113,7 @@ def cmd_list(args: argparse.Namespace) -> None:
     _register_agents()
     configs = load_agent_configs()
 
-    print("\n  Minerva Agent Status")
+    print("\n  Assay Agent Status")
     print("  " + "─" * 50)
 
     for name in sorted(set(list(_AGENT_CLASSES.keys()) + list(configs.keys()))):
@@ -132,7 +132,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="agents",
-        description="Minerva Agent Infrastructure CLI",
+        description="Assay Agent Infrastructure CLI",
     )
     subparsers = parser.add_subparsers(dest="command")
 

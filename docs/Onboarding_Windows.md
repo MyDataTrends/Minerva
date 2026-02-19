@@ -10,7 +10,7 @@
 ### 1. Clone Repository
 ```powershell
 git clone [repository-url]
-cd Minerva
+cd Assay
 ```
 
 ### 2. Create Virtual Environment

@@ -31,7 +31,7 @@ DEV_MODE: bool = get_bool("DEV_MODE", False)
 # LOUD_FAILURES: Raise exceptions instead of catching silently (for debugging)
 LOUD_FAILURES: bool = get_bool("LOUD_FAILURES", DEV_MODE)
 
-# VERBOSE_LOGGING: Enable DEBUG-level logging for all Minerva modules
+# VERBOSE_LOGGING: Enable DEBUG-level logging for all Assay modules
 VERBOSE_LOGGING: bool = get_bool("VERBOSE_LOGGING", DEV_MODE)
 
 # TRACE_EXECUTIONS: Log detailed execution traces for cascade planner

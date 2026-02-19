@@ -1,6 +1,6 @@
 @echo off
-REM Minerva CLI launcher for Windows
-REM Usage: minerva <command> [options]
+REM Assay CLI launcher for Windows
+REM Usage: assay <command> [options]
 
 setlocal
 

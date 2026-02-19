@@ -1,4 +1,4 @@
-# Minerva Architecture Overview
+# Assay Architecture Overview
 
 ## Modules
 

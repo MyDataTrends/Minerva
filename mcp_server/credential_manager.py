@@ -46,7 +46,7 @@ class CredentialManager:
     """
     Secure credential storage with encryption.
     
-    Credentials are stored in ~/.minerva/credentials.json with:
+    Credentials are stored in ~/.assay/credentials.json with:
     - AES-128 encryption (via Fernet) when cryptography is available
     - Base64 obfuscation as fallback (not secure, but better than plaintext)
     """
@@ -54,7 +54,7 @@ class CredentialManager:
     def __init__(self, storage_path: Optional[Path] = None):
         """Initialize credential manager."""
         if storage_path is None:
-            self.storage_path = Path.home() / ".minerva" / "credentials.json"
+            self.storage_path = Path.home() / ".assay" / "credentials.json"
         else:
             self.storage_path = Path(storage_path)
         

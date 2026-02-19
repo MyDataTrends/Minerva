@@ -149,7 +149,7 @@ class MarketingAgent(BaseAgent):
 
         from llm_manager.llm_interface import get_llm_completion
         prompt = (
-            "You are a developer advocate writing release notes for Minerva, "
+            "You are a developer advocate writing release notes for Assay, "
             "an AI-powered local data analysis tool.\n\n"
             "Summarize the following raw git commit messages into a concise, "
             "user-friendly changelog (3-6 bullet points, no jargon, present tense). "
@@ -218,7 +218,7 @@ class MarketingAgent(BaseAgent):
         from llm_manager.llm_interface import get_llm_completion
         prompt = (
             "You are writing a 'Show HN' submission for Hacker News.\n\n"
-            "Project: Minerva — local-first AI data analyst. Upload a CSV, get autonomous "
+            "Project: Assay — local-first AI data analyst. Upload a CSV, get autonomous "
             "cleaning, profiling, modeling, and insights. Zero config. Runs as Streamlit dashboard, "
             "FastAPI backend, CLI, and MCP server.\n\n"
             f"Context:\n{context}\n\n"
@@ -232,14 +232,14 @@ class MarketingAgent(BaseAgent):
         if draft:
             return draft.strip()
         # Fallback
-        return f"Show HN: Minerva — local AI data analyst\n\n{context[:300]}"
+        return f"Show HN: Assay — local AI data analyst\n\n{context[:300]}"
 
     def _draft_reddit(self, context: str) -> str:
         """Draft a Reddit post (r/MachineLearning, r/datascience, or r/programming)."""
         from llm_manager.llm_interface import get_llm_completion
         prompt = (
             "You are writing a Reddit post for r/MachineLearning or r/datascience.\n\n"
-            "Project: Minerva — local-first AI data analyst. Upload a CSV, get autonomous "
+            "Project: Assay — local-first AI data analyst. Upload a CSV, get autonomous "
             "cleaning, profiling, modeling (LightGBM/XGBoost/Ridge), SHAP explanations, "
             "and NL insights. No cloud required.\n\n"
             f"Context:\n{context}\n\n"
@@ -252,14 +252,14 @@ class MarketingAgent(BaseAgent):
         draft = get_llm_completion(prompt, max_tokens=450, temperature=0.6)
         if draft:
             return draft.strip()
-        return f"Minerva — autonomous local AI data analyst update\n\n{context[:300]}"
+        return f"Assay — autonomous local AI data analyst update\n\n{context[:300]}"
 
     def _draft_twitter(self, context: str) -> str:
         """Draft a Twitter/X thread (up to 3 tweets)."""
         from llm_manager.llm_interface import get_llm_completion
         prompt = (
-            "You are writing a Twitter/X thread (up to 3 tweets) about Minerva updates.\n\n"
-            "Project: Minerva — local-first AI data analyst. Upload CSV → autonomous insights.\n\n"
+            "You are writing a Twitter/X thread (up to 3 tweets) about Assay updates.\n\n"
+            "Project: Assay — local-first AI data analyst. Upload CSV → autonomous insights.\n\n"
             f"Context:\n{context}\n\n"
             "Write 2-3 tweets. Keep each under 280 characters. Use relevant hashtags sparingly "
             "(e.g. #OpenSource #DataScience #AI). Make it punchy and share-worthy.\n\n"
@@ -271,7 +271,7 @@ class MarketingAgent(BaseAgent):
         draft = get_llm_completion(prompt, max_tokens=350, temperature=0.7)
         if draft:
             return draft.strip()
-        return f"1/ Minerva update: {context[:200]}\n\n#OpenSource #DataScience"
+        return f"1/ Assay update: {context[:200]}\n\n#OpenSource #DataScience"
 
     # ── Persistence ───────────────────────────────────────────────────
 

@@ -84,7 +84,7 @@ class OneDriveConnector(DataConnector):
         
         # Token storage path
         self._token_path = os.path.join(
-            os.path.expanduser("~"), ".minerva", "onedrive_token.json"
+            os.path.expanduser("~"), ".assay", "onedrive_token.json"
         )
     
     def _load_cached_token(self) -> bool:

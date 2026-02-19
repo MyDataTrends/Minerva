@@ -15,7 +15,7 @@ import hashlib
 
 # Configure page - MUST be first Streamlit command
 st.set_page_config(
-    page_title="Minerva Analytics",
+    page_title="Assay Analytics",
     page_icon="🔮",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -166,7 +166,7 @@ if "analysis_running" not in st.session_state:
 # SIDEBAR NAVIGATION
 # ============================================================================
 with st.sidebar:
-    st.image("https://via.placeholder.com/150x50?text=Minerva", width=150)
+    st.image("https://via.placeholder.com/150x50?text=Assay", width=150)
     st.markdown("---")
     
     # Navigation
@@ -238,7 +238,7 @@ def render_home():
     # Hero section
     st.markdown("""
     <div class="hero-section">
-        <h1>🔮 Welcome to Minerva</h1>
+        <h1>🔮 Welcome to Assay</h1>
         <p style="font-size: 1.2rem; opacity: 0.9;">
             Your AI-powered data analysis assistant. Upload data, get insights, make decisions.
         </p>
@@ -262,7 +262,7 @@ def render_home():
         st.markdown("""
         <div class="feature-card">
             <h3><span class="step-indicator">2</span> Auto-Analyze</h3>
-            <p>Minerva automatically detects patterns, anomalies, and insights.</p>
+            <p>Assay automatically detects patterns, anomalies, and insights.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -325,7 +325,7 @@ def render_home():
     st.markdown("---")
     
     # Features overview
-    st.markdown("## ✨ What Minerva Can Do")
+    st.markdown("## ✨ What Assay Can Do")
     
     feat_col1, feat_col2, feat_col3, feat_col4 = st.columns(4)
     
@@ -432,7 +432,7 @@ def render_analyze():
         target = st.selectbox(
             "Select the column you want to predict/analyze",
             target_options,
-            help="Leave as 'Auto-detect' to let Minerva choose the best target"
+            help="Leave as 'Auto-detect' to let Assay choose the best target"
         )
         st.session_state.target_column = None if target == "Auto-detect" else target
         
@@ -459,7 +459,7 @@ def render_analyze():
         st.markdown("### 🚀 Run Analysis")
         
         st.info("""
-        **Ready to analyze!** Click the button below to start. Minerva will:
+        **Ready to analyze!** Click the button below to start. Assay will:
         1. Clean and preprocess your data
         2. Detect patterns and anomalies
         3. Select and train the best model
@@ -748,7 +748,7 @@ def render_chat():
             if msg["role"] == "user":
                 st.markdown(f"**You:** {msg['content']}")
             else:
-                st.markdown(f"**Minerva:** {msg['content']}")
+                st.markdown(f"**Assay:** {msg['content']}")
     
     # Chat input
     st.markdown("---")
@@ -979,7 +979,7 @@ def render_settings():
     
     st.markdown("### ℹ️ About")
     st.info("""
-    **Minerva Analytics** v1.0
+    **Assay Analytics** v1.0
     
     An AI-powered data analysis platform featuring:
     - Automatic model selection

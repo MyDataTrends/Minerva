@@ -17,7 +17,7 @@ def render_data_fabric_tab(df: pd.DataFrame, meta: list = None):
     """
     st.header("🕸️ Data Fabric & Lineage")
     st.markdown("""
-    Minerva doesn't just see your data; it understands it. 
+    Assay doesn't just see your data; it understands it. 
     Here is how your local file connects to global knowledge.
     """)
 
@@ -224,15 +224,15 @@ def render_auto_discovery_section():
             "🚀 Auto-Discovery",
             value=ctx.preferences.get("auto_discovery", False),
             key="auto_discovery_toggle",
-            help="Allow Minerva to automatically find and suggest external data sources"
+            help="Allow Assay to automatically find and suggest external data sources"
         )
         ctx.set_preference("auto_discovery", auto_mode)
     
     with col_description:
         if auto_mode:
-            st.success("**Auto-Discovery Enabled** — Minerva will suggest relevant APIs for your queries")
+            st.success("**Auto-Discovery Enabled** — Assay will suggest relevant APIs for your queries")
         else:
-            st.info("Enable to let Minerva find external data sources that match your needs")
+            st.info("Enable to let Assay find external data sources that match your needs")
     
     if not auto_mode:
         return
@@ -337,7 +337,7 @@ def render_auto_discovery_section():
                         "Save this key for future use",
                         value=True,
                         key="save_api_key_checkbox",
-                        help="Stores encrypted in ~/.minerva/credentials.json"
+                        help="Stores encrypted in ~/.assay/credentials.json"
                     )
                 
                 # Action buttons

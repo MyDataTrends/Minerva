@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-Minerva Phase 2 evolves the platform from a reactive data analysis tool to a **proactive, autonomous agentic workforce**. While the core engine (Phase 1) remains responsible for the heavy lifting of data processing and modeling, the new **Agent Layer** sits atop it, orchestrating workflows, maintaining the codebase, and proactively finding insights.
+Assay Phase 2 evolves the platform from a reactive data analysis tool to a **proactive, autonomous agentic workforce**. While the core engine (Phase 1) remains responsible for the heavy lifting of data processing and modeling, the new **Agent Layer** sits atop it, orchestrating workflows, maintaining the codebase, and proactively finding insights.
 
 The system follows a **"Glass Box"** philosophy: strictly typed, observable, and debuggable execution, replacing "black box" AI magic with transparent, loggable planning steps.
 
@@ -90,7 +90,7 @@ Agents do not call each other directly (to avoid coupling). They communicate via
 
 ## 4. Orchestration & Planning (The "Brain")
 
-Minerva uses **Hierarchical Planning** rather than a single monolithic prompt.
+Assay uses **Hierarchical Planning** rather than a single monolithic prompt.
 
 ### 4.1. Intent Detection
 
@@ -126,7 +126,7 @@ Execution is transparent. Every step is logged to the UI (`st.status`):
 
 ## 5. Memory & Knowledge Systems
 
-Minerva possesses "Teachable Memory" allowing it to learn user preferences.
+Assay possesses "Teachable Memory" allowing it to learn user preferences.
 
 * **Vector Store** (`learning/vector_store.py`): Stores user feedback, business heuristics (e.g., "Fiscal year starts in Oct"), and successful past plans.
 * **Plan Cache** (`orchestration/plan_learner.py`): Maps `Query Hash` -> `Successful Plan JSON`. If a query is repeated, it skips the LLM and runs the cached plan.
@@ -138,7 +138,7 @@ Minerva possesses "Teachable Memory" allowing it to learn user preferences.
 
 ### 6.1. Semantic Merge 2.0 (`Integration/semantic_merge.py`)
 
-Minerva automatically joins user data with public context (Census, Weather, Economics).
+Assay automatically joins user data with public context (Census, Weather, Economics).
 
 * **Discovery**: Scans `datasets/` and builds an index of column *meanings* (Roles).
 * **Matching**: When a user uploads data, it infers roles (e.g., "Postcode" -> `zip_code`).
@@ -162,7 +162,7 @@ Minerva automatically joins user data with public context (Census, Weather, Econ
 ## 8. Directory Structure
 
 ```text
-Minerva/
+Assay/
 ├── agents/                 # [PHASE 2] Autonomous Agents
 │   ├── base.py
 │   ├── conductor.py

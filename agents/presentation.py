@@ -180,7 +180,7 @@ class PresentationAgent(BaseAgent):
         """Create the PowerPoint file with styling."""
         prs = Presentation()
         
-        # Define Minerva Colors
+        # Define Assay Colors
         DARK_BG = (20, 24, 35)      # Deep Dark Blue/Black
         ACCENT_COLOR = (0, 190, 255) # Cyan/Blue Highlight
         TEXT_COLOR = (240, 240, 240) # Off-white

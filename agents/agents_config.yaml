@@ -1,5 +1,5 @@
 # =============================================================================
-# Minerva Agent Configuration
+# Assay Agent Configuration
 # =============================================================================
 # Each agent can be enabled/disabled independently.
 # dry_run: true means the agent reports what it WOULD do without acting.
@@ -19,7 +19,7 @@ agents:
     dry_run: true
     llm_model: claude-3-5-sonnet
     extra:
-      vision_doc: "minerva_vision_and_business_plan.md"
+      vision_doc: "assay_vision_and_business_plan.md"
 
   sentinel:
     enabled: true

@@ -99,7 +99,7 @@ class MCPServer:
         self._resources: Dict[str, ResourceDefinition] = {}
         
         # Server info
-        self.name = "minerva-mcp"
+        self.name = "assay-mcp"
         self.version = "0.1.0"
         
         # Running state
@@ -635,7 +635,7 @@ def main():
     """CLI entry point for running the MCP server."""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Minerva MCP Server")
+    parser = argparse.ArgumentParser(description="Assay MCP Server")
     parser.add_argument(
         "--transport", 
         choices=["stdio", "http", "both"],

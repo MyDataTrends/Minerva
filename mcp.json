@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "minerva": {
+    "assay": {
       "command": "python",
       "args": ["-m", "mcp_server", "run"],
       "env": {

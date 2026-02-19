@@ -1,5 +1,5 @@
 """
-Teaching Mode - Explicitly teach Minerva new skills.
+Teaching Mode - Explicitly teach Assay new skills.
 Allows users to add examples to the Vector Store for RAG retrieval.
 """
 import streamlit as st
@@ -36,9 +36,9 @@ def init_components():
         return None, None
 
 def render_teaching_mode():
-    st.subheader("🧠 Teach Minerva")
+    st.subheader("🧠 Teach Assay")
     st.markdown("""
-    Add new examples to Minerva's long-term memory. 
+    Add new examples to Assay's long-term memory. 
     These examples will be retrieved when similar questions are asked in the future.
     """)
 
@@ -99,7 +99,7 @@ def render_teaching_mode():
                         metadata={"user_taught": True, "created_at": str(pd.Timestamp.now())}
                     )
                     
-                    st.success("✅ Example saved! Minerva will now use this pattern.")
+                    st.success("✅ Example saved! Assay will now use this pattern.")
                     
                 except SyntaxError as e:
                     st.error(f"❌ Invalid Python code: {e}")
@@ -108,7 +108,7 @@ def render_teaching_mode():
 
     with tab2:
         st.subheader("🎨 Style & Formatting Rules")
-        st.markdown("Teach Minerva how to format output (e.g., fonts, colors, huge numbers).")
+        st.markdown("Teach Assay how to format output (e.g., fonts, colors, huge numbers).")
         
         with st.form("style_form"):
             rule_name = st.text_input("Rule Name", placeholder="e.g. Corporate Color Palette")

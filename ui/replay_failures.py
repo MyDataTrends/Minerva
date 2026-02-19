@@ -1,5 +1,5 @@
 """
-Replay Failures UI Component for Minerva.
+Replay Failures UI Component for Assay.
 
 Provides a "Replay last failure" button for debugging ephemeral code.
 Shows failed executions from the ArtifactStore and allows replaying them.

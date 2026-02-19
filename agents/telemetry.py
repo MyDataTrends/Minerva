@@ -2,7 +2,7 @@
 Telemetry Agent — Weekly usage analytics and trend reporter.
 
 Data sources (all with graceful fallback):
-  1. InteractionLogger (~/.minerva/interactions.db)
+  1. InteractionLogger (~/.assay/interactions.db)
        Written by cascade_planner, dashboard chat, nl_query, feedback_handler.
        Contains: prompts, interaction types, success/failure, response times,
        retry counts, user ratings, dataset names.
@@ -177,12 +177,12 @@ class TelemetryAgent(BaseAgent):
 
     def _collect_interaction_metrics(self, days: int) -> Dict[str, Any]:
         """
-        Pull metrics from InteractionLogger (~/.minerva/interactions.db).
+        Pull metrics from InteractionLogger (~/.assay/interactions.db).
 
         Populated by: cascade_planner (ACTION), dashboard chat (CHAT),
         nl_query (ANALYSIS/CHAT), feedback_handler (ratings/corrections).
         """
-        db_path = Path.home() / ".minerva" / "interactions.db"
+        db_path = Path.home() / ".assay" / "interactions.db"
 
         empty = {
             "summary": {
@@ -415,7 +415,7 @@ class TelemetryAgent(BaseAgent):
 
         Reads from InteractionLogger. Returns a dict of metric → trend info.
         """
-        db_path = Path.home() / ".minerva" / "interactions.db"
+        db_path = Path.home() / ".assay" / "interactions.db"
         if not db_path.exists():
             return {}
 

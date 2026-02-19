@@ -84,7 +84,7 @@ def get_github_config() -> Dict[str, Optional[str]]:
     """Get GitHub API configuration from environment."""
     return {
         "token": os.getenv("GITHUB_TOKEN"),
-        "repo": os.getenv("GITHUB_REPO", "MyDataTrends/Minerva"),
+        "repo": os.getenv("GITHUB_REPO", "MyDataTrends/Assay"),
     }
 
 

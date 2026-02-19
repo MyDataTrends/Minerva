@@ -1247,6 +1247,6 @@ To use {api.name}, you need an API key:
 3. Copy your API key
 4. Either:
    - Set environment variable: {api.auth_config.get('env_var')}
-   - Or store it securely in Minerva's credential manager
+   - Or store it securely in Assay's credential manager
 """.strip(),
     }

@@ -3,7 +3,7 @@
 ## Data Ingestion & Auto-Analysis
 
 - Upload a CSV via the Streamlit dashboard or connect via REST API / public data connector
-- Minerva auto-detects column types, runs data quality scoring, selects the best analyzer (regression, classification, clustering, anomaly, descriptive), and returns metrics + insights
+- Assay auto-detects column types, runs data quality scoring, selects the best analyzer (regression, classification, clustering, anomaly, descriptive), and returns metrics + insights
 - LLM-powered dynamic analysis generates custom preprocessing and modeling code when available, with deterministic fallback
 
 ## Natural Language Querying
@@ -39,7 +39,7 @@
 ## MCP-Powered Agent Integration
 
 - Start the MCP server (stdio or HTTP) for direct integration with Claude Desktop, MCP Inspector, or custom agents
-- All Minerva capabilities are exposed as structured MCP tools with JSON-RPC 2.0 protocol
+- All Assay capabilities are exposed as structured MCP tools with JSON-RPC 2.0 protocol
 - Session-based state management enables multi-step agent workflows
 
 ## Workflow Reruns & Session Replay

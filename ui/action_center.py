@@ -1,5 +1,5 @@
 """
-Action Center UI - Frontend interface for Minerva platform actions.
+Action Center UI - Frontend interface for Assay platform actions.
 
 Provides visual controls for:
 - Data enrichment with public datasets/APIs
@@ -551,7 +551,7 @@ def render_action_center(df: pd.DataFrame, meta=None):
     """
     Main entry point for the Action Center tab.
     
-    Provides visual controls for all major Minerva operations:
+    Provides visual controls for all major Assay operations:
     - Data enrichment with suggestions
     - Analysis configuration and execution
     - External data fetching

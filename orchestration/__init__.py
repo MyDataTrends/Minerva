@@ -1,5 +1,5 @@
 """
-Orchestration package for Minerva.
+Orchestration package for Assay.
 
 Provides structured execution with:
 - Cascade planner for intent → plan → tool flow

@@ -1,5 +1,5 @@
 """
-Minerva Ops Center - Standalone Administrative Interface.
+Assay Ops Center - Standalone Administrative Interface.
 """
 import streamlit as st
 import sys
@@ -13,7 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 # Set Page Config (Distinct from Main App)
 st.set_page_config(
-    page_title="Minerva Ops Center",
+    page_title="Assay Ops Center",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -45,7 +45,7 @@ def main():
         st.info("System Administration & Agent Orchestration")
         
         st.divider()
-        st.caption(f"Minerva Core v2.0")
+        st.caption(f"Assay Core v2.0")
         st.caption(f"Python {sys.version.split(' ')[0]}")
     
     # Main Content

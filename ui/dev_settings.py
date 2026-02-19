@@ -1,5 +1,5 @@
 """
-Developer Settings UI for Minerva.
+Developer Settings UI for Assay.
 
 Provides UI toggles for diagnostic mode settings that persist in session state.
 

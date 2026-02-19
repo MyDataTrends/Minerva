@@ -267,19 +267,19 @@ class SupportAgent(BaseAgent):
         """Use the LLM to personalize a FAQ answer for the specific question."""
         from llm_manager.llm_interface import get_llm_completion
         prompt = (
-            "You are a helpful support bot for Minerva, an AI-powered local data analysis tool.\n\n"
+            "You are a helpful support bot for Assay, an AI-powered local data analysis tool.\n\n"
             f"User question: {question[:400]}\n\n"
             f"Reference answer from knowledge base:\n{faq_answer[:600]}\n\n"
             "Write a friendly, concise support response (≤150 words) using the reference answer. "
             "Personalize it to the user's specific question. "
-            "End with: — Minerva Support Bot"
+            "End with: — Assay Support Bot"
         )
         response = get_llm_completion(prompt, max_tokens=300, temperature=0.5)
         if response:
             return response.strip()
 
         # Deterministic fallback: return the FAQ answer verbatim
-        return faq_answer + "\n\n— Minerva Support Bot"
+        return faq_answer + "\n\n— Assay Support Bot"
 
     # ── FAQ persistence ───────────────────────────────────────────────
 
@@ -311,10 +311,10 @@ class SupportAgent(BaseAgent):
             return False
 
     def _seed_default_faq(self) -> List[Dict[str, Any]]:
-        """Create and persist a starter FAQ with common Minerva questions."""
+        """Create and persist a starter FAQ with common Assay questions."""
         entries: List[Dict[str, Any]] = [
             {
-                "question": "How do I install Minerva?",
+                "question": "How do I install Assay?",
                 "answer": (
                     "Clone the repo and install dependencies with `pip install -r requirements.txt`. "
                     "Then run `streamlit run ui/dashboard.py` to launch the dashboard. "
@@ -324,18 +324,18 @@ class SupportAgent(BaseAgent):
                 "added_at": datetime.utcnow().isoformat(),
             },
             {
-                "question": "What file formats does Minerva support?",
+                "question": "What file formats does Assay support?",
                 "answer": (
-                    "Minerva supports CSV, Excel (.xlsx/.xls), and Parquet files. "
+                    "Assay supports CSV, Excel (.xlsx/.xls), and Parquet files. "
                     "Upload via the dashboard or provide a path via the CLI."
                 ),
                 "tags": ["data", "formats"],
                 "added_at": datetime.utcnow().isoformat(),
             },
             {
-                "question": "Does Minerva require an internet connection or API key?",
+                "question": "Does Assay require an internet connection or API key?",
                 "answer": (
-                    "No. Minerva is local-first and runs fully offline with a local GGUF model. "
+                    "No. Assay is local-first and runs fully offline with a local GGUF model. "
                     "An Anthropic API key is optional — it enables cloud LLM features but is not required "
                     "for core data analysis functionality."
                 ),
@@ -346,7 +346,7 @@ class SupportAgent(BaseAgent):
                 "question": "How do I add a local LLM model?",
                 "answer": (
                     "Place a GGUF model file in `adm/llm_backends/local_model/`. "
-                    "Minerva auto-discovers and registers GGUF files at startup. "
+                    "Assay auto-discovers and registers GGUF files at startup. "
                     "You can also configure a model via the LLM Manager UI tab."
                 ),
                 "tags": ["llm", "model", "setup"],
@@ -365,7 +365,7 @@ class SupportAgent(BaseAgent):
             {
                 "question": "How do I report a bug or request a feature?",
                 "answer": (
-                    "Open an issue on GitHub at https://github.com/MyDataTrends/Minerva/issues. "
+                    "Open an issue on GitHub at https://github.com/MyDataTrends/Assay/issues. "
                     "For bugs, include your OS, Python version, and a minimal reproducer. "
                     "For features, describe the use case and expected behavior."
                 ),
@@ -373,9 +373,9 @@ class SupportAgent(BaseAgent):
                 "added_at": datetime.utcnow().isoformat(),
             },
             {
-                "question": "What machine learning models does Minerva use?",
+                "question": "What machine learning models does Assay use?",
                 "answer": (
-                    "Minerva runs an automated model sweep over LightGBM, XGBoost, Ridge Regression, "
+                    "Assay runs an automated model sweep over LightGBM, XGBoost, Ridge Regression, "
                     "and Logistic Regression. The best-scoring model (by cross-validated metric) is "
                     "selected automatically. SHAP explanations are computed for the winner."
                 ),

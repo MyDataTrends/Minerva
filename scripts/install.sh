@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=================================================="
-echo "  Minerva - AI Data Analyst Installer (Mac/Linux)"
+echo "  Assay - AI Data Analyst Installer (Mac/Linux)"
 echo "=================================================="
 echo ""
 
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 # 4. Done
 echo ""
-echo "[SUCCESS] Minerva is installed!"
+echo "[SUCCESS] Assay is installed!"
 echo ""
 echo "To run the dashboard:"
 echo "   source .venv/bin/activate && streamlit run ui/dashboard.py"

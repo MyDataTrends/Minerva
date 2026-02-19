@@ -143,7 +143,7 @@ class TestDraftGeneration:
     def test_draft_hn_fallback(self, tmp_agent):
         with patch("llm_manager.llm_interface.get_llm_completion", return_value=""):
             result = tmp_agent._draft_hn("fallback context")
-        assert "Minerva" in result
+        assert "Assay" in result
 
     def test_draft_reddit(self, tmp_agent):
         with patch("llm_manager.llm_interface.get_llm_completion", return_value="TITLE: Reddit\n\nBODY: Stuff"):
@@ -153,7 +153,7 @@ class TestDraftGeneration:
     def test_draft_reddit_fallback(self, tmp_agent):
         with patch("llm_manager.llm_interface.get_llm_completion", return_value=""):
             result = tmp_agent._draft_reddit("fallback context")
-        assert "Minerva" in result
+        assert "Assay" in result
 
     def test_draft_twitter(self, tmp_agent):
         with patch("llm_manager.llm_interface.get_llm_completion", return_value="1/ Tweet one\n2/ Tweet two"):

@@ -1,5 +1,5 @@
 """
-Session Persistence Module for Minerva.
+Session Persistence Module for Assay.
 
 Provides state checkpointing and restoration for cross-session continuity:
 - Session snapshots (save current state for later restoration)

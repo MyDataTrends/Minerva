@@ -80,7 +80,7 @@ class GoogleSheetsConnector(DataConnector):
         
         # Token storage
         self._token_path = os.path.join(
-            os.path.expanduser("~"), ".minerva", "google_token.json"
+            os.path.expanduser("~"), ".assay", "google_token.json"
         )
     
     def _load_cached_token(self) -> bool:

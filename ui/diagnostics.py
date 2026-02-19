@@ -1,5 +1,5 @@
 """
-Structured Diagnostics Module for Minerva UI.
+Structured Diagnostics Module for Assay UI.
 
 Provides centralized error handling, logging, and display for the UI layer.
 Captures full context (stack traces, session state) for debugging while
@@ -78,7 +78,7 @@ class DiagnosticsManager:
     - Provides export for bug reports
     """
     
-    SESSION_KEY = "minerva_diagnostics"
+    SESSION_KEY = "assay_diagnostics"
     LOG_FILE = Path("local_data/diagnostics.log")
     
     def __init__(self):
@@ -258,7 +258,7 @@ class DiagnosticsManager:
     
     def export_for_report(self) -> str:
         """Export diagnostics as a string for bug reports."""
-        lines = ["# Minerva Diagnostics Report", f"Generated: {datetime.now().isoformat()}", ""]
+        lines = ["# Assay Diagnostics Report", f"Generated: {datetime.now().isoformat()}", ""]
         
         lines.append(f"## Summary")
         lines.append(f"- Total entries: {len(self.entries)}")
@@ -391,7 +391,7 @@ def render_diagnostics_panel():
             st.download_button(
                 "📥 Download Report",
                 report,
-                file_name=f"minerva_diagnostics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                file_name=f"assay_diagnostics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
                 mime="text/markdown",
             )
     with col2:

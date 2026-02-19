@@ -1,8 +1,8 @@
-# CLAUDE.md — Minerva Project Context
+# CLAUDE.md — Assay Project Context
 
 ## What This Project Is
 
-Minerva is a **local-first, AI-powered autonomous data analyst** (~47K lines of Python, ~220 source files). Users upload CSVs and get automated cleaning, profiling, modeling, visualization, and insights — zero configuration. It runs as a Streamlit dashboard, FastAPI backend, CLI, and MCP server.
+Assay is a **local-first, AI-powered autonomous data analyst** (~47K lines of Python, ~220 source files). Users upload CSVs and get automated cleaning, profiling, modeling, visualization, and insights — zero configuration. It runs as a Streamlit dashboard, FastAPI backend, CLI, and MCP server.
 
 **Business context**: The owner is a solo founder (former Lowe's business analytics consultant) building toward either an open-source SaaS (free local tier + paid cloud tier) or a technology asset sale. The priority is making the system as autonomous as possible — the agent layer should handle routine operations so the founder only makes strategic decisions.
 

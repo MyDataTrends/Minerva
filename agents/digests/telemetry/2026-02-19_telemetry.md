@@ -61,18 +61,18 @@
 
 | Agent | Runs | Successes | Success Rate | Last Run | Pending Esc. |
 |-------|------|-----------|--------------|----------|--------------|
-| advocate | 6 | 6 | 100% | ✅ 2026-02-19 | 0 |
-| conductor | 3 | 3 | 100% | ✅ 2026-02-19 | 0 |
-| engineer | 8 | 8 | 100% | ✅ 2026-02-19 | 0 |
-| marketing | 2 | 2 | 100% | ✅ 2026-02-19 | 0 |
+| advocate | 8 | 8 | 100% | ✅ 2026-02-19 | 0 |
+| conductor | 4 | 4 | 100% | ✅ 2026-02-19 | 0 |
+| engineer | 10 | 10 | 100% | ✅ 2026-02-19 | 0 |
+| marketing | 3 | 3 | 100% | ✅ 2026-02-19 | 0 |
 | productizer | 0 | 0 | — | — — | 0 |
-| sentinel | 6 | 6 | 100% | ✅ 2026-02-19 | 0 |
-| support | 7 | 7 | 100% | ✅ 2026-02-19 | 0 |
-| telemetry | 1 | 1 | 100% | ✅ 2026-02-19 | 0 |
+| sentinel | 8 | 8 | 100% | ✅ 2026-02-19 | 0 |
+| support | 15 | 15 | 100% | ✅ 2026-02-19 | 0 |
+| telemetry | 2 | 2 | 100% | ✅ 2026-02-19 | 0 |
 
 ## Frustration Signals
 
 *No frustration signals.*
 
 ---
-*Generated: 2026-02-19T04:31:05.930155 UTC by TelemetryAgent*
+*Generated: 2026-02-19T04:51:15.745538 UTC by TelemetryAgent*

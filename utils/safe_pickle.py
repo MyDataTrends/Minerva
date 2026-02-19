@@ -1,5 +1,5 @@
 """
-Safe Pickle Module for Minerva.
+Safe Pickle Module for Assay.
 
 Provides secure pickle operations with:
 - Path validation (no traversal attacks)
@@ -34,7 +34,7 @@ ALLOWED_DIRS = {
     "models",
     "local_data",
     "artifacts",
-    ".minerva",
+    ".assay",
 }
 
 # Maximum file size for pickle loads (100MB)
@@ -89,10 +89,10 @@ def validate_pickle_path(path: Union[str, Path], base_dir: Optional[Path] = None
         if relative.parts and relative.parts[0] in ALLOWED_DIRS:
             return path
     
-    # Allow if within home directory .minerva
-    home_minerva = Path.home() / ".minerva"
+    # Allow if within home directory .assay
+    home_assay = Path.home() / ".assay"
     try:
-        path.relative_to(home_minerva)
+        path.relative_to(home_assay)
         return path
     except ValueError:
         pass

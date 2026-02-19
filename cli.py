@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Minerva CLI - Unified command-line interface for the Minerva data analysis platform.
+Assay CLI - Unified command-line interface for the Assay data analysis platform.
 
 Usage:
-    minerva ingest s3 --bucket BUCKET --prefix PREFIX --dest datasets
-    minerva ingest api URL --dest datasets
-    minerva analyze FILE [--target COLUMN]
-    minerva serve [--port PORT] [--host HOST]
-    minerva dashboard [--port PORT]
-    minerva test [--quick]
-    minerva info
+    assay ingest s3 --bucket BUCKET --prefix PREFIX --dest datasets
+    assay ingest api URL --dest datasets
+    assay analyze FILE [--target COLUMN]
+    assay serve [--port PORT] [--host HOST]
+    assay dashboard [--port PORT]
+    assay test [--quick]
+    assay info
 """
 
 import argparse
@@ -25,7 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 def cmd_ingest(args):
     """Ingest data from S3 or API sources. (DEPRECATED)"""
-    print("WARNING: This command is deprecated. Please use the 'Minerva Ops Center' (minerva admin) for data ingestion.")
+    print("WARNING: This command is deprecated. Please use the 'Assay Ops Center' (assay admin) for data ingestion.")
     from legacy.Data_Intake.datalake_ingestion import main as ingest_main
     
     # Build argv for the ingestion module
@@ -121,7 +121,7 @@ def cmd_serve(args):
     """Start the FastAPI server."""
     import uvicorn
     
-    print(f"Starting Minerva API server on {args.host}:{args.port}")
+    print(f"Starting Assay API server on {args.host}:{args.port}")
     print("Press Ctrl+C to stop")
     print()
     
@@ -148,7 +148,7 @@ def cmd_dashboard(args):
     if args.host:
         cmd.extend(["--server.address", args.host])
     
-    print(f"Starting Minerva Dashboard on port {args.port}")
+    print(f"Starting Assay Dashboard on port {args.port}")
     print("Press Ctrl+C to stop")
     print()
     
@@ -177,7 +177,7 @@ def cmd_test(args):
 def cmd_info(args):
     """Display system and configuration information."""
     print("=" * 60)
-    print("MINERVA PLATFORM INFO")
+    print("ASSAY PLATFORM INFO")
     print("=" * 60)
     
     # Python info
@@ -244,7 +244,7 @@ def cmd_admin(args):
     if args.host:
         cmd.extend(["--server.address", args.host])
     
-    print(f"Starting Minerva Ops Center on port {args.port}")
+    print(f"Starting Assay Ops Center on port {args.port}")
     print("Press Ctrl+C to stop")
     print()
     
@@ -253,18 +253,18 @@ def cmd_admin(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="minerva",
-        description="Minerva Data Analysis Platform CLI",
+        prog="assay",
+        description="Assay Data Analysis Platform CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  minerva ingest s3 --bucket my-bucket --prefix data/
-  minerva ingest api https://example.com/data.csv
-  minerva analyze data.csv --target sales
-  minerva serve --port 8000
-  minerva dashboard
-  minerva test --quick
-  minerva info
+  assay ingest s3 --bucket my-bucket --prefix data/
+  assay ingest api https://example.com/data.csv
+  assay analyze data.csv --target sales
+  assay serve --port 8000
+  assay dashboard
+  assay test --quick
+  assay info
         """,
     )
     

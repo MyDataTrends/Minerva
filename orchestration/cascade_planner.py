@@ -1,5 +1,5 @@
 """
-Cascade Decision Planner for Minerva.
+Cascade Decision Planner for Assay.
 
 Implements structured intent → plan → tool cascade:
 - Deterministic rules for common cases

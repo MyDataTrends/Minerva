@@ -1,5 +1,5 @@
 """
-User Feedback Handler for Minerva.
+User Feedback Handler for Assay.
 
 Provides comprehensive feedback collection:
 - Thumbs up/down buttons after chat responses
@@ -323,7 +323,7 @@ def render_report_issue():
             st.download_button(
                 "📥 Download Report",
                 report,
-                file_name=f"minerva_issue_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                file_name=f"assay_issue_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
                 mime="text/markdown",
             )
             
@@ -338,7 +338,7 @@ def _generate_issue_report(
 ) -> str:
     """Generate a comprehensive issue report."""
     lines = [
-        "# Minerva Issue Report",
+        "# Assay Issue Report",
         f"**Generated:** {datetime.now().isoformat()}",
         f"**Issue Type:** {issue_type}",
         "",

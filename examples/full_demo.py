@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Minerva Full Feature Demo.
+"""Assay Full Feature Demo.
 
-This script demonstrates all major features of the Minerva platform:
+This script demonstrates all major features of the Assay platform:
 1. Public data source registry and semantic index
 2. Data upload and automatic preprocessing
 3. Semantic enrichment with public datasets
@@ -267,7 +267,7 @@ def demo_full_workflow():
     from orchestration.orchestrate_workflow import orchestrate_workflow
     from storage.local_backend import load_datalake_dfs
     
-    print("\n🚀 Running full Minerva workflow...")
+    print("\n🚀 Running full Assay workflow...")
     print("   This demonstrates:")
     print("   • Data loading and preprocessing")
     print("   • Semantic enrichment")
@@ -400,7 +400,7 @@ def demo_visualization():
     
     from scripts.visualization_selector import select_visualization
     
-    print("\n   Minerva uses a hybrid approach:")
+    print("\n   Assay uses a hybrid approach:")
     print("   • Heuristics for high-confidence cases (>70%)")
     print("   • LLM fallback for uncertain cases")
     
@@ -463,7 +463,7 @@ def print_demo_commands():
 def main():
     """Run the full demo."""
     print("\n" + "🌟" * 35)
-    print("         MINERVA FULL FEATURE DEMO")
+    print("         ASSAY FULL FEATURE DEMO")
     print("🌟" * 35)
     
     print(f"\nDemo started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

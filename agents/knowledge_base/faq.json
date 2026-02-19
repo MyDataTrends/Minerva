@@ -1,6 +1,6 @@
 [
   {
-    "question": "How do I install Minerva?",
+    "question": "How do I install Assay?",
     "answer": "Clone the repo and install dependencies with `pip install -r requirements.txt`. Then run `streamlit run ui/dashboard.py` to launch the dashboard. See the README for full setup instructions including optional LLM model download.",
     "tags": [
       "installation",
@@ -9,8 +9,8 @@
     "added_at": "2026-02-19T04:06:39.951797"
   },
   {
-    "question": "What file formats does Minerva support?",
-    "answer": "Minerva supports CSV, Excel (.xlsx/.xls), and Parquet files. Upload via the dashboard or provide a path via the CLI.",
+    "question": "What file formats does Assay support?",
+    "answer": "Assay supports CSV, Excel (.xlsx/.xls), and Parquet files. Upload via the dashboard or provide a path via the CLI.",
     "tags": [
       "data",
       "formats"
@@ -18,8 +18,8 @@
     "added_at": "2026-02-19T04:06:39.951797"
   },
   {
-    "question": "Does Minerva require an internet connection or API key?",
-    "answer": "No. Minerva is local-first and runs fully offline with a local GGUF model. An Anthropic API key is optional — it enables cloud LLM features but is not required for core data analysis functionality.",
+    "question": "Does Assay require an internet connection or API key?",
+    "answer": "No. Assay is local-first and runs fully offline with a local GGUF model. An Anthropic API key is optional — it enables cloud LLM features but is not required for core data analysis functionality.",
     "tags": [
       "privacy",
       "offline",
@@ -29,7 +29,7 @@
   },
   {
     "question": "How do I add a local LLM model?",
-    "answer": "Place a GGUF model file in `adm/llm_backends/local_model/`. Minerva auto-discovers and registers GGUF files at startup. You can also configure a model via the LLM Manager UI tab.",
+    "answer": "Place a GGUF model file in `adm/llm_backends/local_model/`. Assay auto-discovers and registers GGUF files at startup. You can also configure a model via the LLM Manager UI tab.",
     "tags": [
       "llm",
       "model",
@@ -49,7 +49,7 @@
   },
   {
     "question": "How do I report a bug or request a feature?",
-    "answer": "Open an issue on GitHub at https://github.com/MyDataTrends/Minerva/issues. For bugs, include your OS, Python version, and a minimal reproducer. For features, describe the use case and expected behavior.",
+    "answer": "Open an issue on GitHub at https://github.com/MyDataTrends/Assay/issues. For bugs, include your OS, Python version, and a minimal reproducer. For features, describe the use case and expected behavior.",
     "tags": [
       "bug",
       "feature",
@@ -58,8 +58,8 @@
     "added_at": "2026-02-19T04:06:39.951797"
   },
   {
-    "question": "What machine learning models does Minerva use?",
-    "answer": "Minerva runs an automated model sweep over LightGBM, XGBoost, Ridge Regression, and Logistic Regression. The best-scoring model (by cross-validated metric) is selected automatically. SHAP explanations are computed for the winner.",
+    "question": "What machine learning models does Assay use?",
+    "answer": "Assay runs an automated model sweep over LightGBM, XGBoost, Ridge Regression, and Logistic Regression. The best-scoring model (by cross-validated metric) is selected automatically. SHAP explanations are computed for the winner.",
     "tags": [
       "modeling",
       "ml",
@@ -69,74 +69,98 @@
   },
   {
     "question": "How do I upload a CSV file?",
-    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `minerva dashboard` to start the UI.",
+    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `assay dashboard` to start the UI.",
     "tags": [],
     "added_at": "2026-02-19T04:09:40.498556"
   },
   {
-    "question": "What LLM models does Minerva support?",
-    "answer": "Minerva supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
+    "question": "What LLM models does Assay support?",
+    "answer": "Assay supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
     "tags": [],
     "added_at": "2026-02-19T04:09:40.500557"
   },
   {
-    "question": "How do I run Minerva in offline mode?",
-    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Minerva will auto-detect and use it.",
+    "question": "How do I run Assay in offline mode?",
+    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Assay will auto-detect and use it.",
     "tags": [],
     "added_at": "2026-02-19T04:09:40.501560"
   },
   {
     "question": "How do I export results to PDF?",
-    "answer": "Use the 'Export' button in the dashboard, or run `minerva analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
+    "answer": "Use the 'Export' button in the dashboard, or run `assay analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
     "tags": [],
     "added_at": "2026-02-19T04:09:40.503557"
   },
   {
     "question": "How do I upload a CSV file?",
-    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `minerva dashboard` to start the UI.",
+    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `assay dashboard` to start the UI.",
     "tags": [],
     "added_at": "2026-02-19T04:32:18.365350"
   },
   {
-    "question": "What LLM models does Minerva support?",
-    "answer": "Minerva supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
+    "question": "What LLM models does Assay support?",
+    "answer": "Assay supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
     "tags": [],
     "added_at": "2026-02-19T04:32:18.366485"
   },
   {
-    "question": "How do I run Minerva in offline mode?",
-    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Minerva will auto-detect and use it.",
+    "question": "How do I run Assay in offline mode?",
+    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Assay will auto-detect and use it.",
     "tags": [],
     "added_at": "2026-02-19T04:32:18.367493"
   },
   {
     "question": "How do I export results to PDF?",
-    "answer": "Use the 'Export' button in the dashboard, or run `minerva analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
+    "answer": "Use the 'Export' button in the dashboard, or run `assay analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
     "tags": [],
     "added_at": "2026-02-19T04:32:18.369515"
   },
   {
     "question": "How do I upload a CSV file?",
-    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `minerva dashboard` to start the UI.",
+    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `assay dashboard` to start the UI.",
     "tags": [],
     "added_at": "2026-02-19T04:36:15.937322"
   },
   {
-    "question": "What LLM models does Minerva support?",
-    "answer": "Minerva supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
+    "question": "What LLM models does Assay support?",
+    "answer": "Assay supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
     "tags": [],
     "added_at": "2026-02-19T04:36:15.939322"
   },
   {
-    "question": "How do I run Minerva in offline mode?",
-    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Minerva will auto-detect and use it.",
+    "question": "How do I run Assay in offline mode?",
+    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Assay will auto-detect and use it.",
     "tags": [],
     "added_at": "2026-02-19T04:36:15.941322"
   },
   {
     "question": "How do I export results to PDF?",
-    "answer": "Use the 'Export' button in the dashboard, or run `minerva analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
+    "answer": "Use the 'Export' button in the dashboard, or run `assay analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
     "tags": [],
     "added_at": "2026-02-19T04:36:15.942322"
+  },
+  {
+    "question": "How do I upload a CSV file?",
+    "answer": "In the Streamlit dashboard, go to the 'Data Upload' tab and drag-and-drop your CSV. Files up to 200MB are supported. Run `assay dashboard` to start the UI.",
+    "tags": [],
+    "added_at": "2026-02-19T04:52:24.622307"
+  },
+  {
+    "question": "What LLM models does Assay support?",
+    "answer": "Assay supports: Anthropic Claude (cloud), OpenAI GPT models (cloud), local GGUF models via llama.cpp, and Ollama models. Configure via the LLM Settings tab.",
+    "tags": [],
+    "added_at": "2026-02-19T04:52:24.624314"
+  },
+  {
+    "question": "How do I run Assay in offline mode?",
+    "answer": "Download a GGUF model file and place it in adm/llm_backends/local_model/. Set ENABLE_LOCAL_LLM=1 in your .env file. Assay will auto-detect and use it.",
+    "tags": [],
+    "added_at": "2026-02-19T04:52:24.625826"
+  },
+  {
+    "question": "How do I export results to PDF?",
+    "answer": "Use the 'Export' button in the dashboard, or run `assay analyze data.csv --export pdf`. Reports are saved to the reports/ directory.",
+    "tags": [],
+    "added_at": "2026-02-19T04:52:24.627836"
   }
 ]

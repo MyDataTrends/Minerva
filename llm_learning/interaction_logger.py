@@ -80,7 +80,7 @@ class InteractionLogger:
     
     def __init__(self, db_path: Optional[Path] = None):
         if db_path is None:
-            db_path = Path.home() / ".minerva" / "interactions.db"
+            db_path = Path.home() / ".assay" / "interactions.db"
         
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

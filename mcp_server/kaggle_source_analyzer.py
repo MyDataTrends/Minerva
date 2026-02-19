@@ -28,7 +28,7 @@ from collections import Counter
 logger = logging.getLogger(__name__)
 
 # Cache file for storing Kaggle-derived weights
-CACHE_DIR = Path.home() / ".minerva" / "cache"
+CACHE_DIR = Path.home() / ".assay" / "cache"
 WEIGHTS_CACHE_FILE = CACHE_DIR / "kaggle_source_weights.json"
 CACHE_TTL_HOURS = 24 * 7  # Refresh weekly
 
@@ -239,7 +239,7 @@ class KaggleSourceAnalyzer:
         Lazy-load Kaggle API with credential manager integration.
         
         Credential priority:
-        1. Minerva encrypted storage (~/.minerva/credentials.json)
+        1. Assay encrypted storage (~/.assay/credentials.json)
         2. Standard Kaggle env vars (KAGGLE_USERNAME, KAGGLE_KEY)
         3. Standard Kaggle file (~/.kaggle/kaggle.json)
         
@@ -254,7 +254,7 @@ class KaggleSourceAnalyzer:
         # CRITICAL: Set credentials BEFORE importing Kaggle API
         # The Kaggle package validates credentials during import!
         if self._master_password:
-            logger.info("Loading Kaggle credentials from Minerva storage...")
+            logger.info("Loading Kaggle credentials from Assay storage...")
             try:
                 from mcp_server.credential_manager import get_kaggle_credentials
                 creds = get_kaggle_credentials(self._master_password)
@@ -271,7 +271,7 @@ class KaggleSourceAnalyzer:
             except Exception as e:
                 logger.warning(f"Could not load Kaggle credentials: {e}")
         else:
-            logger.debug("No master password provided, skipping Minerva credential check")
+            logger.debug("No master password provided, skipping Assay credential check")
         
         # Now import and authenticate Kaggle API
         try:

@@ -21,7 +21,7 @@ except ImportError:
     logger.warning("Cryptography module not found. Falling back to plain text storage.")
 
 class KeyStorage:
-    def __init__(self, app_name: str = "minerva"):
+    def __init__(self, app_name: str = "assay"):
         self.app_dir = Path.home() / f".{app_name}"
         self.app_dir.mkdir(exist_ok=True)
         

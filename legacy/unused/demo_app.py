@@ -10,7 +10,7 @@ import os
 
 # Set page config
 st.set_page_config(
-    page_title="Minerva MCP Demo",
+    page_title="Assay MCP Demo",
     page_icon="🧠",
     layout="wide"
 )
@@ -42,7 +42,7 @@ async def run_step(step_name, func, *args, **kwargs):
 
 # --- UI Layout ---
 
-st.title("🧠 Minerva MCP Server Demo")
+st.title("🧠 Assay MCP Server Demo")
 st.markdown("""
 This interactive demo showcases the **Model Context Protocol (MCP)** server capabilities.
 You will see how an Agent (simulated here) uses tools to:

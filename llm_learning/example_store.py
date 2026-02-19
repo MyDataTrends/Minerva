@@ -64,8 +64,8 @@ class ExampleStore:
         max_size_mb: int = DEFAULT_MAX_SIZE_MB
     ):
         if db_path is None:
-            # Default: ~/.minerva/llm_learning.db
-            db_path = Path.home() / ".minerva" / "llm_learning.db"
+            # Default: ~/.assay/llm_learning.db
+            db_path = Path.home() / ".assay" / "llm_learning.db"
         
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

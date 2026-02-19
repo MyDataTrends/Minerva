@@ -101,7 +101,7 @@ def agent(tmp_path, monkeypatch):
 
 @pytest.fixture()
 def interaction_db(tmp_path):
-    """Populated InteractionLogger DB at the path the agent expects: home()/.minerva/interactions.db."""
+    """Populated InteractionLogger DB at the path the agent expects: home()/.assay/interactions.db."""
     now = datetime.now()
     rows = [
         ("sess1", "analysis", "show me correlations", 1, 120, "sales.csv", 0, "success",
@@ -115,8 +115,8 @@ def interaction_db(tmp_path):
         ("sess3", "analysis", "show me correlations", 1, 130, "sales.csv", 0, "success",
          (now - timedelta(hours=5)).isoformat()),
     ]
-    # Agent reads from Path.home() / ".minerva" / "interactions.db"
-    db = _make_interaction_db(tmp_path / ".minerva" / "interactions.db", rows)
+    # Agent reads from Path.home() / ".assay" / "interactions.db"
+    db = _make_interaction_db(tmp_path / ".assay" / "interactions.db", rows)
     return db
 
 
@@ -410,7 +410,7 @@ class TestTelemetryAgentRun:
             ("s1", "analysis", "good", 1, 100, "", 0, "success", now.isoformat())
             for _ in range(3)  # 3 successes → 70% error rate
         ]
-        _make_interaction_db(tmp_path / ".minerva" / "interactions.db", rows)
+        _make_interaction_db(tmp_path / ".assay" / "interactions.db", rows)
 
         result = agent.run(days=7)
         assert result.success is True

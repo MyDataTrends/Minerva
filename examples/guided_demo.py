@@ -1,7 +1,7 @@
 """
-Guided Demo Script - Quick Start tutorial for Minerva.
+Guided Demo Script - Quick Start tutorial for Assay.
 
-Run this script to see Minerva's key features in action:
+Run this script to see Assay's key features in action:
 1. Load demo retail sales data
 2. Demonstrate semantic enrichment with census data  
 3. Show automatic analysis selection
@@ -35,10 +35,10 @@ def print_step(step_num: int, text: str):
 
 
 def run_demo():
-    """Run the guided demo showcasing Minerva's key features."""
+    """Run the guided demo showcasing Assay's key features."""
     
-    print_header("🔮 Minerva Platform - Guided Demo")
-    print("This demo showcases the key differentiating features of Minerva:\n")
+    print_header("🔮 Assay Platform - Guided Demo")
+    print("This demo showcases the key differentiating features of Assay:\n")
     print("  1. Semantic data enrichment")
     print("  2. Automatic analysis selection")
     print("  3. LLM-powered insights (if available)")
@@ -158,7 +158,7 @@ def run_demo():
         output_path = project_root / "output" / "demo_report.html"
         output_path.parent.mkdir(exist_ok=True)
         
-        export_report_to_file(df, mock_result, str(output_path), title="Minerva Demo Report")
+        export_report_to_file(df, mock_result, str(output_path), title="Assay Demo Report")
         print(f"✅ Report generated: {output_path}")
         print(f"   Open this file in a browser to see the styled report")
     except Exception as e:
@@ -166,7 +166,7 @@ def run_demo():
     
     # Summary
     print_header("Demo Complete!")
-    print("Key Minerva differentiators demonstrated:")
+    print("Key Assay differentiators demonstrated:")
     print("\n  🧠 Semantic Column Detection")
     print("     Automatically identifies column meanings (zip_code, sales_amount, etc.)")
     print("\n  🔗 Semantic Data Enrichment")

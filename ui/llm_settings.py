@@ -42,7 +42,7 @@ def render_llm_settings():
     ProviderType, DOWNLOADABLE_MODELS = _get_provider_base()
     
     st.header("🤖 LLM Model Manager")
-    st.caption("Configure which AI model powers Minerva's analysis")
+    st.caption("Configure which AI model powers Assay's analysis")
     
     # Tabs for different sections
     local_tab, cloud_tab, download_tab = st.tabs([
@@ -254,7 +254,7 @@ def render_llm_settings():
                     source_labels = {
                         "environment": "Environment variables",
                         "kaggle_json": "~/.kaggle/kaggle.json",
-                        "encrypted_storage": "Minerva encrypted storage"
+                        "encrypted_storage": "Assay encrypted storage"
                     }
                     
                     # If from encrypted storage, may need unlock
@@ -363,19 +363,19 @@ def render_llm_settings():
 
         # ===== CUSTOM API KEYS SECTION =====
         with st.expander("🔑 Custom API Keys (Data Sources)", expanded=False):
-            st.write("Store API keys for data services discovered by Minerva.")
+            st.write("Store API keys for data services discovered by Assay.")
             
             with st.popover("ℹ️ How this works"):
                 st.markdown("""
                 ### Secure API Key Storage
                 
-                When Minerva discovers an API that requires authentication 
+                When Assay discovers an API that requires authentication 
                 (like ESPN, Football-Data.org, or Alpha Vantage), you can 
                 store your API key here.
                 
                 **Your keys are:**
                 - 🔐 Encrypted with your master password
-                - 📁 Stored locally in `~/.minerva/credentials.json`
+                - 📁 Stored locally in `~/.assay/credentials.json`
                 - 🔓 Unlocked per session (same as Kaggle)
                 
                 **To get an API key:**

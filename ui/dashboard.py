@@ -492,11 +492,11 @@ with st.sidebar.expander("📥 Add Dataset", expanded=data is None):
 
 if data is None and not st.session_state["datasets"]:
     # === First Run / Welcome Wizard ===
-    st.markdown("## 🚀 Welcome to Minerva")
+    st.markdown("## 🚀 Welcome to Assay")
     st.markdown("""
     **Your AI Data Analyst is ready.** 
     
-    Minerva runs entirely on your machine. To get started, you need data.
+    Assay runs entirely on your machine. To get started, you need data.
     """)
     
     c1, c2, c3 = st.columns([1, 1, 2])
@@ -690,13 +690,13 @@ with chat_tab:
     if not st.session_state.seen_learning_tutorial:
         with st.expander("🎓 **New! Your LLM Gets Smarter Over Time**", expanded=True):
             st.markdown("""
-            **Minerva now learns from your interactions!**
+            **Assay now learns from your interactions!**
             
             - 💬 **Chat naturally** - Every question helps improve responses
             - ⭐ **Rate answers** - Your ratings train the model on what works
             - 📊 **Track progress** - See your LLM's learning journey in the **LLM Settings** tab
             
-            The more you use Minerva, the smarter it becomes for *your* data patterns!
+            The more you use Assay, the smarter it becomes for *your* data patterns!
             """)
             if st.button("Got it!", key="dismiss_tutorial"):
                 st.session_state.seen_learning_tutorial = True
@@ -935,7 +935,7 @@ with chat_tab:
             st.download_button(
                 label="📥 Download Interactive HTML",
                 data=st.session_state["ready_report"],
-                file_name=f"minerva_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
+                file_name=f"assay_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
                 mime="text/html"
             )
 
@@ -1063,7 +1063,7 @@ if result:
     
     # HTML Report Export
     try:
-        report_bytes = generate_report_bytes(data, result, title="Minerva Analysis Report")
+        report_bytes = generate_report_bytes(data, result, title="Assay Analysis Report")
         st.sidebar.download_button(
             "📄 Export Full Report (HTML)",
             report_bytes,

@@ -1,47 +1,47 @@
-# 🚀 Minerva Sales Kit: Retail & E-commerce
+# 🚀 Assay Sales Kit: Retail & E-commerce
 
 > **Use Case**: Autonomous Revenue Intelligence for Omnichannel Retail
-> **Target Persona**: VP of Merchandising / Head of Retail Operations
+> **Target Persona**: VP of Merchandising / Head of E-commerce Operations
 
 ## 1. The Executive Pitch
-Minerva eliminates the manual dashboard grind for retail leaders by autonomously monitoring your revenue, margins, and operational metrics 24/7. Instead of waiting days for analysts to pull reports, you get instant AI-powered insights into what's killing your conversion rates, which regions need attention, and how to optimize discounting—delivered in plain English, not pivot tables.
+Assay is your AI data analyst that monitors your retail operations 24/7 and proactively surfaces the insights that matter—without you building a single dashboard. Instead of spending hours in spreadsheets asking 'what happened?', Assay tells you what's driving revenue changes, which products are at risk, and where to focus next, automatically.
 
 ## 2. The Pain Points (Why they buy)
-* 🔴 **Spending 15+ hours weekly manually pulling reports from multiple systems to understand what's driving revenue drops across regions and channels, only to present stale data in Monday morning meetings**
-* 🔴 **Missing critical inventory and discount optimization opportunities because analysts are buried in dashboard maintenance instead of investigating why certain product categories underperform or why returns spike**
-* 🔴 **Unable to proactively address shipping delays and customer satisfaction issues until they've already impacted reviews and repeat purchase rates—always reacting, never predicting**
+* 🔴 **Spending 15+ hours weekly manually pulling data from multiple systems to answer exec questions like 'Why did revenue drop last week?' or 'Which products are underperforming?'—only to have the question change by the time the report is ready**
+* 🔴 **Missing critical patterns in returns, discounting, and regional performance that are eroding margins, but BI dashboards require knowing exactly what to look for beforehand**
+* 🔴 **Unable to quickly identify which product categories, channels, or regions need immediate attention during monthly business reviews, leading to reactive decision-making and missed opportunities**
 
-## 3. The Solution: Minerva Autonomous Analyst
+## 3. The Solution: Assay Autonomous Analyst
 We don't just "show data". We solve the problem.
 
 ### 💰 ROI & Business Impact
-* 🟢 Save 15-20 hours per week previously spent manually building revenue, inventory, and operations reports
-* 🟢 Reduce revenue leakage by 8-12% through proactive identification of underperforming regions, channels, and product categories
-* 🟢 Decrease return rates by 15-25% by catching shipping and quality issues before they scale across customer segments
-* 🟢 Improve gross margin by 3-5 points through AI-optimized discount strategies and product mix recommendations
+* 🟢 Save 15-20 hours per week eliminating manual reporting and ad-hoc analysis requests
+* 🟢 Reduce margin erosion by 3-5% through proactive discount optimization and return pattern detection
+* 🟢 Accelerate decision-making from days to minutes—answer executive questions in real-time during business reviews
+* 🟢 Eliminate $50K-150K annual BI consultant/analyst costs for routine insight generation
 
 ---
 
 ## 4. The Golden Demo Script
 *Use the dataset `demo_retail_sales.csv` for this demo.*
 
-### Step 1: 1. 'Show me what's impacting revenue performance this quarter'
-- **Action**: Minerva instantly analyzes revenue trends across all dimensions (product_category, region, channel, discount_pct) and surfaces: 'Electronics revenue is down 18% in the West region, driven by a 23% increase in return rates and 2.1-day longer shipping times compared to other regions'
-- **✨ The 'Wow' Factor**: No manual filtering or pivot tables. Minerva autonomously connected three disparate metrics (returns, shipping, revenue) that would take an analyst hours to correlate. The VP immediately knows WHERE the problem is and WHY.
+### Step 1: 1. Ask: 'Assay, what's impacting our revenue performance this month?'
+- **Action**: Assay autonomously analyzes revenue trends across product_category, region, channel, and time—then surfaces: 'Electronics revenue is down 18% vs. last month, driven primarily by West region In-Store channel. However, Online channel is up 12%, suggesting a customer preference shift.'
+- **✨ The 'Wow' Factor**: No manual pivot tables or pre-built dashboards needed. Assay automatically identifies the multi-dimensional story behind the numbers and presents it in plain English in seconds.
 
-### Step 2: 2. 'Which product categories should I focus on to hit my margin targets?'
-- **Action**: Minerva runs margin analysis (revenue vs discount_pct vs units_sold) and responds: 'Books have your highest margin efficiency at 8.2% average discount with minimal returns (3% rate), while Electronics average 12.4% discount with 11% returns. Shifting 10% of marketing spend to Books could improve gross margin by $47K monthly'
-- **✨ The 'Wow' Factor**: Minerva doesn't just show data—it provides strategic recommendations with dollar-impact projections. This transforms the VP from report-consumer to decision-maker in seconds.
+### Step 2: 2. Ask: 'Which products should I be worried about?'
+- **Action**: Assay correlates is_returned, customer_rating, discount_pct, and revenue to flag: 'Books category has a 23% return rate with average rating of 2.8—highest return rate across all categories. Despite 15% average discounts, revenue per order is declining, suggesting a quality or assortment issue.'
+- **✨ The 'Wow' Factor**: Assay connects dots across multiple metrics that would require 3-4 different reports. It doesn't just show returns are high—it explains WHY it matters to your P&L and what else is correlated.
 
-### Step 3: 3. 'Alert me when customer satisfaction is at risk'
-- **Action**: Minerva sets up autonomous monitoring on customer_rating, is_returned, and days_to_ship, then proactively sends: 'ALERT: South region Online orders now averaging 5.3 days to ship (vs. 2.8 company average) with ratings dropping from 4.1 to 3.6 over the past 3 weeks—affecting 847 customers'
-- **✨ The 'Wow' Factor**: This is the shift from reactive to predictive. The VP catches and fixes the fulfillment issue before it becomes a social media crisis or quarterly miss. No analyst needed to babysit dashboards.
+### Step 3: 3. Ask: 'Are our discounts actually working?'
+- **Action**: Assay segments orders by discount_pct ranges and analyzes revenue, units_sold, and customer_rating: 'Orders with 10-15% discounts generate 2.1x more revenue than 20%+ discounts, with identical customer ratings (3.9). You're leaving margin on the table—optimal discount appears to be 8-12%.'
+- **✨ The 'Wow' Factor**: This is the analysis that typically requires a data science project. Assay delivers actionable pricing intelligence instantly, showing exactly where you're over-discounting without ROI.
 
-### Step 4: 4. 'What's my optimal discount strategy by channel?'
-- **Action**: Minerva analyzes discount_pct vs revenue vs channel and reveals: 'In-Store orders convert at 8% discounts with $287 avg order value, while Online requires 11% discounts for only $223 AOV. Reducing Online discounts by 2% and investing in In-Store promotions could yield +$89K monthly revenue with better margins'
-- **✨ The 'Wow' Factor**: Minerva finds the non-obvious insight: deeper discounts online aren't driving proportional revenue. This single insight could reshape the entire promotional calendar.
+### Step 4: 4. Ask: 'What should I focus on this week?'
+- **Action**: Assay prioritizes: '1) South region has 8.2 days_to_ship vs. 3.1 company avg—correlates with 31% lower customer_rating. 2) Online channel revenue up 22% but units_sold only up 8%—investigate product mix shift. 3) Customer #1435 placed 47 orders totaling $18K—potential VIP program candidate.'
+- **✨ The 'Wow' Factor**: Instead of staring at dashboards wondering what matters, Assay acts as your chief of staff—triaging what needs attention NOW with context on why it's important and what action to take.
 
 
 
 ---
-*Generated by Minerva Productizer Agent on 2026-02-18*
+*Generated by Assay Productizer Agent on 2026-02-18*

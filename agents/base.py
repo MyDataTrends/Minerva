@@ -1,5 +1,5 @@
 """
-Base classes for the Minerva agent infrastructure.
+Base classes for the Assay agent infrastructure.
 
 All agents extend BaseAgent and implement run() to perform their work.
 Results are captured in AgentResult for aggregation by the Conductor.
@@ -104,7 +104,7 @@ class AgentConfig:
 
 class BaseAgent(ABC):
     """
-    Abstract base for all Minerva agents.
+    Abstract base for all Assay agents.
 
     Subclasses must implement:
         - run(**kwargs) -> AgentResult

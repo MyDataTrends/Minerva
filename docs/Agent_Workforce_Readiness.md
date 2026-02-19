@@ -5,7 +5,7 @@
 
 ## Overview
 
-Minerva has evolved from an interactive data tool into an **autonomous data workforce**. Phase 2 introduces a multi-agent system designed to "run the business" of data analysis, code maintenance, and community management without constant human supervision.
+Assay has evolved from an interactive data tool into an **autonomous data workforce**. Phase 2 introduces a multi-agent system designed to "run the business" of data analysis, code maintenance, and community management without constant human supervision.
 
 ## 🤖 The Agent Roster
 
@@ -55,7 +55,7 @@ Minerva has evolved from an interactive data tool into an **autonomous data work
   * **Auto-Sourcing**: Fetches real-world data for a given topic (e.g., "Crypto", "Retail") using `APIDiscoveryAgent`.
   * **Vertical Sales Kits**: Generates a complete sales package (Elevator Pitch, Buyer Persona, Pain Points, ROI, Demo Script).
   * **Fallback Logic**: Gracefully handles API failures by using local backup data.
-* **Impact**: Transforms Minerva from a tool into a *sellable solution* by automatically generating the marketing assets needed to close deals in specific verticals.
+* **Impact**: Transforms Assay from a tool into a *sellable solution* by automatically generating the marketing assets needed to close deals in specific verticals.
 
 ---
 
@@ -73,7 +73,7 @@ This builds trust by making the "magic" observable.
 
 ### Cascade Planner Integration
 
-The **Scheduler Agent** now uses the `CascadePlanner` (Minerva's brain), verifying:
+The **Scheduler Agent** now uses the `CascadePlanner` (Assay's brain), verifying:
 
 * **Intent Detection**: Successfully identifies complex queries ("Filter Sales > 120 and average").
 * **Robustness**: Handles data type mismatches (e.g., coercing string "120" to int) via the `tool_registry`.

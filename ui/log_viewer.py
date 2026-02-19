@@ -1,5 +1,5 @@
 """
-Admin Log Viewer for Minerva.
+Admin Log Viewer for Assay.
 
 Provides in-app viewing of server logs with:
 - Multi-file log selection

@@ -1,20 +1,20 @@
-# Minerva 🦉
+# Assay 🦉
 
 **Upload. Analyze. Done.**
 
-Minerva is an **AI-powered data analyst** that runs locally on your machine. It turns raw CSVs into insights, charts, and reports without you writing a single line of code.
+Assay is an **AI-powered data analyst** that runs locally on your machine. It turns raw CSVs into insights, charts, and reports without you writing a single line of code.
 
-## Why Minerva?
+## Why Assay?
 
 Traditional analytics tools (Excel, Tableau, Power BI) require you to manually clean data, build charts, and configure dashboards.
 Chat-based AI tools (ChatGPT, Julius) require you to upload your sensitive data to the cloud.
 
-Minerva is different:
+Assay is different:
 
 - **Zero Configuration**: Just upload a file. The system auto-detects types, cleans data, selects models, and generates insights.
 - **Local & Private**: Your data never leaves your machine. Processing happens locally or via your personal API keys.
 - **Self-Improving**: It remembers your domain. If you teach it that "Fiscal Year starts in Feb", it remembers that for every future analysis.
-- **Transparent**: Unlike black-box AI, Minerva generates actual Python code that you can inspect, audit, and reuse.
+- **Transparent**: Unlike black-box AI, Assay generates actual Python code that you can inspect, audit, and reuse.
 
 ## Features
 
@@ -22,14 +22,14 @@ Minerva is different:
 - **Smart Charts**: Auto-selects the best visualization for your data (e.g., time-series lines, categorical bars).
 - **Natural Language Query**: Ask "Show me sales by region" and get a chart + answer.
 - **Data Fabric**: Visualizes how your datasets connect and where they came from.
-- **Agentic Infrastructure**: Built as an MCP Server, so other agents (like Claude Desktop) can use Minerva as a tool.
+- **Agentic Infrastructure**: Built as an MCP Server, so other agents (like Claude Desktop) can use Assay as a tool.
 - **Active Learning**: Learns from your feedback to improve future analyses.
 
 ## Quick Start (Win/Mac/Linux)
 
 ### 1. Install
 
-Minerva requires **Python 3.10+**.
+Assay requires **Python 3.10+**.
 
 **Windows Users**:
 Download the repository and double-click `scripts/install.bat`.
@@ -37,15 +37,15 @@ Download the repository and double-click `scripts/install.bat`.
 **Manual Install**:
 
 ```bash
-git clone https://github.com/MyDataTrends/Minerva.git
-cd minerva
+git clone https://github.com/MyDataTrends/Assay.git
+cd assay
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 **Docker Users**:
-Minerva is available as a Docker container for zero-dependency installation.
+Assay is available as a Docker container for zero-dependency installation.
 
 ```bash
 docker-compose up --build
@@ -75,7 +75,7 @@ streamlit run ui/dashboard.py
 
 1. Upon launch, you'll see the **Welcome Wizard**.
 2. Click **"Load Sample Data"** to analyze the included sales dataset.
-3. Watch as Minerva:
+3. Watch as Assay:
    - Cleans the data
    - Profiles column types
    - Selects a forecasting model
@@ -85,7 +85,7 @@ streamlit run ui/dashboard.py
 
 ### Running the Agent Stack
 
-Minerva isn't just a dashboard — it's a system of autonomous agents that can run your data operations.
+Assay isn't just a dashboard — it's a system of autonomous agents that can run your data operations.
 
 To run the **Conductor** (which orchestrates the entire system):
 
@@ -101,14 +101,14 @@ python -m agents run engineer
 
 ### MCP Server (For Claude Desktop)
 
-Minerva exposes its tools via the Model Context Protocol (MCP). To let Claude use Minerva:
+Assay exposes its tools via the Model Context Protocol (MCP). To let Claude use Assay:
 
 1. Add this to your Claude Desktop config:
 
 ```json
 {
   "mcpServers": {
-    "minerva": {
+    "assay": {
       "command": "python",
       "args": ["-m", "mcp_server", "run"]
     }
@@ -116,7 +116,7 @@ Minerva exposes its tools via the Model Context Protocol (MCP). To let Claude us
 }
 ```
 
-1. Restart Claude Desktop. You can now ask Claude: *"Analyze the data in my Minerva workspace"* or *"Find GDP data using Minerva"*.
+1. Restart Claude Desktop. You can now ask Claude: *"Analyze the data in my Assay workspace"* or *"Find GDP data using Assay"*.
 
 ## Privacy & Security
 

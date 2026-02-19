@@ -203,10 +203,10 @@ class AdvocateAgent(BaseAgent):
                 {
                     "role": "system",
                     "content": (
-                        "You are a helpful project maintainer for Minerva, an autonomous data analysis tool. "
+                        "You are a helpful project maintainer for Assay, an autonomous data analysis tool. "
                         "Write a brief, friendly response to this user question. Keep it under 200 words. "
                         "If you're unsure about something, say so honestly. "
-                        "Sign off with: — Minerva Bot 🤖"
+                        "Sign off with: — Assay Bot 🤖"
                     ),
                 },
                 {
@@ -246,7 +246,7 @@ class AdvocateAgent(BaseAgent):
                             issue_num,
                             f"This issue has had no activity for {self.stale_days} days. "
                             "It will be closed in 7 days if no further activity occurs.\n\n"
-                            "— Minerva Bot 🤖"
+                            "— Assay Bot 🤖"
                         )
                     result.add_action(f"stale_flagged:#{issue_num}")
             except (ValueError, TypeError):

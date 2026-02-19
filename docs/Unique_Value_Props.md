@@ -2,11 +2,11 @@
 
 ## Core Differentiators
 
-**Privacy-First Architecture** – Minerva runs entirely on the user's local machine. Data never leaves the host. The local LLM (Llama 3 via `llama_cpp`) runs in a detached subprocess with optional CUDA GPU acceleration, providing cloud-level AI capability with zero data exposure.
+**Privacy-First Architecture** – Assay runs entirely on the user's local machine. Data never leaves the host. The local LLM (Llama 3 via `llama_cpp`) runs in a detached subprocess with optional CUDA GPU acceleration, providing cloud-level AI capability with zero data exposure.
 
 **Self-Improving Execution Engine** – The Cascade Planner (`orchestration/cascade_planner.py`) classifies intents, generates multi-step execution plans, and routes to registered tools with retry, fallback, and dependency-aware execution. The Plan Learner (`orchestration/plan_learner.py`) records every successful execution pattern in SQLite, refining tool weights and intent classification over time – the system literally gets smarter with use.
 
-**Teachable Memory** – The Vector Store (`learning/vector_store.py`) uses SQLite + cosine similarity to store user-taught formulas, queries, and domain-specific logic. Users can "teach" Minerva their business rules and KPIs, which are recalled via embedding-based retrieval (RAG) during future queries.
+**Teachable Memory** – The Vector Store (`learning/vector_store.py`) uses SQLite + cosine similarity to store user-taught formulas, queries, and domain-specific logic. Users can "teach" Assay their business rules and KPIs, which are recalled via embedding-based retrieval (RAG) during future queries.
 
 **Autonomous API Discovery & Dynamic Connectors** – The API Discovery Agent (`mcp_server/discovery_agent.py`) takes natural-language descriptions of data needs, searches a curated registry of 20+ public APIs, applies Kaggle-derived vertical weighting, and ranks results. When no known API matches, the Dynamic Connector Generator (`mcp_server/dynamic_connector.py`) fetches API documentation, uses the LLM to generate Python connector code, validates it via AST analysis, and executes it in a sandbox.
 

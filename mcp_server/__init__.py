@@ -1,7 +1,7 @@
 """
-Minerva MCP Server - Model Context Protocol implementation.
+Assay MCP Server - Model Context Protocol implementation.
 
-This module provides an MCP server that exposes Minerva's data analysis,
+This module provides an MCP server that exposes Assay's data analysis,
 semantic merge, decisioning, and visualization capabilities as structured
 tools for LLM-driven orchestration.
 

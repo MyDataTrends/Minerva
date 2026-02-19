@@ -1,6 +1,6 @@
 # Developer Checklist
 
-Use this checklist to ensure consistency and quality when adding new features to Minerva.
+Use this checklist to ensure consistency and quality when adding new features to Assay.
 
 ## 1. General Hygiene (Crucial)
 

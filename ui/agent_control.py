@@ -1,5 +1,5 @@
 """
-Agent Control Panel - UI for managing and monitoring Minerva agents.
+Agent Control Panel - UI for managing and monitoring Assay agents.
 """
 import streamlit as st
 import pandas as pd
@@ -44,7 +44,7 @@ def render_agent_control():
     </style>
     """, unsafe_allow_html=True)
 
-    st.title("🛡️ Minerva Ops Center")
+    st.title("🛡️ Assay Ops Center")
     
     tab_fleet, tab_cmd, tab_academy = st.tabs([
         "🤖 Agent Fleet", 
@@ -383,12 +383,12 @@ def render_agent_control():
     # TAB 3: ACADEMY (New)
     # ==============================================================================
     with tab_academy:
-        st.header("🎓 Minerva Academy")
+        st.header("🎓 Assay Academy")
         
         st.markdown("""
         ### Welcome to the Agent Workforce!
         
-        Minerva uses a team of autonomous agents to keep your data platform healthy and insightful.
+        Assay uses a team of autonomous agents to keep your data platform healthy and insightful.
         Here is how they work.
 
         #### 🤖 Meet the Team
@@ -415,9 +415,9 @@ def render_agent_control():
 
         ```bash
         # Start the platform
-        minerva serve           # Start API
-        minerva dashboard       # Start Main UI
-        minerva admin           # Start this Ops Center
+        assay serve           # Start API
+        assay dashboard       # Start Main UI
+        assay admin           # Start this Ops Center
         
         # Agents
         python -m agents run all
@@ -432,7 +432,7 @@ def render_agent_control():
             *   Ensure `requirements.txt` is installed.
 
             **Issue: Database locked?**
-            *   Minerva uses SQLite. Ensure no other heavy process is holding the `state/*.db` files.
+            *   Assay uses SQLite. Ensure no other heavy process is holding the `state/*.db` files.
             
             **Issue: Credentials missing?**
             *   Check your `.env` file for `OPENAI_API_KEY` or `AWS_ACCESS_KEY_ID`.

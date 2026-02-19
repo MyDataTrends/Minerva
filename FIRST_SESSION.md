@@ -4,18 +4,18 @@
 
 ```bash
 # 1. Push repo to GitHub (if not already done)
-cd /path/to/Minerva
+cd /path/to/Assay
 git init
 git add .
 git commit -m "Initial public commit"
-gh repo create minerva --public --source=. --push
+gh repo create assay --public --source=. --push
 # (or use GitHub web UI to create repo, then git remote add + push)
 
 # 2. Install Claude Code (requires Node.js 18+)
 npm install -g @anthropic-ai/claude-code
 
 # 3. Start Claude Code in your repo
-cd /path/to/Minerva
+cd /path/to/Assay
 claude
 ```
 

@@ -1,5 +1,5 @@
 """
-Conductor Agent — Central orchestrator for the Minerva agent system.
+Conductor Agent — Central orchestrator for the Assay agent system.
 
 Runs daily: scans inputs, delegates to other agents, compiles digests.
 """
@@ -140,7 +140,7 @@ class ConductorAgent(BaseAgent):
         """Compile all results into a markdown daily digest."""
         today = datetime.utcnow().strftime("%Y-%m-%d")
         lines = [
-            f"# Minerva Daily Digest — {today}",
+            f"# Assay Daily Digest — {today}",
             "",
         ]
 

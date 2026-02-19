@@ -487,7 +487,7 @@ class SemanticEnrichTool(BaseTool):
         if df is None:
             return error_response(f"Dataset not found: {dataset_id}")
         
-        # Try to use existing Minerva enrichment
+        # Try to use existing Assay enrichment
         try:
             from orchestration.semantic_enricher import SemanticEnricher
             

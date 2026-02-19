@@ -57,7 +57,7 @@ class TestConductorAgent:
             assert len(digest_files) == 1
 
             content = digest_files[0].read_text(encoding="utf-8")
-            assert "Minerva Daily Digest" in content
+            assert "Assay Daily Digest" in content
             assert "📊 Metrics" in content
         finally:
             mod.DIGEST_DIR = original_dir
@@ -118,7 +118,7 @@ class TestConductorAgent:
 
         digest = conductor._compile_digest(sub_results, {"stars": 42, "open_prs": 1})
 
-        assert "# Minerva Daily Digest" in digest
+        assert "# Assay Daily Digest" in digest
         assert "📊 Metrics" in digest
         assert "stars" in digest
         assert "🟡 Needs Review" in digest

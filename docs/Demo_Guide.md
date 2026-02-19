@@ -1,6 +1,6 @@
-# Minerva Demo Guide
+# Assay Demo Guide
 
-This guide walks you through demonstrating all features of the Minerva platform.
+This guide walks you through demonstrating all features of the Assay platform.
 
 ## Quick Start (5 minutes)
 
@@ -21,7 +21,7 @@ python -m examples.full_demo
 
 ### 1. Public Data Sources Registry
 
-Minerva includes a curated database of public datasets for semantic enrichment:
+Assay includes a curated database of public datasets for semantic enrichment:
 
 ```powershell
 # List all registered data sources

@@ -4,29 +4,33 @@
 
 ---
 
-TITLE: Show HN: Minerva – Local-first AI data analyst with chat interface and autonomous agents
+TITLE: Show HN: Assay – Local-first AI data analyst with agents, chat, and MCP server
 
 BODY:
 
-I built Minerva to scratch my own itch: analyzing CSV data without writing code or waiting for dashboards to load.
+I built Assay to handle the repetitive parts of data analysis locally. You point it at a CSV, and it autonomously cleans, profiles, models, and extracts insights without sending data anywhere.
 
 **What it does:**
-Upload a CSV and ask questions in plain English. "What's driving returns?" "Which regions have shipping delays?" "Show me products with declining margins." Minerva picks the right analysis tools, runs them, and explains what it found.
+
+- Cleans messy data (handles missing values, outliers, encoding issues)
+- Profiles datasets (distributions, correlations, anomalies)
+- Builds models (regression, classification, clustering depending on your data)
+- Runs as multiple interfaces: Streamlit dashboard, FastAPI backend, CLI, or MCP server
 
 **What's new in this release:**
-- Conversational chat interface for data questions
-- Agent framework that autonomously selects analysis methods (statistical tests, clustering, anomaly detection, etc.)
-- Four deployment modes: Streamlit dashboard, FastAPI backend, CLI, and MCP server
-- Everything runs locally—your data never leaves your machine
+
+The big addition is an AI agent framework. Instead of just running one-off analyses, you can now set up agents for specific tasks like monitoring marketing performance, analyzing support tickets, or tracking usage patterns. They work autonomously on your local data.
+
+I also added a unified dashboard that combines chat, analysis results, and orchestration. The chat interface lets you ask questions about your data in plain English, and it maintains context across the conversation.
+
+The system now suggests which analysis to run based on your data structure, so you spend less time configuring and more time getting results.
 
 **Technical details:**
-The agent system coordinates multiple specialized tools: data profiling, missing value analysis, outlier detection, correlation analysis, and ML modeling. It uses LLM function calling to chain operations based on your question. The MCP server integration means you can use it from Claude Desktop or other MCP clients.
 
-Built with Python, runs on commodity hardware. No cloud dependencies, no API keys required (though you can plug in OpenAI/Anthropic if you want). Uses local models by default.
+Everything runs locally—no API calls with your data. It's built on Streamlit for the UI, FastAPI for the backend API, and supports MCP (Model Context Protocol) so it can integrate with other tools. Zero config to get started.
 
-**Why local-first matters:**
-I've worked with teams that can't upload sensitive data to cloud analytics tools. Minerva processes everything on your laptop. Useful for finance, healthcare, or anyone with compliance requirements.
+I originally built this because I was tired of writing the same data cleaning scripts over and over. Figured others might have the same problem.
 
-Still early—there are rough edges and the agent sometimes picks suboptimal analysis paths. But it's useful enough that I'm using it daily, and I think others building data tools or needing quick analysis might find it interesting.
+Open to feedback, especially on the agent framework—curious what use cases people would want to automate.
 
-Code is open source. Would love feedback on the agent architecture and what analysis capabilities would be most useful.
+GitHub: [your-repo-link]

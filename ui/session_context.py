@@ -38,14 +38,14 @@ logger = logging.getLogger(__name__)
 
 # These are the canonical keys - all tabs should use these
 KEYS = {
-    "chat_history": "minerva_chat_history",
-    "datasets": "minerva_datasets", 
-    "primary_dataset": "minerva_primary_dataset_id",
-    "llm_context": "minerva_llm_context",
-    "action_log": "minerva_action_log",
-    "discoveries": "minerva_discoveries",
-    "pending_fetch": "minerva_pending_fetch",
-    "user_preferences": "minerva_user_preferences",
+    "chat_history": "assay_chat_history",
+    "datasets": "assay_datasets", 
+    "primary_dataset": "assay_primary_dataset_id",
+    "llm_context": "assay_llm_context",
+    "action_log": "assay_action_log",
+    "discoveries": "assay_discoveries",
+    "pending_fetch": "assay_pending_fetch",
+    "user_preferences": "assay_user_preferences",
 }
 
 
