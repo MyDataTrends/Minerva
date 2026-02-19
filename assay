@@ -1,6 +1,6 @@
 #!/bin/bash
-# Minerva CLI launcher for Unix/Mac
-# Usage: ./minerva <command> [options]
+# Assay CLI launcher for Unix/Mac
+# Usage: ./assay <command> [options]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

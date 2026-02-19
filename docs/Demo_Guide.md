@@ -6,7 +6,7 @@ This guide walks you through demonstrating all features of the Assay platform.
 
 ```powershell
 # 1. Setup environment
-cd C:\Projects\Minerva\Minerva
+cd C:\Projects\Assay\Assay
 .\.venv\Scripts\Activate.ps1
 
 # 2. Setup public data sources and semantic index
