@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          pip install --no-cache-dir \
+            fastapi uvicorn streamlit pyyaml python-dotenv requests httpx \
+            pandas numpy scikit-learn xgboost lightgbm plotly matplotlib \
+            anthropic cryptography structlog scipy pillow openpyxl fuzzywuzzy \
+            urllib3 tornado werkzeug filelock fonttools \
+            pytest responses moto
+
+      - name: Run tests
+        env:
+          DEV_MODE: "true"
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest tests/ -v --tb=short
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/assay:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/assay:${{ github.ref_name }}
+
+  pypi:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build distribution
+        run: |
+          pip install build
+          python -m build
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}

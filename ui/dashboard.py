@@ -1,4 +1,14 @@
 import logging
+import os
+import sys
+import time
+from pathlib import Path
+
+# === Ensure project root is in Python path ===
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_LOG_DIR = Path(os.environ.get("LOG_DIR", str(_PROJECT_ROOT / "logs")))
+_LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # Configure logging to file
 logging.basicConfig(
@@ -6,20 +16,14 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("app_debug.log", mode='w')
+        logging.FileHandler(_LOG_DIR / "app_debug.log", mode='w')
     ]
 )
 logger = logging.getLogger(__name__)
 
-# === Ensure project root is in Python path ===
-import sys
-import time
-from pathlib import Path
-
 # Debug profiling
 t0 = time.time()
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROFILE_LOG = _PROJECT_ROOT / "startup_profile.log"
+PROFILE_LOG = _LOG_DIR / "startup_profile.log"
 
 # Open with buffering=1 (line buffered) or flush immediately
 with open(PROFILE_LOG, "w", encoding="utf-8") as f:

@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "assay"
+version = "0.1.0"
+description = "Local-first, AI-powered autonomous data analyst"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Your Name", email = "your@email.com"}]
+keywords = ["data", "analytics", "AI", "machine-learning", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "streamlit",
+    "pyyaml",
+    "python-dotenv",
+    "requests",
+    "httpx",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.5.0",
+    "xgboost>=2.0.0",
+    "lightgbm>=4.6.0",
+    "plotly",
+    "matplotlib",
+    "anthropic",
+    "cryptography",
+    "structlog",
+    "scipy>=1.13.0",
+    "pillow",
+    "openpyxl==3.0.10",
+    "fuzzywuzzy==0.18.0",
+    # Security pins
+    "urllib3>=2.6.3",
+    "tornado>=6.5.3",
+    "werkzeug>=3.1.5",
+    "filelock>=3.20.3",
+    "fonttools>=4.61.0",
+]
+
+[project.optional-dependencies]
+full = [
+    "torch",
+    "spacy>=3.5.4",
+    "transformers>=4.26.1",
+    "fastembed>=0.2.0",
+    "catboost>=1.2",
+    "boto3",
+    "kaggle",
+    "qdrant-client",
+    "fpdf",
+    "python-pptx",
+    "pypdf",
+    "prometheus_client",
+    "schedule",
+    "jupyterlab",
+    "ipywidgets",
+    "notebook",
+    "selenium",
+]
+dev = [
+    "pytest>=6.2.5",
+    "responses",
+    "moto",
+    "ruff",
+]
+
+[project.scripts]
+assay = "cli:main"
+
+[project.urls]
+Homepage = "https://github.com/MyDataTrends/assay"
+"Bug Tracker" = "https://github.com/MyDataTrends/assay/issues"
+
+[tool.setuptools]
+py-modules = ["cli", "main", "ops_center", "orchestrate_workflow"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*", "notebooks*", "docs*", "infra*", "examples*", ".venv*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install core deps
+        run: |
+          pip install --no-cache-dir \
+            fastapi uvicorn streamlit pyyaml python-dotenv requests httpx \
+            pandas numpy scikit-learn xgboost lightgbm plotly matplotlib \
+            anthropic cryptography structlog scipy pillow openpyxl fuzzywuzzy \
+            urllib3 tornado werkzeug filelock fonttools \
+            pytest responses moto
+
+      - name: Run tests
+        env:
+          DEV_MODE: "true"
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest tests/ -v --tb=short -x

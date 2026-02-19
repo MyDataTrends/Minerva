@@ -1,31 +1,45 @@
-# Base image
-FROM python:3.12-slim
+# Stage 1: builder — install all dependencies
+FROM python:3.12-slim AS builder
+WORKDIR /build
 
-# Prevent Python from writing pyc files and buffering stdout
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl git gcc g++ cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# Install CPU-only PyTorch first to avoid the 3 GB CUDA download
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install all remaining dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: runtime — lean image with pre-installed packages
+FROM python:3.12-slim
+WORKDIR /app
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set work directory
-WORKDIR /app
-
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
+    curl git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.12 /usr/local/lib/python3.12
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy project specific config if needed, otherwise just copy app
+# Copy application source
 COPY . .
 
-# Expose Streamlit port
-EXPOSE 8501
+# Create runtime directories and non-root user
+RUN useradd -m -u 1000 assay \
+    && mkdir -p local_data logs User_Data models output_files metadata mcp_data mcp_temp \
+    && chown -R assay:assay /app
 
-# Healthcheck
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
+USER assay
 
-# Run the application
-CMD ["streamlit", "run", "ui/dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+EXPOSE 8000 8501 8766
+
+# Default: run FastAPI + embedded MCP server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

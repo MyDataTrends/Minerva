@@ -1,0 +1,59 @@
+# Version control
+.git/
+.gitignore
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+*.env
+
+# LLM model files (~4 GB each — mount via volume instead)
+*.gguf
+*.bin
+models/
+
+# Runtime data (use named volumes in docker-compose)
+local_data/
+logs/
+User_Data/
+output_files/
+metadata/
+mcp_data/
+mcp_temp/
+
+# SQLite state databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Notebooks and generated files
+notebooks/local_data/
+*.ipynb_checkpoints/
+
+# Node (if any frontend tooling)
+node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,15 +1,54 @@
-version: '3.8'
-
 services:
-  assay:
+  api:
     build: .
+    image: assay:latest
+    ports:
+      - "8000:8000"
+      - "8766:8766"
+    env_file:
+      - .env
+    environment:
+      MCP_ENABLED: "1"
+      MCP_HOST: "0.0.0.0"
+    volumes:
+      - assay_data:/app/local_data
+      - assay_logs:/app/logs
+      - assay_models:/app/models
+      - assay_userdata:/app/User_Data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  ui:
+    image: assay:latest
+    depends_on:
+      api:
+        condition: service_healthy
     ports:
       - "8501:8501"
-    volumes:
-      - .:/app
-      - ./local_data:/app/local_data
+    env_file:
+      - .env
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - FRED_API_KEY=${FRED_API_KEY}
-      - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
+      API_BASE_URL: "http://api:8000"
+    command:
+      - streamlit
+      - run
+      - ui/dashboard.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+      - --server.headless=true
+    volumes:
+      - assay_data:/app/local_data
+      - assay_logs:/app/logs
+      - assay_userdata:/app/User_Data
     restart: unless-stopped
+
+volumes:
+  assay_data:
+  assay_logs:
+  assay_models:
+  assay_userdata:

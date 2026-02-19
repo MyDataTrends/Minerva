@@ -1,5 +1,11 @@
 # Assay 🦉
 
+[![CI](https://github.com/MyDataTrends/Assay/actions/workflows/ci.yml/badge.svg)](https://github.com/MyDataTrends/Assay/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/assay)](https://pypi.org/project/assay/)
+[![Docker](https://img.shields.io/docker/v/mydatatrends/assay?label=docker)](https://hub.docker.com/r/mydatatrends/assay)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **Upload. Analyze. Done.**
 
 Assay is an **AI-powered data analyst** that runs locally on your machine. It turns raw CSVs into insights, charts, and reports without you writing a single line of code.
@@ -29,29 +35,50 @@ Assay is different:
 
 ### 1. Install
 
-Assay requires **Python 3.10+**.
+Assay requires **Python 3.10+** and **Git**.
 
-**Windows Users**:
-Download the repository and double-click `scripts/install.bat`.
-
-**Manual Install**:
+#### One-liner (Linux / Mac)
 
 ```bash
-git clone https://github.com/MyDataTrends/Assay.git
-cd assay
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+curl -sSL https://raw.githubusercontent.com/MyDataTrends/Assay/main/install.sh | bash
 ```
 
-**Docker Users**:
-Assay is available as a Docker container for zero-dependency installation.
+Clones the repo to `~/.assay`, creates a virtualenv, installs all dependencies, and adds `assay` to your PATH.
+
+#### One-liner (Windows PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/MyDataTrends/Assay/main/install.ps1 | iex
+```
+
+Same as above — adds an `assay` function to your PowerShell profile.
+
+#### pip (Python package)
+
+```bash
+pip install assay                   # core deps + CLI
+pip install "assay[full]"           # + ML/cloud extras (torch, spaCy, boto3, etc.)
+assay info
+```
+
+#### Docker (zero-dependency)
 
 ```bash
 docker-compose up --build
 ```
 
 Access the dashboard at `http://localhost:8501`.
+
+#### Manual install
+
+```bash
+git clone https://github.com/MyDataTrends/Assay.git
+cd Assay
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+streamlit run ui/dashboard.py
+```
 
 ### 2. Configure (Optional)
 
@@ -62,13 +89,11 @@ Copy `.env.example` to `.env` and add your API keys:
 
 ### 3. Run
 
-**Windows Users**:
-Double-click `scripts/run_dashboard.bat`.
-
-**Manual Run**:
-
 ```bash
-streamlit run ui/dashboard.py
+assay dashboard        # launch Streamlit UI
+assay serve            # launch FastAPI backend only
+assay analyze FILE     # analyze a CSV from the command line
+assay info             # show version and environment info
 ```
 
 ### 4. First Analysis

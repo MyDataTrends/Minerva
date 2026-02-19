@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PYTHONIOENCODING=utf-8 python:*)"
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "Bash(find:*)",
+      "Bash(test:*)"
     ]
   }
 }
