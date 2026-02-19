@@ -176,6 +176,60 @@ class WebSearcher:
         
         return results
 
+    def ask_llm_for_api(self, query: str) -> List[DiscoveredAPI]:
+        """
+        Ask LLM to identify the best official API for a query.
+        """
+        try:
+            from llm_manager.llm_interface import get_llm_completion
+            
+            prompt = f"""You are an expert Data Engineer. Identify the official public API for this data request: "{query}".
+            
+            Return a JSON object with:
+            - name: Exact name of the API
+            - base_url: The base URL of the API
+            - description: Brief description
+            - auth_type: "api_key", "oauth2", or "none"
+            - home_url: Main website URL
+            
+            Example:
+            {{
+                "name": "Steam Web API",
+                "base_url": "https://api.steampowered.com",
+                "description": "Valve's official API for Steam data",
+                "auth_type": "api_key",
+                "home_url": "https://steamcommunity.com/dev"
+            }}
+            
+            If no public API exists, return null.
+            JSON:"""
+            
+            response = get_llm_completion(prompt, max_tokens=256, temperature=0.0)
+            
+            # Simple JSON extraction
+            import json
+            import re
+            
+            # Find JSON block
+            match = re.search(r'\{.*\}', response, re.DOTALL)
+            if match:
+                data = json.loads(match.group())
+                if data and data.get("name"):
+                    return [DiscoveredAPI(
+                        name=data["name"],
+                        description=data.get("description", ""),
+                        base_url=data.get("base_url", ""),
+                        docs_url=data.get("home_url", ""),
+                        auth_type=data.get("auth_type", "unknown"),
+                        source="llm_knowledge",
+                        confidence=0.85  # High confidence for LLM knowledge
+                    )]
+            
+        except Exception as e:
+            logger.error(f"LLM API discovery failed: {e}")
+            
+        return []
+
 
 class APIDiscoveryAgent:
     """
@@ -241,6 +295,10 @@ class APIDiscoveryAgent:
         "social": {
             "preferred": ["reddit", "twitter"],
             "boost": 0.3,
+        },
+        "gaming": {
+            "preferred": ["steam", "igdb", "rawg"],
+            "boost": 0.4,
         },
     }
     
@@ -314,6 +372,10 @@ class APIDiscoveryAgent:
             "primary": ["reddit", "twitter", "trending", "viral", "social media"],
             "secondary": ["posts", "likes", "followers", "hashtag", "meme",
                          "influencer", "engagement", "sentiment", "news", "opinion"]
+        },
+        "gaming": {
+            "primary": ["steam", "valve", "twitch", "gaming", "esports", "minecraft", "roblox", "nintendo", "xbox", "playstation"],
+            "secondary": ["game", "games", "player", "score", "achievement", "level", "boss", "quest", "rpg", "fps", "skin", "loot"]
         },
     }
     
@@ -560,17 +622,26 @@ class APIDiscoveryAgent:
                             signup_url=api_def.signup_url,
                             source="registry",
                             confidence=min(1.0, match["score"] / 20),
-                            registry_id=api_def.id,
+            registry_id=api_def.id,
                         ))
             except Exception as e2:
                 logger.error(f"Keyword fallback failed: {e2}")
         
-        # 2. If no good matches, search web
+        # 2. LLM-based intelligent fallback (High Confidence)
+        # If registry didn't give a perfect match (confidence > 0.9), ask the LLM for the real API
+        if not results or results[0].confidence < 0.9:
+            logger.info("Checking LLM knowledge for API...")
+            llm_results = self.web_searcher.ask_llm_for_api(user_query)
+            if llm_results:
+                logger.info(f"LLM suggested API: {llm_results[0].name}")
+                results.extend(llm_results)
+
+        # 3. Web Search fallback (Public lists)
         if not results or results[0].confidence < 0.5:
             web_results = self.web_searcher.search_public_apis(user_query)
             results.extend(web_results)
         
-        # 3. Apply vertical-specific boost (Kaggle-informed weighting)
+        # 4. Apply vertical-specific boost (Kaggle-informed weighting)
         if vertical:
             results = self._apply_vertical_boost(results, vertical)
         
@@ -579,6 +650,62 @@ class APIDiscoveryAgent:
         
         return results
     
+    
+    def _resolve_api_key(self, api_name: str) -> Optional[str]:
+        """
+        Attempt to resolve an API key from environment variables based on the API name.
+        
+        This checks the registry for known mappings first, then tries common patterns.
+        """
+        import os
+        from mcp_server.api_registry import API_REGISTRY
+        
+        # 1. Check Registry for exact or fuzzy match
+        # Normalize name for comparison
+        clean_name = api_name.lower().replace(" ", "")
+        
+        for api_id, api_def in API_REGISTRY.items():
+            # Check ID match
+            if api_id.lower() in clean_name or clean_name in api_id.lower().replace("_", ""):
+                if api_def.auth_config and api_def.auth_config.get("env_var"):
+                    env_var = api_def.auth_config["env_var"]
+                    key = os.environ.get(env_var)
+                    if key:
+                        logger.info(f"Resolved API key for '{api_name}' from {env_var}")
+                        return key
+            
+            # Check Name match
+            registry_clean_name = api_def.name.lower().replace(" ", "")
+            if registry_clean_name in clean_name or clean_name in registry_clean_name:
+                if api_def.auth_config and api_def.auth_config.get("env_var"):
+                    env_var = api_def.auth_config["env_var"]
+                    key = os.environ.get(env_var)
+                    if key:
+                        logger.info(f"Resolved API key for '{api_name}' from {env_var}")
+                        return key
+
+        # 2. Heuristic fallback (e.g. "OpenWeatherMap" -> OPENWEATHERMAP_API_KEY)
+        # Convert "US Census Bureau" -> "US_CENSUS_BUREAU_API_KEY" or "CENSUS_API_KEY"
+        
+        # Try exact upper case with _API_KEY
+        env_guess_1 = api_name.upper().replace(" ", "_") + "_API_KEY"
+        if os.environ.get(env_guess_1):
+            return os.environ.get(env_guess_1)
+            
+        # Try without "API" (e.g. just "CENSUS" if user named it that, though less likely)
+        # But also try removing common words like "THE", "US", "BUREAU", "API" for the variable name
+        short_name = api_name.upper().replace("THE", "").replace("US", "").replace("BUREAU", "").replace("API", "").replace("WEB", "").strip().replace("  ", " ").replace(" ", "_")
+        env_guess_2 = short_name + "_API_KEY"
+        if os.environ.get(env_guess_2):
+             return os.environ.get(env_guess_2)
+             
+        # Try specifically for Census since that was the user report
+        if "CENSUS" in api_name.upper():
+            if os.environ.get("CENSUS_API_KEY"):
+                return os.environ.get("CENSUS_API_KEY")
+
+        return None
+
     def auto_connect(
         self, 
         api: DiscoveredAPI,
@@ -594,6 +721,10 @@ class APIDiscoveryAgent:
         Returns:
             AutoConnectResult with connector and sample data
         """
+        # Attempt to auto-resolve key if not provided
+        if not api_key:
+            api_key = self._resolve_api_key(api.name)
+            
         result = AutoConnectResult(
             success=False,
             api_name=api.name,
@@ -657,7 +788,7 @@ class APIDiscoveryAgent:
         self,
         user_query: str,
         api_key: Optional[str] = None
-    ) -> Tuple[Optional[Any], str]:
+    ) -> FetchResult:
         """
         Complete one-click flow: describe data -> get data.
         
@@ -666,14 +797,14 @@ class APIDiscoveryAgent:
             api_key: Optional API key for authenticated APIs
             
         Returns:
-            Tuple of (data or None, status message)
+            FetchResult object with data, status, and auth info
         """
         # 1. Discover APIs
         apis = self.discover_api(user_query)
         
         if not apis:
-            return None, "No APIs found matching your query. Try being more specific about the data you need."
-        
+             return FetchResult(success=False, status="No relevant APIs found.")
+             
         # 2. Try each API until one works
         for api in apis[:3]:  # Try top 3
             logger.info(f"Trying {api.name}...")
@@ -682,15 +813,35 @@ class APIDiscoveryAgent:
             
             if result.success:
                 if result.sample_data:
-                    return result.sample_data, f"Successfully fetched data from {api.name}"
+                    return FetchResult(
+                        success=True, 
+                        data=result.sample_data, 
+                        status=f"Successfully fetched data from {api.name}",
+                        api_name=api.name
+                    )
                 elif result.needs_auth:
-                    return None, f"Found {api.name} but authentication required. Visit: {result.signup_url}"
+                    # Return rich auth info so UI can prompt user
+                    return FetchResult(
+                        success=False,
+                        status=f"Authentication required for {api.name}",
+                        needs_auth=True,
+                        api_name=api.name,
+                        api_id=api.registry_id or ""
+                    )
                 else:
-                    return None, f"Connected to {api.name} but no data returned. The connector is ready for use."
-        
-        # All failed
-        best_api = apis[0]
-        return None, f"Found {best_api.name} but couldn't fetch data automatically. You may need to configure authentication."
+                    logger.warning(f"Connected to {api.name} but no data returned. Trying next API...")
+                    continue
+            else:
+                if result.needs_auth:
+                     return FetchResult(
+                        success=False,
+                        status=f"Authentication required for {api.name}",
+                        needs_auth=True,
+                        api_name=api.name,
+                        api_id=api.registry_id or ""
+                    )
+
+        return FetchResult(success=False, status="No data could be fetched from any discovered API.")
 
     def _registry_fetch(
         self,

@@ -1,54 +1,47 @@
 # 🚀 Minerva Sales Kit: Retail & E-commerce
 
-> **Use Case**: Autonomous Sales Performance Analytics for Multi-Category Retailers
-> **Target Persona**: VP of Sales / Head of Retail Operations
+> **Use Case**: Autonomous Sales Performance Intelligence for Retail Leaders
+> **Target Persona**: VP of Sales / Head of Revenue Operations
 
 ## 1. The Executive Pitch
-
-Minerva eliminates the manual grind of sales reporting by autonomously monitoring your daily sales performance across all categories, surfacing anomalies, trends, and actionable insights in plain English—before you even ask. Instead of building dashboards, your team gets intelligent alerts and answers on-demand, freeing up 20+ hours per week to focus on driving revenue, not chasing data.
+Minerva eliminates the manual grind of sales reporting by autonomously monitoring your revenue data 24/7, instantly surfacing anomalies, trends, and category performance shifts before they impact your bottom line. Instead of building dashboards, you get executive-ready insights delivered in plain English—so you can focus on strategy, not spreadsheets.
 
 ## 2. The Pain Points (Why they buy)
-
 * 🔴 **Spending 15+ hours weekly manually pulling sales reports from multiple sources, only to present stale data that's already outdated by the time leadership sees it**
-* 🔴 **Missing critical sales anomalies and category performance shifts until it's too late—discovering underperforming categories only after quarterly reviews when margins have already eroded**
-* 🔴 **Drowning in spreadsheets and static dashboards that require constant manual updates, leaving no time for strategic decisions or proactive inventory/promotion planning**
+* 🔴 **Missing critical sales anomalies (sudden drops in specific categories, emerging trends) until it's too late to course-correct, leading to missed revenue targets and painful QBR conversations**
+* 🔴 **Drowning in spreadsheets and static dashboards that show WHAT happened but never explain WHY, forcing them to play detective instead of strategist**
 
 ## 3. The Solution: Minerva Autonomous Analyst
-
 We don't just "show data". We solve the problem.
 
 ### 💰 ROI & Business Impact
-
-* 🟢 Save 20+ hours per week previously spent on manual reporting, data pulls, and dashboard updates
-* 🟢 Reduce revenue leakage by 10-15% through early detection of category underperformance and sales anomalies
-* 🟢 Accelerate decision-making from days to minutes—enabling faster response to market changes, inventory issues, and promotional opportunities
-* 🟢 Eliminate dependency on BI/analytics team for routine questions, freeing technical resources for strategic initiatives
+* 🟢 Save 15-20 hours per week previously spent on manual reporting and data wrangling
+* 🟢 Reduce time-to-insight from days to seconds, enabling 3x faster response to revenue threats
+* 🟢 Eliminate 'surprise' revenue misses by catching category-level anomalies 48-72 hours earlier
+* 🟢 Increase revenue team productivity by 25% as analysts shift from reporting to strategic analysis
 
 ---
 
 ## 4. The Golden Demo Script
-
 *Use the dataset `test_sales.csv` for this demo.*
 
-### Step 1: 1. Ask: 'How are my sales performing across categories this week compared to last week?'
+### Step 1: 1. Ask: 'What's happening with my sales performance this week?'
+- **Action**: Minerva instantly analyzes Date and Sales columns, identifies a 15% week-over-week growth trend, and highlights that January 15-20 showed unusual acceleration
+- **✨ The 'Wow' Factor**: No SQL, no dashboard building—just conversational intelligence. What used to take 2 hours in Excel happens in 3 seconds.
 
-- **Action**: Minerva instantly analyzes the Date, Sales, and Category columns, aggregates weekly performance, calculates week-over-week growth rates for each category, and presents a clear summary with visual trends
-* **✨ The 'Wow' Factor**: No SQL, no pivot tables, no waiting for BI team—instant answer with context. The VP sees Category A up 8%, Category B down 12% in seconds, not hours.
+### Step 2: 2. Ask: 'Which categories are driving or dragging performance?'
+- **Action**: Minerva segments sales by Category, reveals that Category A is up 22% while Category B has declined 8% over the past 30 days, and flags this divergence as statistically significant
+- **✨ The 'Wow' Factor**: Automatically surfaces the 'why' behind the numbers—no pivot tables, no guesswork. The VP immediately knows where to double down and where to investigate.
 
-### Step 2: 2. Ask: 'Alert me to any unusual sales patterns or anomalies'
+### Step 3: 3. Ask: 'Alert me if any category drops more than 10% day-over-day'
+- **Action**: Minerva sets up an autonomous monitoring rule and will proactively Slack/email the VP the moment an anomaly occurs—before the Monday morning leadership call
+- **✨ The 'Wow' Factor**: Shifts from reactive reporting to proactive intelligence. The VP becomes the person who spots problems first, not last.
 
-- **Action**: Minerva autonomously detects statistical outliers—like a sudden 40% drop in Category B on a specific date—and surfaces it with context: 'Category B sales dropped significantly on Jan 15th, 30% below the 7-day average'
-* **✨ The 'Wow' Factor**: Proactive intelligence without setting up complex rules. Minerva catches revenue risks before they become quarterly disasters, acting like a 24/7 analyst watching every metric.
+### Step 4: 4. Ask: 'Create an executive summary for my board update'
+- **Action**: Minerva generates a narrative insight: 'Sales grew 18% MTD driven by Category A strength (+22%), offsetting Category B softness (-8%). Key risk: Category B shows 3-day consecutive decline starting Jan 18—recommend immediate channel review.'
+- **✨ The 'Wow' Factor**: Board-ready insights in seconds, not hours of PowerPoint prep. The VP walks into meetings armed with context, not just charts.
 
-### Step 3: 3. Ask: 'Which category is my best performer and what's driving the trend?'
 
-- **Action**: Minerva ranks categories by total sales, growth rate, and consistency, then provides narrative insights: 'Category A leads with $45K total sales and steady 5% weekly growth. Category B shows volatility with 3 significant dips in the past month'
-* **✨ The 'Wow' Factor**: Turns raw data into strategic narrative. The VP can walk into exec meetings with confidence, armed with insights—not just numbers—without spending a weekend in Excel.
-
-### Step 4: 4. Set up: 'Monitor daily sales and notify me if any category drops more than 15% day-over-day'
-
-- **Action**: Minerva creates an autonomous monitoring agent that watches sales performance 24/7, sending Slack/email alerts only when thresholds are breached, with full context and suggested drill-down questions
-* **✨ The 'Wow' Factor**: Replaces manual daily report checking with intelligent automation. The VP stays ahead of problems while sleeping—Minerva never misses a shift, never takes vacation, and always provides context with alerts.
 
 ---
 *Generated by Minerva Productizer Agent on 2026-02-17*

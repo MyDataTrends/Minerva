@@ -18,12 +18,23 @@ class _NoopCounter:  # pragma: no cover - simple no-op implementation
 
 if ENABLE_PROMETHEUS:
     try:
-        from prometheus_client import Counter  # type: ignore
+        from prometheus_client import Counter, REGISTRY  # type: ignore
     except Exception:  # pragma: no cover - optional dependency
         Counter = _NoopCounter  # type: ignore
 else:  # metrics explicitly disabled
     Counter = _NoopCounter  # type: ignore
 
+
+# Prevent "Duplicated timeseries" error on reload (e.g. Streamlit)
+if Counter != _NoopCounter:
+    try:
+        # We access the private registry to check for existence because the public API 
+        # raises duplicate errors instead of returning existing metrics.
+        # This is common in hot-reloading environments.
+        if "app_requests_total" in REGISTRY._names_to_collectors:
+             REGISTRY.unregister(REGISTRY._names_to_collectors["app_requests_total"])
+    except Exception:
+        pass
 
 REQUESTS = Counter("app_requests_total", "Total requests")
 

@@ -71,3 +71,6 @@ reports/verify_upgrade_*.md
 tests/*.log
 tests/upgrade_log.txt
 agents/digests/*.md
+
+# === Presentations ===
+reports/presentations/*.pptx

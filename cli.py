@@ -24,8 +24,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 def cmd_ingest(args):
-    """Ingest data from S3 or API sources."""
-    from Data_Intake.datalake_ingestion import main as ingest_main
+    """Ingest data from S3 or API sources. (DEPRECATED)"""
+    print("WARNING: This command is deprecated. Please use the 'Minerva Ops Center' (minerva admin) for data ingestion.")
+    from legacy.Data_Intake.datalake_ingestion import main as ingest_main
     
     # Build argv for the ingestion module
     ingest_args = [args.source]
@@ -228,6 +229,28 @@ def cmd_info(args):
     print(f"  MAX_GB_FREE: {MAX_GB_FREE}")
 
 
+def cmd_admin(args):
+    """Start the Ops Center (Admin UI)."""
+    import subprocess
+    
+    dashboard_path = PROJECT_ROOT / "ops_center.py"
+    
+    cmd = [
+        sys.executable, "-m", "streamlit", "run",
+        str(dashboard_path),
+        "--server.port", str(args.port),
+    ]
+    
+    if args.host:
+        cmd.extend(["--server.address", args.host])
+    
+    print(f"Starting Minerva Ops Center on port {args.port}")
+    print("Press Ctrl+C to stop")
+    print()
+    
+    subprocess.run(cmd)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="minerva",
@@ -286,6 +309,11 @@ Examples:
     
     # Info command
     subparsers.add_parser("info", help="Display system information")
+
+    # Admin command
+    admin_parser = subparsers.add_parser("admin", help="Start the Ops Center (Admin UI)")
+    admin_parser.add_argument("--port", "-p", type=int, default=8502, help="Port number")
+    admin_parser.add_argument("--host", default=None, help="Host address")
     
     args = parser.parse_args()
     
@@ -301,6 +329,7 @@ Examples:
         "dashboard": cmd_dashboard,
         "test": cmd_test,
         "info": cmd_info,
+        "admin": cmd_admin,
     }
     
     handler = commands.get(args.command)
