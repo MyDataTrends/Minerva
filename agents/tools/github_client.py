@@ -29,7 +29,7 @@ class GitHubClient:
 
     def __init__(self, token: Optional[str] = None, repo: Optional[str] = None):
         self.token = token or os.getenv("GITHUB_TOKEN")
-        self.repo = repo or os.getenv("GITHUB_REPO", "rme0722/Minerva")
+        self.repo = repo or os.getenv("GITHUB_REPO", "MyDataTrends/Minerva")
         self._client = None
         self._available = False
         self._init_client()

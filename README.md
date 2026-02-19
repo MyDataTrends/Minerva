@@ -37,7 +37,7 @@ Download the repository and double-click `scripts/install.bat`.
 **Manual Install**:
 
 ```bash
-git clone https://github.com/rme0722/minerva.git
+git clone https://github.com/MyDataTrends/Minerva.git
 cd minerva
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate

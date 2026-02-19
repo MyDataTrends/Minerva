@@ -1,201 +1,501 @@
-order_id,order_date,product_category,revenue,units_sold,region,channel,customer_rating,is_returned
-1,2025-01-01,Home,52.97,3,South,Online,4,0
-2,2025-01-02,Electronics,80.06,1,East,In-Store,3,0
-3,2025-01-03,Home,45.75,3,East,In-Store,5,0
-4,2025-01-04,Home,46.62,4,East,In-Store,4,0
-5,2025-01-05,Electronics,214.73,2,East,Online,3,0
-6,2025-01-06,Electronics,201.14,1,South,In-Store,4,0
-7,2025-01-07,Home,63.22,7,West,In-Store,4,0
-8,2025-01-08,Clothing,84.16,8,North,In-Store,3,1
-9,2025-01-09,Home,242.16,7,South,Online,5,0
-10,2025-01-10,Home,28.76,5,North,In-Store,5,0
-11,2025-01-11,Home,117.97,1,West,Online,3,0
-12,2025-01-12,Home,436.88,7,East,Online,5,0
-13,2025-01-13,Electronics,433.56,7,West,Online,3,0
-14,2025-01-14,Home,19.07,9,South,Online,3,0
-15,2025-01-15,Clothing,48.91,3,East,Online,3,0
-16,2025-01-16,Electronics,103.02,9,South,Online,5,0
-17,2025-01-17,Clothing,31.26,1,East,In-Store,3,0
-18,2025-01-18,Clothing,52.74,1,North,Online,4,0
-19,2025-01-19,Clothing,80.65,4,North,In-Store,5,0
-20,2025-01-20,Clothing,276.18,9,North,In-Store,5,1
-21,2025-01-21,Electronics,86.81,6,West,Online,5,0
-22,2025-01-22,Electronics,107.08,3,South,In-Store,5,0
-23,2025-01-23,Clothing,135.63,1,West,In-Store,4,0
-24,2025-01-24,Clothing,139.04,4,North,In-Store,5,0
-25,2025-01-25,Electronics,92.06,9,South,In-Store,5,1
-26,2025-01-26,Electronics,34.55,3,North,Online,3,0
-27,2025-01-27,Electronics,169.31,9,West,In-Store,5,0
-28,2025-01-28,Home,127.13,7,West,Online,4,0
-29,2025-01-29,Home,37.43,4,West,In-Store,4,0
-30,2025-01-30,Home,52.15,3,North,In-Store,4,0
-31,2025-01-31,Clothing,183.1,5,South,Online,4,0
-32,2025-02-01,Home,146.11,5,South,In-Store,5,0
-33,2025-02-02,Clothing,50.59,3,North,In-Store,5,0
-34,2025-02-03,Clothing,72.53,9,South,In-Store,4,0
-35,2025-02-04,Home,80.26,4,North,Online,4,1
-36,2025-02-05,Clothing,147.47,5,South,In-Store,5,0
-37,2025-02-06,Home,244.48,4,East,Online,4,0
-38,2025-02-07,Home,94.87,5,East,In-Store,3,0
-39,2025-02-08,Electronics,229.38,7,West,Online,4,0
-40,2025-02-09,Home,181.03,9,East,Online,4,1
-41,2025-02-10,Electronics,106.11,7,East,In-Store,3,0
-42,2025-02-11,Home,28.37,5,East,In-Store,3,0
-43,2025-02-12,Home,39.56,7,North,Online,5,0
-44,2025-02-13,Electronics,162.88,5,East,Online,5,0
-45,2025-02-14,Electronics,22.91,3,East,In-Store,3,0
-46,2025-02-15,Home,99.01,7,West,Online,3,0
-47,2025-02-16,Clothing,200.41,2,East,In-Store,5,0
-48,2025-02-17,Electronics,101.69,9,East,In-Store,4,0
-49,2025-02-18,Clothing,55.64,1,South,In-Store,3,0
-50,2025-02-19,Clothing,45.73,6,West,In-Store,5,1
-51,2025-02-20,Clothing,172.94,7,West,Online,4,0
-52,2025-02-21,Electronics,131.28,8,West,In-Store,3,0
-53,2025-02-22,Clothing,71.64,9,West,Online,4,0
-54,2025-02-23,Electronics,211.08,2,West,In-Store,5,0
-55,2025-02-24,Clothing,178.25,2,West,Online,3,0
-56,2025-02-25,Home,376.48,5,North,In-Store,4,1
-57,2025-02-26,Home,141.67,5,East,Online,3,0
-58,2025-02-27,Electronics,78.92,6,West,Online,4,0
-59,2025-02-28,Home,80.29,3,East,In-Store,5,0
-60,2025-03-01,Home,19.15,8,East,In-Store,5,0
-61,2025-03-02,Clothing,101.55,1,North,In-Store,3,0
-62,2025-03-03,Electronics,88.89,6,West,In-Store,4,0
-63,2025-03-04,Clothing,31.06,4,South,Online,3,0
-64,2025-03-05,Clothing,88.21,1,North,In-Store,3,0
-65,2025-03-06,Clothing,263.63,7,South,Online,4,0
-66,2025-03-07,Clothing,50.02,9,East,Online,4,0
-67,2025-03-08,Clothing,41.77,4,East,In-Store,4,0
-68,2025-03-09,Clothing,217.88,4,North,Online,5,0
-69,2025-03-10,Clothing,149.51,6,North,Online,3,0
-70,2025-03-11,Electronics,1041.98,3,South,Online,3,0
-71,2025-03-12,Home,31.35,6,West,Online,5,0
-72,2025-03-13,Clothing,160.18,7,South,In-Store,4,0
-73,2025-03-14,Clothing,115.9,3,North,In-Store,5,0
-74,2025-03-15,Clothing,94.39,7,South,In-Store,5,1
-75,2025-03-16,Clothing,186.5,3,North,In-Store,5,0
-76,2025-03-17,Clothing,87.9,2,South,Online,3,0
-77,2025-03-18,Clothing,19.12,4,North,Online,5,0
-78,2025-03-19,Home,45.7,8,North,In-Store,3,0
-79,2025-03-20,Home,268.15,9,North,In-Store,3,0
-80,2025-03-21,Clothing,229.9,7,West,In-Store,3,0
-81,2025-03-22,Home,66.79,1,South,Online,4,0
-82,2025-03-23,Electronics,134.68,3,South,In-Store,3,0
-83,2025-03-24,Clothing,834.77,9,South,In-Store,3,0
-84,2025-03-25,Electronics,87.8,1,North,In-Store,4,0
-85,2025-03-26,Electronics,89.19,9,South,Online,3,0
-86,2025-03-27,Clothing,104.84,8,South,Online,5,0
-87,2025-03-28,Home,146.29,1,North,Online,5,0
-88,2025-03-29,Electronics,68.09,6,East,Online,3,0
-89,2025-03-30,Clothing,146.19,5,North,Online,4,0
-90,2025-03-31,Electronics,19.0,6,South,Online,5,0
-91,2025-04-01,Electronics,117.82,5,North,Online,4,0
-92,2025-04-02,Electronics,93.74,6,East,Online,4,0
-93,2025-04-03,Electronics,75.64,5,North,In-Store,5,0
-94,2025-04-04,Home,61.55,5,South,In-Store,4,0
-95,2025-04-05,Electronics,55.28,4,East,Online,5,0
-96,2025-04-06,Electronics,46.95,3,West,Online,4,0
-97,2025-04-07,Electronics,14.09,3,South,In-Store,5,0
-98,2025-04-08,Home,72.65,4,East,Online,3,0
-99,2025-04-09,Electronics,216.39,9,East,Online,5,1
-100,2025-04-10,Electronics,68.83,2,West,Online,5,0
-101,2025-04-11,Home,149.62,9,North,In-Store,5,1
-102,2025-04-12,Home,37.93,1,North,In-Store,5,0
-103,2025-04-13,Home,31.67,1,South,In-Store,4,0
-104,2025-04-14,Electronics,49.37,5,West,In-Store,3,0
-105,2025-04-15,Home,39.63,6,North,In-Store,5,0
-106,2025-04-16,Home,34.94,6,West,Online,4,0
-107,2025-04-17,Electronics,129.0,3,North,In-Store,3,0
-108,2025-04-18,Home,373.58,7,East,Online,3,0
-109,2025-04-19,Electronics,52.8,9,North,Online,3,0
-110,2025-04-20,Clothing,23.26,8,West,In-Store,3,0
-111,2025-04-21,Home,152.24,6,East,In-Store,5,0
-112,2025-04-22,Clothing,28.54,8,East,Online,5,0
-113,2025-04-23,Electronics,34.93,5,East,Online,4,0
-114,2025-04-24,Home,133.75,8,West,Online,4,1
-115,2025-04-25,Electronics,78.87,4,South,In-Store,4,1
-116,2025-04-26,Clothing,51.95,8,South,In-Store,3,0
-117,2025-04-27,Electronics,95.08,2,South,In-Store,3,0
-118,2025-04-28,Home,64.88,5,West,In-Store,5,1
-119,2025-04-29,Home,408.15,9,East,In-Store,3,0
-120,2025-04-30,Clothing,52.42,4,South,Online,3,0
-121,2025-05-01,Electronics,43.35,6,West,In-Store,3,1
-122,2025-05-02,Home,62.55,1,South,Online,4,0
-123,2025-05-03,Clothing,64.7,9,North,Online,4,0
-124,2025-05-04,Home,144.97,1,South,Online,5,0
-125,2025-05-05,Home,18.3,5,South,In-Store,3,1
-126,2025-05-06,Electronics,126.57,4,East,In-Store,3,1
-127,2025-05-07,Home,58.38,3,West,In-Store,5,1
-128,2025-05-08,Electronics,167.58,6,East,Online,3,0
-129,2025-05-09,Home,86.65,2,East,Online,3,0
-130,2025-05-10,Clothing,136.31,3,East,Online,4,0
-131,2025-05-11,Home,65.82,5,East,Online,5,0
-132,2025-05-12,Electronics,127.79,9,East,Online,5,0
-133,2025-05-13,Electronics,340.7,2,South,Online,5,0
-134,2025-05-14,Clothing,49.83,8,East,In-Store,5,0
-135,2025-05-15,Home,82.62,2,East,In-Store,4,0
-136,2025-05-16,Home,61.01,5,West,In-Store,4,0
-137,2025-05-17,Clothing,321.95,7,North,In-Store,3,0
-138,2025-05-18,Home,63.61,8,South,Online,3,0
-139,2025-05-19,Home,50.09,1,South,Online,3,0
-140,2025-05-20,Electronics,56.68,6,South,In-Store,3,0
-141,2025-05-21,Home,80.76,1,East,Online,4,0
-142,2025-05-22,Home,47.71,2,East,In-Store,5,0
-143,2025-05-23,Clothing,67.04,1,East,In-Store,4,0
-144,2025-05-24,Clothing,102.08,5,West,In-Store,3,0
-145,2025-05-25,Electronics,82.07,9,North,Online,4,0
-146,2025-05-26,Home,175.1,6,East,In-Store,5,0
-147,2025-05-27,Home,69.72,1,North,In-Store,5,1
-148,2025-05-28,Home,76.42,1,West,In-Store,4,0
-149,2025-05-29,Electronics,111.82,2,South,Online,4,0
-150,2025-05-30,Electronics,542.31,9,East,Online,4,0
-151,2025-05-31,Clothing,47.94,3,North,In-Store,3,0
-152,2025-06-01,Electronics,419.43,1,North,Online,4,0
-153,2025-06-02,Home,34.92,5,East,Online,4,0
-154,2025-06-03,Home,108.11,7,South,Online,4,0
-155,2025-06-04,Electronics,68.61,6,South,Online,5,1
-156,2025-06-05,Home,46.89,1,South,Online,5,0
-157,2025-06-06,Home,157.48,5,West,Online,3,1
-158,2025-06-07,Electronics,145.46,5,North,Online,3,0
-159,2025-06-08,Electronics,61.25,6,North,Online,5,0
-160,2025-06-09,Home,16.86,3,North,Online,5,0
-161,2025-06-10,Home,64.33,5,West,Online,5,0
-162,2025-06-11,Home,100.62,7,North,In-Store,4,0
-163,2025-06-12,Clothing,90.15,5,West,In-Store,4,0
-164,2025-06-13,Clothing,164.8,5,South,Online,5,1
-165,2025-06-14,Clothing,422.77,5,East,In-Store,4,0
-166,2025-06-15,Electronics,125.35,3,North,In-Store,4,0
-167,2025-06-16,Clothing,141.77,1,North,Online,3,0
-168,2025-06-17,Electronics,101.35,5,South,Online,5,0
-169,2025-06-18,Electronics,229.97,9,East,Online,5,0
-170,2025-06-19,Clothing,137.71,1,West,In-Store,4,0
-171,2025-06-20,Clothing,163.9,3,East,In-Store,5,0
-172,2025-06-21,Clothing,382.67,4,South,Online,3,0
-173,2025-06-22,Home,107.94,1,South,Online,3,0
-174,2025-06-23,Clothing,72.47,1,East,Online,3,0
-175,2025-06-24,Home,128.64,8,West,In-Store,5,0
-176,2025-06-25,Electronics,223.41,2,West,In-Store,5,0
-177,2025-06-26,Home,134.44,8,North,In-Store,5,1
-178,2025-06-27,Clothing,210.29,7,West,In-Store,5,0
-179,2025-06-28,Electronics,52.71,2,East,Online,5,0
-180,2025-06-29,Electronics,44.95,6,South,Online,3,0
-181,2025-06-30,Electronics,58.2,6,North,Online,4,0
-182,2025-07-01,Home,32.66,3,North,Online,3,1
-183,2025-07-02,Clothing,98.32,2,South,In-Store,5,0
-184,2025-07-03,Electronics,63.81,1,West,In-Store,3,0
-185,2025-07-04,Electronics,240.85,6,South,Online,5,0
-186,2025-07-05,Electronics,32.04,5,West,Online,5,0
-187,2025-07-06,Home,312.29,9,South,In-Store,3,1
-188,2025-07-07,Home,41.06,1,East,Online,5,0
-189,2025-07-08,Clothing,33.43,7,West,In-Store,4,0
-190,2025-07-09,Home,46.54,5,East,Online,5,0
-191,2025-07-10,Electronics,428.81,5,North,Online,4,1
-192,2025-07-11,Clothing,87.18,2,South,Online,4,0
-193,2025-07-12,Electronics,137.49,3,North,Online,5,1
-194,2025-07-13,Electronics,77.7,7,North,Online,3,0
-195,2025-07-14,Home,83.76,6,North,Online,4,0
-196,2025-07-15,Clothing,60.06,2,North,Online,3,0
-197,2025-07-16,Home,93.75,6,South,In-Store,4,0
-198,2025-07-17,Home,133.71,2,North,In-Store,5,0
-199,2025-07-18,Clothing,344.69,2,South,In-Store,5,0
-200,2025-07-19,Electronics,20.09,2,South,In-Store,4,0
+order_id,order_date,customer_id,product_category,revenue,units_sold,discount_pct,region,channel,customer_rating,is_returned,days_to_ship
+10001,2025-11-24,1102,Books,132.11,8,0.01,East,Online,4,0,3
+10002,2025-02-27,1435,Electronics,319.39,11,0.05,West,In-Store,4,0,1
+10003,2025-01-13,1860,Electronics,195.6,12,0.08,South,In-Store,3,0,6
+10004,2025-05-21,1270,Home & Garden,160.23,1,0.34,North,Online,1,1,2
+10005,2025-05-06,1106,Clothing,67.92,9,0.2,Central,Online,3,0,1
+10006,2025-04-25,1071,Electronics,64.06,6,0.33,East,Online,3,0,2
+10007,2025-03-13,1700,Electronics,86.37,4,0.2,North,Online,4,0,4
+10008,2025-02-22,1020,Clothing,392.59,12,0.17,Central,Online,5,0,6
+10009,2025-12-13,1614,Sports,65.04,9,0.11,Central,In-Store,3,0,6
+10010,2025-10-07,1121,Electronics,110.88,11,0.21,West,Online,5,0,4
+10011,2025-02-14,1466,Home & Garden,14.94,5,0.05,West,In-Store,1,0,6
+10012,2025-10-30,1214,Home & Garden,154.57,5,0.31,West,Mobile App,5,0,4
+10013,2025-08-05,1330,Electronics,547.72,12,0.29,North,Online,5,0,1
+10014,2025-01-17,1458,Clothing,42.65,5,0.11,North,In-Store,4,0,5
+10015,2025-01-16,1087,Electronics,1140.88,1,0.33,East,In-Store,2,0,2
+10016,2025-02-17,1372,Home & Garden,104.15,1,0.29,West,In-Store,5,0,4
+10017,2025-04-22,1099,Electronics,11.49,8,0.23,Central,Online,4,0,2
+10018,2025-04-30,1871,Electronics,66.13,12,0.04,South,Online,5,1,1
+10019,2025-09-16,1663,Home & Garden,260.96,8,0.17,East,Online,4,1,5
+10020,2025-11-05,1130,Electronics,445.61,12,0.18,North,Online,5,0,1
+10021,2025-01-14,1661,Electronics,159.89,6,0.08,East,Online,3,0,6
+10022,2025-10-15,1308,Clothing,315.47,12,0.03,East,In-Store,5,0,2
+10023,2025-04-12,1769,Electronics,35.08,11,0.27,East,Online,5,0,7
+10024,2025-11-29,1343,Sports,52.24,13,0.04,East,Mobile App,5,0,5
+10025,2025-12-26,1491,Electronics,23.49,4,0.21,South,In-Store,3,0,6
+10026,2025-10-07,1413,Home & Garden,55.48,2,0.33,West,Online,5,1,5
+10027,2025-08-03,1805,Clothing,165.59,14,0.31,Central,Online,4,1,6
+10028,2025-04-23,1385,Home & Garden,106.71,2,0.1,East,Mobile App,5,0,1
+10029,2025-08-18,1191,Clothing,180.24,9,0.3,East,In-Store,4,0,4
+10030,2025-10-29,1955,Electronics,42.55,5,0.0,East,In-Store,5,0,2
+10031,2025-05-23,1276,Books,44.68,4,0.01,West,Online,2,0,3
+10032,2025-01-04,1160,Sports,106.03,10,0.21,North,Online,5,0,3
+10033,2025-03-23,1459,Sports,55.58,13,0.13,North,Online,5,0,1
+10034,2025-12-24,1313,Electronics,255.06,1,0.14,South,Online,5,0,2
+10035,2025-08-05,1021,Electronics,54.49,7,0.2,North,In-Store,4,0,2
+10036,2025-06-24,1252,Clothing,60.56,3,0.07,East,In-Store,4,1,1
+10037,2025-05-23,1747,Clothing,125.85,6,0.07,East,In-Store,5,0,2
+10038,2025-03-21,1856,Clothing,65.93,5,0.17,East,Mobile App,3,0,4
+10039,2025-04-21,1560,Sports,33.52,5,0.26,South,In-Store,4,0,1
+10040,2025-06-22,1474,Electronics,37.36,11,0.22,East,Online,5,0,4
+10041,2025-02-22,1058,Books,138.41,5,0.1,North,Online,5,0,2
+10042,2025-02-17,1510,Clothing,30.36,1,0.15,West,Mobile App,3,0,1
+10043,2025-07-14,1681,Sports,275.26,1,0.06,West,Online,5,1,2
+10044,2025-02-19,1475,Electronics,51.82,3,0.03,Central,Mobile App,5,1,1
+10045,2025-07-03,1699,Clothing,147.37,14,0.27,North,In-Store,2,0,2
+10046,2025-06-26,1975,Home & Garden,54.36,12,0.09,East,Online,5,0,4
+10047,2025-11-06,1782,Electronics,43.29,10,0.06,West,In-Store,1,0,7
+10048,2025-05-16,1189,Electronics,109.6,4,0.24,North,Mobile App,4,0,4
+10049,2025-01-23,1957,Books,208.81,5,0.22,West,In-Store,1,1,2
+10050,2025-08-24,1686,Home & Garden,73.86,2,0.22,East,Mobile App,2,0,1
+10051,2025-10-02,1957,Electronics,85.42,8,0.08,West,Mobile App,5,0,3
+10052,2025-03-05,1562,Clothing,171.73,11,0.08,Central,Online,4,0,4
+10053,2025-07-13,1875,Clothing,176.34,11,0.08,Central,Online,4,0,4
+10054,2025-02-10,1566,Home & Garden,87.29,14,0.06,West,Mobile App,3,0,6
+10055,2025-10-10,1243,Electronics,63.13,2,0.23,North,In-Store,4,0,3
+10056,2025-05-31,1831,Electronics,96.17,9,0.3,North,Online,4,0,2
+10057,2025-11-18,1504,Electronics,77.27,2,0.25,North,Online,4,0,7
+10058,2025-11-13,1130,Clothing,115.63,13,0.28,West,In-Store,4,0,1
+10059,2025-07-05,1484,Home & Garden,34.63,9,0.14,North,Mobile App,5,0,6
+10060,2025-10-23,1818,Electronics,112.36,7,0.23,East,In-Store,4,0,2
+10061,2025-04-09,1646,Books,50.67,8,0.12,Central,In-Store,4,0,5
+10062,2025-12-27,1020,Clothing,185.81,11,0.18,East,Online,4,0,7
+10063,2025-02-05,1840,Electronics,52.56,2,0.17,North,Online,5,0,4
+10064,2025-01-24,1166,Electronics,53.3,7,0.06,East,Mobile App,4,0,5
+10065,2025-12-05,1273,Electronics,128.55,12,0.14,North,Online,4,0,4
+10066,2025-04-27,1387,Books,91.05,6,0.34,West,Online,4,1,4
+10067,2025-05-29,1600,Home & Garden,556.31,4,0.09,East,Online,5,1,5
+10068,2025-02-10,1315,Clothing,24.45,7,0.05,West,In-Store,4,0,7
+10069,2025-04-30,1013,Home & Garden,98.29,14,0.15,West,Mobile App,5,1,5
+10070,2025-02-21,1241,Clothing,222.23,13,0.28,South,Online,4,0,2
+10071,2025-07-14,1776,Home & Garden,56.68,4,0.2,North,Online,3,0,6
+10072,2025-05-23,1345,Electronics,43.45,2,0.24,Central,In-Store,5,0,6
+10073,2025-08-21,1564,Home & Garden,44.85,10,0.07,North,Mobile App,4,0,5
+10074,2025-11-22,1897,Electronics,24.79,12,0.22,Central,Online,5,0,2
+10075,2025-07-06,1339,Electronics,265.01,7,0.11,North,Online,5,0,6
+10076,2025-03-25,1091,Clothing,69.15,8,0.29,West,Online,5,0,2
+10077,2025-07-09,1366,Electronics,62.9,2,0.22,East,Mobile App,2,0,2
+10078,2025-07-01,1955,Electronics,16.46,5,0.07,East,Online,5,0,4
+10079,2025-04-18,1454,Clothing,28.59,1,0.02,South,Online,4,1,6
+10080,2025-12-10,1427,Books,290.71,7,0.01,Central,In-Store,5,0,6
+10081,2025-05-17,1508,Electronics,114.72,8,0.13,Central,In-Store,5,0,4
+10082,2025-12-26,1775,Electronics,228.88,13,0.09,Central,Online,5,0,5
+10083,2025-12-16,1942,Sports,206.85,6,0.23,West,Mobile App,4,0,4
+10084,2025-11-28,1034,Sports,40.43,5,0.17,Central,Online,4,0,6
+10085,2025-02-06,1205,Clothing,628.84,6,0.09,East,In-Store,3,0,6
+10086,2025-11-08,1080,Clothing,428.28,2,0.05,West,Online,5,0,7
+10087,2025-11-22,1931,Home & Garden,57.34,1,0.04,North,In-Store,4,0,5
+10088,2025-03-29,1561,Electronics,5.18,7,0.3,Central,Online,4,0,4
+10089,2025-10-01,1871,Books,67.68,7,0.09,Central,Mobile App,5,0,1
+10090,2025-05-06,1387,Sports,108.92,10,0.23,North,In-Store,4,0,1
+10091,2025-03-25,1001,Electronics,57.16,11,0.28,Central,In-Store,3,0,5
+10092,2025-08-25,1389,Electronics,75.4,10,0.21,North,In-Store,4,0,4
+10093,2025-07-14,1565,Books,46.39,14,0.3,West,In-Store,4,0,4
+10094,2025-05-19,1105,Clothing,188.16,2,0.14,East,Online,4,0,2
+10095,2025-11-24,1771,Clothing,94.72,2,0.33,North,Online,1,1,6
+10096,2025-12-19,1821,Home & Garden,192.71,1,0.05,South,Mobile App,3,1,3
+10097,2025-10-13,1476,Home & Garden,239.31,10,0.04,North,Online,4,0,7
+10098,2025-04-23,1702,Books,15.81,8,0.23,Central,In-Store,5,0,5
+10099,2025-12-17,1401,Books,48.6,8,0.33,West,Mobile App,1,0,3
+10100,2025-06-16,1729,Sports,54.64,1,0.28,West,Online,4,0,3
+10101,2025-01-29,1555,Home & Garden,704.22,12,0.03,North,In-Store,5,0,5
+10102,2025-04-28,1161,Sports,101.41,11,0.1,East,Online,3,0,4
+10103,2025-01-17,1201,Home & Garden,172.44,8,0.33,South,In-Store,4,1,5
+10104,2025-06-11,1957,Home & Garden,19.99,9,0.09,West,Online,5,0,3
+10105,2025-07-25,1995,Electronics,100.94,14,0.27,Central,Online,5,1,6
+10106,2025-05-18,1269,Sports,196.89,4,0.29,Central,In-Store,5,0,7
+10107,2025-02-03,1862,Sports,179.39,1,0.17,East,In-Store,5,0,7
+10108,2025-04-19,1815,Home & Garden,148.22,1,0.14,West,In-Store,5,0,6
+10109,2025-10-18,1270,Sports,90.96,3,0.16,North,Online,4,0,6
+10110,2025-06-11,1455,Home & Garden,94.56,14,0.08,Central,Online,5,0,4
+10111,2025-04-19,1461,Electronics,23.23,5,0.31,East,In-Store,1,0,1
+10112,2025-12-02,1726,Electronics,43.8,5,0.16,West,Online,5,0,5
+10113,2025-09-13,1251,Electronics,108.28,9,0.31,West,Mobile App,4,0,7
+10114,2025-07-22,1701,Clothing,50.77,10,0.04,West,In-Store,4,0,6
+10115,2025-11-26,1295,Electronics,156.19,14,0.35,West,In-Store,4,0,5
+10116,2025-08-23,1724,Home & Garden,130.77,12,0.16,West,Mobile App,5,1,7
+10117,2025-03-15,1719,Clothing,268.78,2,0.02,Central,Online,2,0,6
+10118,2025-05-16,1748,Home & Garden,193.76,2,0.01,East,In-Store,5,0,7
+10119,2025-03-13,1337,Clothing,107.97,6,0.26,West,Online,5,0,4
+10120,2025-05-07,1878,Home & Garden,163.76,9,0.23,South,Mobile App,3,0,1
+10121,2025-10-15,1052,Clothing,201.16,1,0.28,South,Online,5,0,1
+10122,2025-10-03,1791,Electronics,59.98,9,0.04,East,In-Store,5,0,6
+10123,2025-05-15,1921,Clothing,69.17,9,0.01,North,Mobile App,5,0,7
+10124,2025-10-27,1216,Home & Garden,83.31,13,0.18,North,Online,4,0,4
+10125,2025-08-08,1763,Clothing,61.53,9,0.14,North,Online,4,0,2
+10126,2025-10-26,1187,Books,202.87,5,0.16,South,In-Store,3,0,5
+10127,2025-07-24,1379,Electronics,54.5,13,0.35,North,Online,4,0,5
+10128,2025-07-05,1492,Clothing,245.02,9,0.34,Central,Online,5,0,3
+10129,2025-04-23,1040,Books,67.12,11,0.33,West,Online,2,0,4
+10130,2025-03-12,1156,Clothing,131.36,4,0.27,South,Online,5,0,7
+10131,2025-09-18,1014,Clothing,102.84,2,0.12,East,Mobile App,4,0,3
+10132,2025-09-10,1812,Home & Garden,41.23,13,0.14,East,In-Store,4,0,6
+10133,2025-02-16,1064,Home & Garden,88.6,6,0.19,West,Online,5,0,7
+10134,2025-01-25,1856,Home & Garden,117.56,14,0.29,South,Online,5,0,3
+10135,2025-02-26,1838,Electronics,85.5,4,0.02,North,Online,4,0,1
+10136,2025-03-20,1520,Electronics,30.75,6,0.15,North,Online,4,0,5
+10137,2025-11-18,1343,Home & Garden,351.13,3,0.03,Central,Online,4,1,7
+10138,2025-03-23,1128,Sports,96.56,6,0.18,Central,Online,1,0,3
+10139,2025-12-15,1647,Home & Garden,47.68,2,0.31,North,Online,4,0,1
+10140,2025-08-05,1471,Electronics,329.18,2,0.27,East,In-Store,4,0,4
+10141,2025-11-02,1062,Home & Garden,147.51,13,0.08,East,Online,4,0,3
+10142,2025-02-02,1138,Home & Garden,34.46,9,0.34,Central,In-Store,5,0,6
+10143,2025-07-17,1498,Electronics,39.03,7,0.23,West,In-Store,4,0,6
+10144,2025-07-15,1592,Clothing,75.35,3,0.0,North,In-Store,4,0,6
+10145,2025-11-02,1391,Clothing,114.19,13,0.09,Central,In-Store,4,0,7
+10146,2025-08-28,1674,Clothing,148.15,11,0.09,Central,Online,5,0,5
+10147,2025-09-28,1418,Clothing,192.51,1,0.02,North,Mobile App,5,0,3
+10148,2025-05-09,1288,Electronics,138.61,8,0.34,North,In-Store,4,0,4
+10149,2025-10-11,1378,Electronics,264.38,14,0.17,East,Online,5,0,3
+10150,2025-01-06,1772,Electronics,99.63,6,0.31,West,In-Store,4,1,5
+10151,2025-12-15,1489,Books,49.02,7,0.11,West,In-Store,4,0,1
+10152,2025-02-28,1230,Sports,89.78,9,0.04,North,Online,4,1,5
+10153,2025-12-16,1040,Clothing,85.18,5,0.17,South,Online,4,1,6
+10154,2025-10-02,1027,Books,11.44,1,0.04,Central,Online,5,0,7
+10155,2025-05-17,1134,Home & Garden,57.45,12,0.17,Central,Mobile App,5,0,1
+10156,2025-11-25,1200,Clothing,115.74,10,0.32,North,In-Store,3,0,7
+10157,2025-06-24,1839,Clothing,64.11,7,0.18,South,Mobile App,5,0,6
+10158,2025-02-27,1779,Electronics,53.68,5,0.22,East,In-Store,4,0,2
+10159,2025-05-31,1929,Electronics,186.62,3,0.05,North,Online,3,0,5
+10160,2025-08-11,1032,Home & Garden,43.24,12,0.02,North,Online,3,0,5
+10161,2025-03-22,1047,Home & Garden,159.06,13,0.04,Central,In-Store,4,0,4
+10162,2025-08-21,1502,Electronics,30.99,9,0.21,North,In-Store,3,1,3
+10163,2025-01-02,1406,Books,819.43,1,0.03,North,Mobile App,3,0,1
+10164,2025-05-15,1573,Sports,75.75,1,0.13,North,Online,4,0,7
+10165,2025-09-14,1727,Electronics,69.5,1,0.19,Central,Online,4,0,1
+10166,2025-04-02,1804,Books,224.63,3,0.14,East,In-Store,5,1,4
+10167,2025-09-17,1098,Books,64.4,12,0.06,East,In-Store,4,0,4
+10168,2025-02-24,1683,Books,288.28,6,0.1,North,In-Store,5,0,7
+10169,2025-11-17,1871,Electronics,121.18,10,0.32,Central,In-Store,4,0,3
+10170,2025-06-02,1725,Home & Garden,81.88,11,0.24,East,Online,5,0,7
+10171,2025-11-24,1986,Clothing,75.19,3,0.17,East,In-Store,5,0,7
+10172,2025-09-17,1546,Home & Garden,236.53,8,0.0,East,In-Store,5,1,6
+10173,2025-11-08,1960,Books,108.24,14,0.35,Central,Mobile App,4,0,3
+10174,2025-04-12,1738,Home & Garden,127.21,14,0.24,Central,In-Store,5,0,5
+10175,2025-03-20,1612,Sports,138.77,10,0.11,North,Online,3,0,6
+10176,2025-07-11,1942,Sports,100.12,2,0.31,West,Online,4,0,2
+10177,2025-03-24,1461,Sports,136.44,14,0.09,East,Mobile App,4,0,3
+10178,2025-10-04,1642,Clothing,81.89,9,0.19,West,Online,4,0,4
+10179,2025-09-29,1768,Electronics,86.5,3,0.22,Central,Mobile App,1,0,6
+10180,2025-01-01,1004,Clothing,36.77,5,0.08,Central,Online,5,0,3
+10181,2025-11-03,1217,Sports,114.23,10,0.34,Central,In-Store,5,0,1
+10182,2025-06-15,1502,Electronics,22.75,8,0.26,West,In-Store,4,0,7
+10183,2025-09-08,1766,Clothing,112.94,2,0.2,Central,Mobile App,5,0,2
+10184,2025-01-10,1397,Electronics,71.92,6,0.06,North,Online,4,0,5
+10185,2025-02-27,1870,Home & Garden,121.47,12,0.02,Central,In-Store,5,0,7
+10186,2025-07-05,1794,Sports,38.9,5,0.11,South,Online,4,1,1
+10187,2025-06-07,1392,Sports,16.52,13,0.26,West,Online,3,0,1
+10188,2025-05-03,1206,Electronics,67.99,10,0.09,South,In-Store,5,0,2
+10189,2025-01-30,1014,Books,38.99,9,0.19,Central,In-Store,5,0,5
+10190,2025-05-04,1857,Home & Garden,21.66,12,0.25,North,Mobile App,5,0,4
+10191,2025-10-18,1553,Clothing,166.4,5,0.04,East,Online,5,0,6
+10192,2025-02-10,1891,Home & Garden,324.08,2,0.24,Central,Online,5,0,5
+10193,2025-02-13,1460,Clothing,47.58,5,0.03,North,Online,5,0,3
+10194,2025-09-06,1690,Clothing,84.72,12,0.34,West,Online,5,1,1
+10195,2025-02-05,1574,Home & Garden,70.37,4,0.17,South,Online,5,0,3
+10196,2025-09-30,1863,Electronics,53.14,11,0.05,South,In-Store,4,0,4
+10197,2025-03-06,1742,Clothing,153.08,7,0.12,South,Online,5,0,3
+10198,2025-03-07,1240,Clothing,201.97,6,0.14,West,Mobile App,3,0,5
+10199,2025-12-04,1563,Electronics,44.93,14,0.27,North,Mobile App,5,0,3
+10200,2025-09-01,1095,Clothing,93.3,2,0.26,West,In-Store,5,0,4
+10201,2025-10-09,1899,Home & Garden,251.55,12,0.21,South,Mobile App,5,0,4
+10202,2025-03-26,1733,Home & Garden,156.21,11,0.04,Central,In-Store,5,0,4
+10203,2025-05-16,1484,Sports,175.94,11,0.05,East,Online,5,0,5
+10204,2025-09-28,1406,Sports,268.91,13,0.03,West,Online,4,0,4
+10205,2025-11-07,1230,Home & Garden,266.1,5,0.2,West,Online,5,0,1
+10206,2025-08-05,1748,Home & Garden,204.98,7,0.31,North,In-Store,3,0,7
+10207,2025-04-19,1654,Electronics,101.08,11,0.15,North,Mobile App,3,0,4
+10208,2025-10-04,1170,Clothing,66.29,7,0.06,West,Online,4,0,3
+10209,2025-12-20,1540,Clothing,97.79,5,0.2,South,Mobile App,4,0,6
+10210,2025-04-13,1035,Electronics,58.7,12,0.28,East,In-Store,4,0,3
+10211,2025-06-09,1524,Clothing,18.88,9,0.26,North,Online,5,1,6
+10212,2025-07-24,1159,Clothing,71.98,4,0.31,South,Mobile App,4,0,3
+10213,2025-12-10,1838,Sports,119.82,11,0.1,Central,Online,4,0,5
+10214,2025-11-29,1698,Books,56.27,3,0.07,North,Online,1,0,3
+10215,2025-07-11,1242,Home & Garden,77.15,4,0.31,South,In-Store,4,0,5
+10216,2025-08-13,1085,Clothing,79.58,5,0.23,South,Online,5,0,5
+10217,2025-09-22,1795,Electronics,266.53,13,0.11,East,In-Store,1,0,4
+10218,2025-08-20,1577,Books,67.52,6,0.26,East,Online,4,0,1
+10219,2025-03-03,1681,Books,266.48,3,0.29,Central,Online,3,0,6
+10220,2025-05-07,1556,Electronics,10.28,2,0.22,South,Mobile App,2,0,4
+10221,2025-04-26,1573,Home & Garden,264.62,14,0.24,South,Online,4,1,4
+10222,2025-02-02,1952,Electronics,254.15,13,0.13,East,Online,3,0,7
+10223,2025-06-23,1645,Electronics,185.27,4,0.19,North,Online,5,0,5
+10224,2025-01-11,1795,Electronics,18.0,5,0.18,North,Mobile App,5,0,5
+10225,2025-10-29,1027,Electronics,203.39,4,0.3,West,Online,4,0,6
+10226,2025-10-11,1619,Books,86.48,14,0.29,East,Online,5,0,3
+10227,2025-04-28,1555,Home & Garden,11.9,11,0.29,West,Online,4,0,3
+10228,2025-10-29,1339,Clothing,254.31,13,0.0,East,Online,4,0,4
+10229,2025-04-23,1797,Home & Garden,285.81,12,0.26,Central,In-Store,5,0,2
+10230,2025-01-04,1957,Books,19.62,3,0.27,South,In-Store,3,0,2
+10231,2025-02-06,1330,Books,103.58,8,0.24,Central,Online,5,0,3
+10232,2025-12-29,1639,Electronics,273.38,10,0.26,East,In-Store,2,0,2
+10233,2025-11-20,1505,Clothing,240.84,4,0.29,South,Online,4,0,7
+10234,2025-01-31,1347,Electronics,175.71,14,0.16,North,Mobile App,2,0,3
+10235,2025-04-28,1472,Clothing,10.83,2,0.18,North,Mobile App,5,0,5
+10236,2025-02-04,1230,Electronics,161.36,2,0.04,West,Online,5,0,4
+10237,2025-01-17,1189,Home & Garden,75.6,1,0.13,East,Mobile App,5,0,1
+10238,2025-06-19,1224,Clothing,199.67,13,0.23,East,In-Store,4,0,4
+10239,2025-02-06,1384,Electronics,110.49,4,0.27,North,Online,4,0,3
+10240,2025-09-21,1376,Electronics,88.6,10,0.08,Central,Online,2,0,7
+10241,2025-05-02,1282,Clothing,150.31,9,0.05,South,Online,4,0,3
+10242,2025-05-23,1957,Electronics,78.45,14,0.23,Central,In-Store,5,1,4
+10243,2025-12-09,1632,Clothing,88.29,11,0.0,Central,Mobile App,4,0,7
+10244,2025-09-06,1627,Electronics,57.73,7,0.06,North,In-Store,5,0,7
+10245,2025-04-20,1972,Electronics,24.92,12,0.01,North,Mobile App,5,0,7
+10246,2025-10-04,1744,Clothing,141.78,10,0.06,North,In-Store,4,1,6
+10247,2025-03-09,1258,Home & Garden,47.24,7,0.06,West,In-Store,5,0,3
+10248,2025-10-20,1358,Electronics,76.66,13,0.14,Central,In-Store,2,0,2
+10249,2025-10-23,1709,Electronics,113.25,7,0.14,East,Online,3,1,2
+10250,2025-08-31,1455,Electronics,16.98,8,0.31,South,In-Store,2,0,3
+10251,2025-05-05,1410,Books,20.31,1,0.18,West,In-Store,4,0,3
+10252,2025-08-31,1648,Clothing,70.82,10,0.25,East,Online,4,0,6
+10253,2025-07-28,1317,Home & Garden,129.5,13,0.04,Central,In-Store,4,0,2
+10254,2025-04-08,1676,Books,163.24,10,0.08,North,Online,4,0,3
+10255,2025-02-18,1224,Electronics,25.2,8,0.25,Central,Online,4,0,3
+10256,2025-02-19,1818,Sports,149.8,4,0.02,South,In-Store,5,0,6
+10257,2025-12-04,1233,Home & Garden,73.99,4,0.17,West,Online,5,1,6
+10258,2025-08-09,1683,Electronics,44.41,4,0.21,West,Online,1,0,4
+10259,2025-07-01,1663,Clothing,53.58,6,0.21,South,Online,3,0,6
+10260,2025-08-05,1974,Sports,170.97,7,0.01,East,Mobile App,5,0,1
+10261,2025-07-30,1826,Clothing,112.08,6,0.11,East,Online,4,0,2
+10262,2025-08-28,1373,Books,93.71,1,0.22,West,Mobile App,5,0,4
+10263,2025-01-28,1671,Clothing,109.38,12,0.05,West,Online,4,0,1
+10264,2025-12-11,1607,Home & Garden,189.14,8,0.24,North,Mobile App,4,0,3
+10265,2025-12-01,1471,Clothing,83.29,13,0.26,East,Mobile App,3,0,3
+10266,2025-11-27,1232,Sports,94.02,10,0.34,South,Online,4,0,4
+10267,2025-02-20,1691,Home & Garden,223.75,11,0.07,East,Online,5,0,6
+10268,2025-02-01,1112,Electronics,69.04,13,0.29,North,Online,4,0,7
+10269,2025-07-26,1829,Electronics,147.6,7,0.18,West,In-Store,5,0,7
+10270,2025-06-23,1496,Electronics,60.16,6,0.13,West,Online,5,0,3
+10271,2025-02-25,1441,Electronics,64.54,6,0.04,North,Online,4,1,7
+10272,2025-05-08,1563,Electronics,82.83,5,0.26,South,Online,5,0,5
+10273,2025-04-09,1267,Home & Garden,135.94,6,0.08,West,Online,4,0,4
+10274,2025-04-08,1509,Clothing,234.01,12,0.13,Central,Online,4,0,1
+10275,2025-10-02,1806,Home & Garden,97.25,9,0.02,West,In-Store,5,0,4
+10276,2025-08-18,1385,Books,27.12,10,0.28,Central,Mobile App,4,0,2
+10277,2025-03-13,1386,Home & Garden,149.18,9,0.27,North,Online,4,1,6
+10278,2025-08-05,1112,Home & Garden,641.03,10,0.26,North,In-Store,3,0,6
+10279,2025-04-04,1612,Sports,98.19,8,0.1,West,Online,4,0,4
+10280,2025-05-23,1624,Clothing,22.94,10,0.06,East,In-Store,5,0,3
+10281,2025-08-25,1951,Electronics,103.1,9,0.22,Central,Mobile App,5,0,3
+10282,2025-05-08,1080,Electronics,89.8,13,0.17,South,Mobile App,5,0,5
+10283,2025-02-08,1698,Electronics,83.96,10,0.06,West,Mobile App,5,0,5
+10284,2025-08-15,1112,Electronics,191.78,8,0.24,South,Online,4,0,6
+10285,2025-10-09,1001,Electronics,271.14,8,0.35,West,In-Store,4,0,5
+10286,2025-02-20,1641,Sports,155.53,1,0.26,East,In-Store,3,0,1
+10287,2025-01-26,1219,Sports,80.93,10,0.26,East,Online,4,0,5
+10288,2025-11-30,1565,Electronics,221.53,11,0.33,East,Mobile App,4,1,1
+10289,2025-10-04,1854,Electronics,27.25,5,0.07,East,Online,5,0,5
+10290,2025-01-08,1996,Electronics,50.76,4,0.2,North,In-Store,4,0,6
+10291,2025-02-17,1735,Clothing,55.5,2,0.34,North,Online,4,0,6
+10292,2025-05-02,1224,Clothing,87.82,8,0.06,Central,Online,4,1,1
+10293,2025-03-27,1384,Sports,135.02,3,0.25,South,In-Store,5,1,4
+10294,2025-07-28,1402,Clothing,76.66,4,0.21,West,In-Store,5,0,6
+10295,2025-09-06,1637,Sports,43.6,12,0.21,West,Online,3,0,4
+10296,2025-09-04,1129,Books,196.35,7,0.24,North,Online,4,0,3
+10297,2025-04-20,1052,Electronics,74.56,10,0.33,West,In-Store,5,0,1
+10298,2025-07-25,1683,Sports,97.68,9,0.27,North,Online,4,0,7
+10299,2025-01-31,1729,Home & Garden,139.89,2,0.02,Central,Online,4,0,6
+10300,2025-03-26,1671,Clothing,92.86,3,0.3,South,Mobile App,5,0,2
+10301,2025-07-14,1709,Clothing,93.19,4,0.08,Central,In-Store,5,0,3
+10302,2025-01-02,1415,Sports,205.28,10,0.13,East,Online,2,0,4
+10303,2025-07-19,1246,Home & Garden,101.61,1,0.16,East,In-Store,5,1,6
+10304,2025-05-16,1835,Sports,179.51,7,0.17,East,In-Store,5,0,1
+10305,2025-08-21,1438,Books,139.18,2,0.15,Central,Mobile App,4,0,7
+10306,2025-05-27,1202,Home & Garden,451.92,5,0.33,West,Online,5,0,5
+10307,2025-08-05,1183,Books,124.9,1,0.25,South,Online,5,0,7
+10308,2025-12-23,1122,Home & Garden,149.96,3,0.22,East,Online,5,0,2
+10309,2025-10-12,1400,Home & Garden,217.31,12,0.02,East,Online,5,0,4
+10310,2025-12-05,1766,Home & Garden,94.72,2,0.32,East,In-Store,3,1,3
+10311,2025-09-07,1293,Electronics,54.04,1,0.32,South,Online,3,0,7
+10312,2025-03-21,1279,Home & Garden,61.6,7,0.27,East,In-Store,4,0,1
+10313,2025-04-08,1836,Clothing,62.08,5,0.0,South,Online,4,0,2
+10314,2025-06-01,1883,Clothing,42.09,1,0.02,East,Online,4,0,1
+10315,2025-04-22,1609,Books,116.08,6,0.08,Central,Mobile App,5,0,6
+10316,2025-01-30,1197,Electronics,54.4,5,0.05,Central,Online,5,0,5
+10317,2025-10-24,1981,Clothing,105.2,3,0.14,South,Online,5,0,3
+10318,2025-10-05,1906,Home & Garden,79.29,12,0.32,Central,In-Store,5,0,1
+10319,2025-02-01,1510,Sports,87.07,7,0.17,South,Online,5,0,4
+10320,2025-06-10,1751,Clothing,140.45,11,0.0,Central,In-Store,4,0,6
+10321,2025-01-30,1143,Sports,58.35,10,0.1,Central,In-Store,3,0,6
+10322,2025-01-26,1608,Sports,150.07,9,0.02,South,Online,4,0,3
+10323,2025-10-27,1200,Electronics,315.4,14,0.01,West,In-Store,5,0,6
+10324,2025-09-02,1123,Electronics,118.45,13,0.1,Central,Online,4,0,4
+10325,2025-09-15,1186,Home & Garden,48.15,13,0.1,East,Online,5,1,1
+10326,2025-09-29,1325,Clothing,55.04,9,0.28,West,Online,2,0,3
+10327,2025-03-22,1463,Electronics,73.8,14,0.34,South,Online,5,0,6
+10328,2025-01-30,1348,Home & Garden,55.93,9,0.13,West,Mobile App,5,1,6
+10329,2025-09-18,1770,Clothing,40.73,2,0.15,North,Online,5,0,4
+10330,2025-02-11,1659,Clothing,101.85,3,0.3,North,Online,5,0,5
+10331,2025-04-06,1763,Clothing,75.42,7,0.09,Central,Online,5,0,5
+10332,2025-02-05,1954,Home & Garden,104.77,5,0.05,Central,In-Store,5,0,7
+10333,2025-11-01,1931,Clothing,232.55,2,0.3,East,Online,5,0,6
+10334,2025-02-04,1402,Home & Garden,74.51,3,0.02,West,Online,5,0,1
+10335,2025-12-12,1345,Electronics,34.87,10,0.22,North,In-Store,5,0,3
+10336,2025-05-01,1962,Home & Garden,65.42,6,0.2,Central,Online,1,0,6
+10337,2025-07-26,1510,Clothing,166.72,13,0.12,West,Online,4,1,2
+10338,2025-03-03,1146,Sports,154.69,7,0.11,Central,Online,4,0,3
+10339,2025-10-19,1147,Clothing,136.31,9,0.27,Central,Online,4,1,7
+10340,2025-05-07,1863,Books,54.61,1,0.03,North,Mobile App,4,0,5
+10341,2025-10-24,1710,Home & Garden,164.27,11,0.08,North,Online,5,0,6
+10342,2025-11-01,1819,Electronics,196.67,7,0.26,Central,Online,5,0,4
+10343,2025-01-21,1488,Sports,51.61,8,0.19,South,Online,5,0,2
+10344,2025-11-14,1928,Clothing,87.07,12,0.04,Central,In-Store,4,0,6
+10345,2025-02-11,1935,Clothing,453.19,14,0.31,Central,In-Store,1,0,7
+10346,2025-08-03,1639,Electronics,49.8,3,0.14,East,Online,2,0,1
+10347,2025-12-03,1550,Clothing,23.01,4,0.29,East,In-Store,4,0,2
+10348,2025-10-26,1337,Clothing,272.14,10,0.28,East,In-Store,1,0,7
+10349,2025-10-17,1871,Clothing,223.47,6,0.22,South,Mobile App,1,0,6
+10350,2025-09-25,1640,Sports,62.45,10,0.17,South,In-Store,5,0,1
+10351,2025-06-11,1778,Electronics,82.24,7,0.34,Central,Online,5,0,2
+10352,2025-05-14,1987,Clothing,33.79,13,0.05,East,Online,4,0,1
+10353,2025-04-15,1952,Clothing,96.66,14,0.25,South,Online,3,0,1
+10354,2025-12-09,1472,Electronics,228.77,4,0.07,North,Online,4,0,2
+10355,2025-06-10,1945,Clothing,58.32,8,0.12,Central,Mobile App,1,1,2
+10356,2025-05-03,1150,Home & Garden,181.58,5,0.11,West,Online,5,0,1
+10357,2025-05-16,1414,Clothing,130.45,1,0.33,Central,Online,4,0,7
+10358,2025-07-22,1989,Electronics,142.92,4,0.34,West,In-Store,4,0,5
+10359,2025-03-09,1297,Clothing,61.1,3,0.06,East,Online,4,0,2
+10360,2025-12-10,1610,Electronics,67.78,9,0.01,West,Online,2,0,6
+10361,2025-11-27,1262,Sports,20.54,8,0.25,East,Online,5,0,3
+10362,2025-06-03,1763,Electronics,57.21,1,0.15,North,Online,5,1,4
+10363,2025-08-23,1143,Home & Garden,228.33,11,0.03,West,In-Store,5,0,1
+10364,2025-06-11,1345,Books,42.8,6,0.24,Central,Online,3,0,1
+10365,2025-02-07,1623,Clothing,48.22,9,0.19,East,Online,4,1,4
+10366,2025-01-05,1571,Books,150.23,7,0.34,Central,Online,4,0,5
+10367,2025-08-23,1880,Electronics,124.24,4,0.08,South,Online,5,0,4
+10368,2025-11-15,1001,Sports,156.32,13,0.14,East,In-Store,4,0,2
+10369,2025-10-16,1896,Clothing,35.5,1,0.19,West,Online,4,0,4
+10370,2025-02-21,1303,Home & Garden,700.12,12,0.28,East,Online,5,0,1
+10371,2025-02-07,1253,Electronics,34.04,2,0.19,Central,Mobile App,5,0,4
+10372,2025-10-03,1651,Electronics,101.84,12,0.21,North,In-Store,4,0,3
+10373,2025-04-20,1452,Electronics,79.29,5,0.08,East,Online,4,0,6
+10374,2025-09-17,1036,Home & Garden,34.84,12,0.3,West,In-Store,4,0,2
+10375,2025-05-16,1159,Sports,66.94,11,0.15,South,In-Store,5,0,4
+10376,2025-03-09,1008,Home & Garden,91.71,5,0.05,North,In-Store,4,0,1
+10377,2025-06-28,1232,Electronics,53.52,8,0.23,South,Online,5,0,7
+10378,2025-02-05,1098,Sports,190.52,6,0.08,East,Mobile App,4,0,6
+10379,2025-05-06,1658,Clothing,79.1,8,0.03,Central,Online,5,0,2
+10380,2025-07-09,1815,Clothing,30.78,2,0.3,Central,Online,5,0,1
+10381,2025-05-26,1207,Electronics,28.76,3,0.16,West,Online,4,1,5
+10382,2025-03-22,1130,Home & Garden,146.19,6,0.26,Central,Online,5,0,3
+10383,2025-08-13,1403,Electronics,27.4,12,0.1,North,In-Store,3,0,5
+10384,2025-10-06,1151,Home & Garden,115.95,13,0.28,Central,Online,5,0,3
+10385,2025-12-27,1053,Sports,128.47,10,0.04,West,Online,5,0,4
+10386,2025-06-04,1119,Electronics,40.6,3,0.12,East,Mobile App,2,0,2
+10387,2025-11-10,1672,Clothing,183.57,6,0.34,East,Online,5,1,4
+10388,2025-12-01,1919,Electronics,22.78,6,0.28,Central,Online,5,0,3
+10389,2025-09-28,1627,Clothing,114.11,2,0.17,South,Online,2,0,3
+10390,2025-01-05,1586,Clothing,87.12,7,0.12,East,Online,4,0,3
+10391,2025-12-08,1624,Clothing,81.84,12,0.31,Central,Online,5,0,6
+10392,2025-10-11,1967,Home & Garden,35.08,2,0.19,West,In-Store,5,0,1
+10393,2025-06-03,1419,Clothing,42.54,6,0.27,Central,Online,4,1,2
+10394,2025-12-06,1421,Home & Garden,328.67,1,0.26,East,Online,3,0,4
+10395,2025-02-23,1103,Home & Garden,237.97,3,0.01,West,In-Store,2,0,4
+10396,2025-03-10,1851,Home & Garden,162.99,2,0.04,Central,In-Store,4,0,5
+10397,2025-05-16,1253,Home & Garden,190.92,7,0.23,North,Online,4,0,3
+10398,2025-03-01,1226,Home & Garden,177.12,14,0.06,West,Online,5,0,7
+10399,2025-02-24,1111,Clothing,69.5,4,0.09,North,Online,2,0,3
+10400,2025-10-11,1509,Clothing,93.51,8,0.33,South,Online,5,0,3
+10401,2025-03-21,1472,Sports,27.72,6,0.2,West,Online,1,0,7
+10402,2025-05-20,1098,Home & Garden,83.78,12,0.26,North,Online,3,0,4
+10403,2025-05-25,1152,Electronics,232.0,10,0.2,East,Mobile App,4,0,5
+10404,2025-11-06,1860,Clothing,53.06,4,0.19,East,Online,4,0,1
+10405,2025-04-18,1913,Clothing,204.08,5,0.03,South,In-Store,5,0,7
+10406,2025-06-25,1895,Books,96.86,13,0.12,West,Online,5,0,6
+10407,2025-04-15,1877,Electronics,29.72,13,0.1,West,In-Store,5,0,2
+10408,2025-12-18,1337,Electronics,37.12,9,0.14,West,In-Store,5,0,7
+10409,2025-11-21,1705,Clothing,187.81,7,0.28,South,In-Store,5,0,1
+10410,2025-05-16,1821,Clothing,140.05,10,0.13,West,Online,4,0,4
+10411,2025-09-16,1162,Sports,97.65,14,0.16,East,In-Store,5,0,6
+10412,2025-09-08,1719,Electronics,72.3,14,0.14,North,Online,5,0,6
+10413,2025-05-09,1956,Sports,106.53,9,0.03,East,In-Store,2,0,6
+10414,2025-01-27,1680,Electronics,182.04,7,0.15,East,Online,5,0,3
+10415,2025-02-17,1995,Sports,293.15,12,0.07,North,Online,2,0,2
+10416,2025-11-21,1160,Electronics,304.58,1,0.07,East,Online,4,0,4
+10417,2025-08-05,1579,Electronics,121.22,12,0.03,South,Online,5,0,4
+10418,2025-05-22,1800,Home & Garden,78.45,8,0.12,North,Online,2,0,6
+10419,2025-01-23,1397,Books,101.19,4,0.27,East,Online,3,0,4
+10420,2025-01-02,1276,Sports,136.69,3,0.1,Central,Mobile App,5,0,2
+10421,2025-06-20,1815,Home & Garden,136.24,14,0.11,East,In-Store,5,0,2
+10422,2025-03-08,1915,Books,256.31,13,0.22,South,Mobile App,3,0,5
+10423,2025-11-23,1503,Electronics,489.12,7,0.07,West,Online,5,0,7
+10424,2025-05-15,1895,Books,76.39,12,0.31,East,Mobile App,4,0,7
+10425,2025-03-24,1391,Clothing,505.08,3,0.18,West,In-Store,4,0,5
+10426,2025-08-15,1134,Home & Garden,229.93,8,0.16,Central,In-Store,5,0,1
+10427,2025-10-10,1194,Sports,83.04,6,0.2,East,In-Store,5,0,7
+10428,2025-12-28,1400,Home & Garden,298.52,5,0.06,North,Online,4,0,2
+10429,2025-08-07,1639,Clothing,346.72,4,0.21,West,In-Store,5,0,2
+10430,2025-10-15,1032,Clothing,62.29,8,0.13,Central,Online,5,0,7
+10431,2025-01-05,1687,Sports,359.88,8,0.31,North,Online,3,0,2
+10432,2025-02-27,1459,Electronics,212.74,12,0.06,North,Online,3,1,5
+10433,2025-02-08,1954,Books,598.75,1,0.18,North,Mobile App,3,0,6
+10434,2025-12-20,1882,Home & Garden,64.12,9,0.21,North,Mobile App,5,0,6
+10435,2025-03-18,1469,Electronics,67.85,14,0.01,East,Mobile App,5,0,4
+10436,2025-10-07,1374,Home & Garden,17.79,5,0.13,East,In-Store,5,0,6
+10437,2025-01-19,1021,Clothing,142.16,4,0.26,East,Online,5,0,3
+10438,2025-07-09,1749,Home & Garden,121.53,6,0.29,Central,Online,5,0,5
+10439,2025-10-26,1669,Sports,57.37,6,0.11,Central,Online,3,0,2
+10440,2025-10-10,1037,Electronics,84.31,2,0.28,Central,Online,4,0,7
+10441,2025-03-17,1229,Clothing,31.53,8,0.34,South,Online,4,0,6
+10442,2025-08-09,1364,Books,234.81,7,0.3,Central,Online,4,0,5
+10443,2025-03-07,1562,Clothing,60.84,1,0.04,East,Online,5,0,6
+10444,2025-01-22,1437,Home & Garden,1069.81,5,0.26,East,Mobile App,5,1,1
+10445,2025-06-07,1775,Clothing,78.22,12,0.11,South,Online,4,0,2
+10446,2025-07-06,1282,Clothing,49.02,6,0.35,South,Mobile App,4,0,1
+10447,2025-01-21,1026,Clothing,64.73,4,0.17,Central,In-Store,5,0,2
+10448,2025-07-03,1225,Clothing,29.09,2,0.04,West,Online,4,0,5
+10449,2025-04-18,1276,Electronics,132.4,13,0.25,South,Online,3,0,4
+10450,2025-12-16,1797,Home & Garden,64.33,14,0.11,North,Online,4,0,6
+10451,2025-05-08,1608,Electronics,222.52,4,0.35,East,Online,2,0,6
+10452,2025-12-08,1283,Electronics,72.26,1,0.34,North,In-Store,5,0,3
+10453,2025-02-22,1878,Electronics,272.48,7,0.23,East,Online,2,0,7
+10454,2025-07-01,1959,Electronics,165.0,2,0.05,East,Online,4,0,1
+10455,2025-10-14,1480,Clothing,92.1,13,0.24,South,Online,4,0,6
+10456,2025-07-28,1452,Home & Garden,318.68,2,0.03,South,Mobile App,5,0,5
+10457,2025-11-14,1828,Sports,192.83,9,0.01,North,In-Store,3,0,4
+10458,2025-03-21,1815,Electronics,950.48,5,0.29,East,In-Store,3,0,7
+10459,2025-05-02,1658,Sports,64.87,2,0.07,North,Online,1,0,5
+10460,2025-03-25,1515,Home & Garden,95.71,11,0.13,West,In-Store,3,0,1
+10461,2025-04-01,1546,Clothing,315.76,9,0.34,North,In-Store,3,1,3
+10462,2025-07-31,1191,Books,26.18,9,0.12,Central,In-Store,5,0,6
+10463,2025-01-13,1048,Books,258.15,1,0.1,North,Mobile App,3,0,5
+10464,2025-04-02,1511,Electronics,127.92,11,0.32,Central,Online,1,0,7
+10465,2025-06-20,1016,Clothing,44.23,3,0.04,Central,Mobile App,5,0,2
+10466,2025-07-30,1171,Books,30.25,4,0.27,Central,Mobile App,4,0,4
+10467,2025-12-09,1219,Home & Garden,52.56,14,0.35,West,Online,4,0,7
+10468,2025-05-08,1157,Electronics,14.47,7,0.32,North,Online,4,0,5
+10469,2025-05-17,1476,Sports,60.85,10,0.23,North,Mobile App,5,0,4
+10470,2025-03-23,1045,Sports,148.12,4,0.11,West,Online,3,0,6
+10471,2025-12-26,1372,Sports,61.5,2,0.09,East,Online,5,1,2
+10472,2025-02-25,1517,Sports,273.32,7,0.29,South,Mobile App,5,0,3
+10473,2025-07-15,1098,Sports,339.66,6,0.31,North,In-Store,2,0,7
+10474,2025-01-20,1891,Electronics,249.76,3,0.18,South,Online,5,0,3
+10475,2025-08-29,1744,Electronics,108.26,6,0.09,West,In-Store,4,0,2
+10476,2025-04-24,1036,Home & Garden,14.02,11,0.04,East,Online,2,0,4
+10477,2025-04-13,1279,Books,51.27,6,0.03,East,Online,5,0,6
+10478,2025-08-24,1348,Clothing,80.35,12,0.25,East,Online,5,0,5
+10479,2025-06-29,1496,Home & Garden,44.03,5,0.15,West,In-Store,5,0,2
+10480,2025-06-06,1301,Home & Garden,80.51,4,0.32,Central,Online,3,0,1
+10481,2025-04-27,1180,Clothing,326.38,10,0.26,Central,In-Store,4,0,4
+10482,2025-04-25,1606,Home & Garden,24.13,12,0.07,South,In-Store,5,0,3
+10483,2025-01-13,1098,Sports,383.51,1,0.21,Central,Online,4,0,7
+10484,2025-12-04,1699,Home & Garden,182.69,10,0.15,Central,In-Store,4,0,2
+10485,2025-04-09,1992,Clothing,111.56,6,0.2,East,Online,1,0,3
+10486,2025-07-24,1115,Clothing,50.86,2,0.26,East,In-Store,3,0,4
+10487,2025-06-18,1190,Home & Garden,44.74,13,0.28,South,Online,5,0,3
+10488,2025-05-23,1252,Clothing,24.51,3,0.3,North,Mobile App,4,0,2
+10489,2025-02-05,1980,Clothing,355.46,14,0.09,South,Online,5,0,4
+10490,2025-05-23,1927,Clothing,308.0,8,0.01,South,Online,4,0,1
+10491,2025-06-29,1982,Electronics,29.22,10,0.26,West,In-Store,5,0,2
+10492,2025-11-25,1160,Electronics,57.85,14,0.04,West,Online,4,0,5
+10493,2025-09-18,1255,Clothing,127.3,14,0.11,South,Online,4,0,6
+10494,2025-07-24,1322,Clothing,70.84,6,0.0,South,In-Store,3,0,2
+10495,2025-12-14,1127,Clothing,19.4,3,0.24,South,In-Store,4,0,4
+10496,2025-10-02,1017,Home & Garden,53.19,7,0.06,Central,In-Store,4,0,7
+10497,2025-06-19,1792,Home & Garden,428.73,4,0.23,West,Online,5,0,6
+10498,2025-01-15,1734,Electronics,56.15,14,0.35,South,In-Store,5,1,2
+10499,2025-03-01,1565,Sports,78.98,9,0.03,East,Online,3,0,1
+10500,2025-05-14,1569,Clothing,36.01,5,0.03,East,In-Store,2,0,7

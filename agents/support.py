@@ -365,7 +365,7 @@ class SupportAgent(BaseAgent):
             {
                 "question": "How do I report a bug or request a feature?",
                 "answer": (
-                    "Open an issue on GitHub at https://github.com/rme0722/Minerva/issues. "
+                    "Open an issue on GitHub at https://github.com/MyDataTrends/Minerva/issues. "
                     "For bugs, include your OS, Python version, and a minimal reproducer. "
                     "For features, describe the use case and expected behavior."
                 ),
